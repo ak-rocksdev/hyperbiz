@@ -72,10 +72,12 @@
                     </a>
                     <div class="menu-item pt-2.25 pb-px">
                         <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
-                            User
+                            Menu
                         </span>
                     </div>
-                    <a :class="['menu-item', isActive('/user*') ? 'active' : '']" :href="isActive('/user*') ? 'javascript:void(0)' : route('user.list')">
+                    <a
+                        :class="['menu-item', isActive('/user*') ? 'active' : '']"
+                        :href="isActive('/user*') ? null : route('user.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -85,6 +87,20 @@
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
                                 User
+                            </span>
+                        </div>
+                    </a>
+                    <!-- Client -->
+                    <a :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client*') ? 'javascript:void(0)' : route('client.list')">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-user text-lg">
+                                </i>
+                            </span>
+                            <span
+                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Client
                             </span>
                         </div>
                     </a>

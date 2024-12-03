@@ -3,7 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ClientController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -30,5 +31,10 @@ Route::middleware([
 
     Route::prefix('user')->group(function () {
         Route::get('/list', [UserController::class, 'index'])->name('user.list');
+    });
+
+    // prefix "client"
+    Route::prefix('client')->group(function () {
+        Route::get('/list', [ClientController::class, 'list'])->name('client.list');
     });
 });
