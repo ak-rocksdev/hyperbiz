@@ -142,7 +142,7 @@
         <div class="container-fixed">
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
-                    <div class="card-header">
+                    <div class="card-header gap-5">
                         <h3 class="card-title">
                             Users
                         </h3>
@@ -154,7 +154,7 @@
                                     </i>
                                     <input data-datatable-search="#users_table" class="input input-sm ps-8" placeholder="Search Users" value="" />
                                 </div>
-                                <a class="btn btn-sm btn-primary" href="/user/create">
+                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" href="/user/create">
                                     Create User
                                 </a>
                             </div>
@@ -169,7 +169,7 @@
                                             <th class="w-[60px]">
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox"/>
                                             </th>
-                                            <th class="min-w-[170px]" data-datatable-column="name">
+                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
                                                 <span class="sort">
                                                     <span class="sort-label">
                                                         Name
@@ -187,7 +187,7 @@
                                                     </span>
                                                 </span>
                                             </th>
-                                            <th class="min-w-[185px]">
+                                            <th class="min-w-[180px] w-[200px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
                                                         Registered At
@@ -196,7 +196,7 @@
                                                     </span>
                                                 </span>
                                             </th>
-                                            <th class="w-[185px] text-center">
+                                            <th class="w-[85px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
                                                         Action
@@ -218,13 +218,79 @@
                                             <td>
                                                 {{ user.email }}
                                             </td>
-                                            <td>
+                                            <td class="text-center">
                                                 {{ user.created_at }}
                                             </td>
-                                            <td class="text-center">
+                                            <!-- <td class="text-center">
                                                 <a class="btn btn-primary btn-sm" :href="'/user/' + user.id">
                                                     View Detail
                                                 </a>
+                                            </td> -->
+                                            <td class="text-center">
+                                                <div class="menu flex-inline justify-center" data-menu="true">
+                                                    <div class="menu-item" data-menu-item-offset="0, 10px"
+                                                        data-menu-item-placement="bottom-end"
+                                                        data-menu-item-placement-rtl="bottom-start"
+                                                        data-menu-item-toggle="dropdown"
+                                                        data-menu-item-trigger="click|lg:click">
+                                                        <button
+                                                            class="menu-toggle btn btn-sm btn-icon btn-light btn-clear">
+                                                            <i class="ki-filled ki-dots-vertical">
+                                                            </i>
+                                                        </button>
+                                                        <div class="menu-dropdown menu-default w-full max-w-[175px]"
+                                                            data-menu-dismiss="true">
+                                                            <div class="menu-item">
+                                                                <Link class="menu-link" :href="'/user/' + user.id">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-search-list">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title">
+                                                                        View
+                                                                    </span>
+                                                                </Link>
+                                                            </div>
+                                                            <div class="menu-separator">
+                                                            </div>
+                                                            <div class="menu-item">
+                                                                <a class="menu-link" href="#">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-pencil">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title">
+                                                                        Edit
+                                                                    </span>
+                                                                </a>
+                                                            </div>
+                                                            <div class="menu-item">
+                                                                <a class="menu-link" href="#">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-copy">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title">
+                                                                        Make a copy
+                                                                    </span>
+                                                                </a>
+                                                            </div>
+                                                            <div class="menu-separator">
+                                                            </div>
+                                                            <div class="menu-item">
+                                                                <a class="menu-link" href="#">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-trash">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title !text-red-500 hover:!text-red-600">
+                                                                        Remove
+                                                                    </span>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
