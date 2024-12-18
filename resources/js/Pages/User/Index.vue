@@ -100,33 +100,33 @@
     };
 
     // On component mount, load scripts and initialize table
-    onMounted(async () => {
-        try {
-            // Load required external script
-            await loadScript('/assets/js/core.bundle.js');
+    // onMounted(async () => {
+    //     try {
+    //         // Load required external script
+    //         await loadScript('/assets/js/core.bundle.js');
 
-            // Wait for the document to be ready
-            KTDom.ready(() => {
-                // loadTable();
-                KTDataTable.init()
+    //         // Wait for the document to be ready
+    //         KTDom.ready(() => {
+    //             // loadTable();
+    //             KTDataTable.init()
 
-                // Initialzie pending datatables
-                KTDataTable.createInstances();
+    //             // Initialzie pending datatables
+    //             KTDataTable.createInstances();
 
-                // const datatableEl = document.querySelector('#users_table');
-                // const options = {
-                //     pageSize: 5,
-                // };
-                // setTimeout(() => {
-                //     const datatable = new KTDataTable(datatableEl, options);
-                //     console.log('datatable', datatable);
+    //             // const datatableEl = document.querySelector('#users_table');
+    //             // const options = {
+    //             //     pageSize: 5,
+    //             // };
+    //             // setTimeout(() => {
+    //             //     const datatable = new KTDataTable(datatableEl, options);
+    //             //     console.log('datatable', datatable);
                     
-                // }, 1000);
-            });
-        } catch (err) {
-            console.error('Failed to load script:', err);
-        }
-    });
+    //             // }, 1000);
+    //         });
+    //     } catch (err) {
+    //         console.error('Failed to load script:', err);
+    //     }
+    // });
 </script>
 
 

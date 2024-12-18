@@ -2285,6 +2285,16 @@ video {
   outline: none;
 }
 
+.modal-body,.modal-footer {
+  padding-inline-start:1.25rem;padding-inline-end:1.25rem;padding-block-start:.625rem;padding-block-end:.625rem}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--tw-gray-200)
+}
+
 .modal-table .table th:first-child, .modal-table .table td:first-child {
   padding-inline-start: 1.25rem;
 }

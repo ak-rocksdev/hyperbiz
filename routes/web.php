@@ -30,11 +30,14 @@ Route::middleware([
     })->name('dashboard');
 
     Route::prefix('user')->group(function () {
-        Route::get('/list', [UserController::class, 'index'])->name('user.list');
+        Route::get('/list',         [UserController::class, 'index'])->name('user.list');
     });
 
     // prefix "client"
     Route::prefix('client')->group(function () {
-        Route::get('/list', [ClientController::class, 'list'])->name('client.list');
+        Route::get('/list',             [ClientController::class, 'list'])->name('client.list');
+        Route::get('/detail/{id}',      [ClientController::class, 'detail'])->name('client.detail');
+        Route::get('/api/detail/{id}',  [ClientController::class, 'detailApi']);
+        Route::post('/api/store',       [ClientController::class, 'store']);
     });
 });

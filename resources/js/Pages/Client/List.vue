@@ -1,11 +1,51 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Head, Link, router } from '@inertiajs/vue3';
-    import { ref, onMounted } from 'vue';
+    import { Head, Link } from '@inertiajs/vue3';
+    import Detail from './Detail.vue'; // Import the Detail component
+    import axios from 'axios';
+    import { ref } from 'vue';
+
+    const form = ref({});
 
     const props = defineProps({
-        clients: Object
+        clients: Object,
+        clientTypes: Object,
     });
+
+    const selectedClient = ref(null);
+
+    const viewClientDetail = async (id) => {
+        selectedClient.value = null;
+        try {
+            const response = await axios.get(`/client/api/detail/${id}`);
+            selectedClient.value = response.data.client; // Set the fetched data
+        } catch (error) {
+            console.error("Error fetching client details:", error);
+        }
+    };
+
+    const submitForm = () => {
+        console.log('Form submitted:', form.value);
+        
+        try {
+            axios.post('/client/api/store', form.value)
+                .then(response => {
+                    // Reset the form
+                    form.value = {};
+
+                    // Close the modal
+                    document.querySelector('#modal_create_new_client').dispatchEvent(new Event('modal-dismiss'));
+
+                    // Refresh the clients list
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
 </script>
 
 <template>
@@ -32,14 +72,14 @@
                                     </i>
                                     <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Client" value="" />
                                 </div>
-                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" href="/client/create">
+                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_client">
                                     Add New Client
                                 </a>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div data-datatable="true" data-datatable-state-save="true" id="data_container">
+                        <div id="data_container">
                             <div class="scrollable-x-auto">
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
@@ -115,9 +155,9 @@
                                                         <img :src="'https://picsum.photos/500/300.jpg'" alt="Client Image" class="object-cover w-full h-full" />
                                                     </div>
                                                     <div class="flex flex-col">
-                                                        <a :href="'/client/' + client.id" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px">
+                                                        <span @click="viewClientDetail(client.id)" data-modal-toggle="#modal_view_client" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer">
                                                             {{ client.name }}
-                                                        </a>
+                                                        </span>
                                                         <span class="text-2sm text-gray-700 font-normal">
                                                             {{ client.email }}
                                                         </span>
@@ -131,7 +171,12 @@
                                                 {{ client.phone_number }}
                                             </td>
                                             <td>
-                                                {{ client.address.country_name }} - {{ client.address.state_name }}, {{ client.address.city_name }}
+                                                <span v-if="client.address">
+                                                    {{ client.address.country_name }} - {{ client.address.state_name }}, {{ client.address.city_name }}
+                                                </span>
+                                                <span v-else>
+                                                    N/A
+                                                </span>
                                             </td>
                                             <td class="text-center">
                                                 {{ client.register_at }}
@@ -151,13 +196,13 @@
                                                         <div class="menu-dropdown menu-default w-full max-w-[175px]"
                                                             data-menu-dismiss="true">
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/client/' + client.id">
+                                                                <Link class="menu-link" :href="'/client/detail/' + client.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-search-list">
                                                                         </i>
                                                                     </span>
                                                                     <span class="menu-title">
-                                                                        View
+                                                                        View Detail
                                                                     </span>
                                                                 </Link>
                                                             </div>
@@ -190,8 +235,8 @@
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-dollar"></i>
                                                                     </span>
-                                                                    <span class="menu-title">
-                                                                        All Transactions
+                                                                    <span class="menu-title text-start">
+                                                                        Transactions
                                                                     </span>
                                                                 </a>
                                                             </div>
@@ -237,5 +282,199 @@
             </div>
         </div>
         <!-- End of Container -->
+
     </AppLayout>
+    <div class="modal" data-modal="true" id="modal_create_new_client">
+        <div class="modal-content max-w-[600px] top-[10%]">
+            <form @submit.prevent="submitForm">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        Add Client
+                    </h3>
+                    <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                        <i class="ki-outline ki-cross">
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
+                        <!-- Client Name -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Name
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <input
+                                class="input"
+                                name="client_name"
+                                placeholder="Enter Client Name"
+                                type="text"
+                                v-model="form.client_name"
+                            />
+                        </div>
+
+                        <!-- Client Type -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Client Type
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <select
+                                class="select"
+                                name="mst_client_type_id"
+                                v-model="form.mst_client_type_id"
+                            >
+                                <option value="" disabled selected>Select Client Type</option>
+                                <option v-for="(name, id) in clientTypes" :key="id" :value="id">
+                                    {{ name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Client Phone Number -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Client Phone Number
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <input
+                                class="input"
+                                name="client_phone_number"
+                                placeholder="Enter Client Phone Number"
+                                type="text"
+                                v-model="form.client_phone_number"
+                            />
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Email</label>
+                            <input
+                                class="input"
+                                name="email"
+                                placeholder="Enter Client Email"
+                                type="email"
+                                v-model="form.email"
+                            />
+                        </div>
+
+                        <!-- Contact Person -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Contact Person Name
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <input
+                                class="input"
+                                name="contact_person"
+                                placeholder="Enter Name"
+                                type="text"
+                                v-model="form.contact_person"
+                            />
+                        </div>
+
+                        <!-- Contact Person Phone Number -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Contact Person Phone</label>
+                            <input
+                                class="input"
+                                name="contact_person_phone_number"
+                                placeholder="Enter Phone Number"
+                                type="text"
+                                v-model="form.contact_person_phone_number"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-end">
+                    <div class="flex gap-4">
+                        <button class="btn btn-light" data-modal-dismiss="true">
+                            Cancel
+                        </button>
+                        <button class="btn btn-primary">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal mb-10" data-modal="true" id="modal_view_client">
+        <div class="modal-content max-w-[600px] top-[10%]">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    View Client
+                </h3>
+                <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                    <i class="ki-outline ki-cross">
+                    </i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div v-if="selectedClient">
+                    <div class="p-5">
+                        <div class="d-flex gap-5">
+                            <div class="p-5">
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Client Name</label>
+                                    <!-- use tailwind css class name for flex -->
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="!text-gray-500">{{ selectedClient.name }}</span>
+                                        <span class="badge badge-outline badge-success">
+                                            {{ selectedClient.client_type }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Email</label>
+                                    <p class="!text-gray-500">{{ selectedClient.email }}</p>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Company Phone</label>
+                                    <p class="!text-gray-500">{{ selectedClient.phone_number }}</p>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Contact Person</label>
+                                    <p v-if="selectedClient.contact_person"  class="!text-gray-500">{{ selectedClient.contact_person }}</p>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Contact Person Phone Number</label>
+                                    <p v-if="selectedClient.contact_person_phone_number" class="!text-gray-500">{{ selectedClient.contact_person_phone_number }}</p>
+                                    <p v-else class="!text-gray-500">N/A</p>
+                                </div>
+                                <div>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Address</label>
+                                    <div v-if="selectedClient.address">
+                                        <p class="!text-gray-500">{{ selectedClient.address?.address }}</p>
+                                        <p class="!text-gray-500">{{ selectedClient.address?.city_name }}, {{ selectedClient.address?.state_name }}</p>
+                                        <p class="!text-gray-500">{{ selectedClient.address?.country_name }}</p>
+                                    </div>
+                                    <div v-else>
+                                        <p class="!text-gray-500">N/A</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p v-else>Loading...</p>
+            </div>
+            <div class="modal-footer justify-end">
+                <div class="flex gap-4">
+                    <button class="btn btn-light" data-modal-dismiss="true">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>

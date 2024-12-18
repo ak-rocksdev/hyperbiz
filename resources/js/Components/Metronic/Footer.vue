@@ -18,7 +18,7 @@
                         {{ year }}©
                     </span>
                     <span class="text-gray-600 hover:text-primary">
-                        Proudly Part of Muwasholah Holding Company
+                        Enterprise Resource Planning System
                     </span>
                 </div>
                 <nav class="flex order-1 md:order-2 gap-4 font-normal text-2sm text-gray-600">

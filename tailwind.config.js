@@ -10,6 +10,8 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
+        './resources/**/*.vue',
+        './resources/css/**/*.css',
     ],
 
     theme: {
@@ -21,5 +23,8 @@ export default {
     },
 
     darkMode: 'media',
-    plugins: [forms, typography],
+    plugins: [
+        forms, 
+        typography,
+    ],
 };

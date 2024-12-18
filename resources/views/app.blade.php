@@ -33,12 +33,13 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
         <link href="/assets/vendors/apexcharts/apexcharts.css" rel="stylesheet"/>
         <link href="/assets/vendors/keenicons/styles.bundle.css" rel="stylesheet"/>
-        <link href="/assets/css/styles.css" rel="stylesheet"/>
+        <!-- <link href="/assets/css/styles.css" rel="stylesheet"/> -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <!-- Scripts -->
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
+        @vite('resources/css/app.css')
         @inertiaHead
     </head>
     <body class="antialiased flex h-full text-base text-gray-700 demo1 sidebar-fixed header-fixed bg-[--tw-page-bg]">
