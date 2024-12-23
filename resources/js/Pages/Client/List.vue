@@ -10,6 +10,8 @@
     const props = defineProps({
         clients: Object,
         clientTypes: Object,
+        totalClients: Number,
+        clientCategoriesCount: Number,
     });
 
     const selectedClient = ref(null);
@@ -18,7 +20,7 @@
         selectedClient.value = null;
         try {
             const response = await axios.get(`/client/api/detail/${id}`);
-            selectedClient.value = response.data.client; // Set the fetched data
+            selectedClient.value = response.data.client;
         } catch (error) {
             console.error("Error fetching client details:", error);
         }
@@ -58,6 +60,30 @@
 
         <!-- Container -->
         <div class="container-fixed">
+            <div class="py-5">
+                <div class="grid grid-cols-2 gap-5 lg:gap-7.5 w-full items-stretch">
+                    <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+                        <div class="flex flex-col gap-1 py-5 px-5">
+                            <span class="text-3xl font-semibold text-gray-900">
+                                {{ totalClients }}
+                            </span>
+                            <span class="text-2sm font-normal text-gray-700">
+                                Clients
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
+                        <div class="flex flex-col gap-1 py-5 px-5">
+                            <span class="text-3xl font-semibold text-gray-900">
+                                {{ clientCategoriesCount }}
+                            </span>
+                            <span class="text-2sm font-normal text-gray-700">
+                                Categories of Clients
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header gap-5">
@@ -164,8 +190,10 @@
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>
-                                                {{ client.client_type }}
+                                            <td class="text-center">
+                                                <span class="badge badge-outline badge-success">
+                                                    {{ client.client_type }}
+                                                </span>
                                             </td>
                                             <td>
                                                 {{ client.phone_number }}
@@ -209,7 +237,7 @@
                                                             <div class="menu-separator">
                                                             </div>
                                                             <div class="menu-item">
-                                                                <a class="menu-link" href="#">
+                                                                <Link class="menu-link" :href="'/client/edit/' + client.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-pencil">
                                                                         </i>
@@ -217,7 +245,7 @@
                                                                     <span class="menu-title">
                                                                         Edit
                                                                     </span>
-                                                                </a>
+                                                                </Link>
                                                             </div>
                                                             <div class="menu-item">
                                                                 <a class="menu-link" href="#">
@@ -408,7 +436,7 @@
         </div>
     </div>
 
-    <div class="modal mb-10" data-modal="true" id="modal_view_client">
+    <div class="modal pb-10" data-modal="true" id="modal_view_client">
         <div class="modal-content max-w-[600px] top-[10%]">
             <div class="modal-header">
                 <h3 class="modal-title">

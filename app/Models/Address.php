@@ -14,6 +14,19 @@ class Address extends Model
         return \Database\Factories\AddressFactory::new();
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_by = auth()->id();
+        });
+
+        static::updating(function ($model) {
+            $model->updated_by = auth()->id();
+        });
+    }
+
     protected $table = 'mst_address';
 
     protected $fillable = [

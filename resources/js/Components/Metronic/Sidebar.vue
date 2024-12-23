@@ -37,11 +37,11 @@
             id="sidebar_header">
             <a v-if="!darkMode" href="/dashboard">
                 <img class="default-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
-                <img class="small-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
+                <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
             </a>
             <a v-else href="/dashboard">
                 <img class="default-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
-                <img class="small-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
+                <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
             </a>
             <button
                 class="btn btn-icon btn-icon-md size-[30px] rounded-lg border border-gray-200 dark:border-gray-300 bg-light text-gray-500 hover:text-gray-700 toggle absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4"

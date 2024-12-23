@@ -50,7 +50,7 @@
                                     <p class="!text-gray-500">{{ client.email }}</p>
                                 </div>
                                 <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Company Phone</label>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Client Phone</label>
                                     <p class="!text-gray-500">{{ client.phone_number }}</p>
                                 </div>
                                 <div class="mb-5">

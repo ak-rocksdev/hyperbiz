@@ -7,6 +7,7 @@ use Inertia\Inertia;
 
 use App\Models\Client;
 use App\Models\ClientType;
+use App\Models\Address;
 use Carbon\Carbon;
 
 class ClientController extends Controller
@@ -27,12 +28,21 @@ class ClientController extends Controller
             ];
         });
 
+        // count all clients
+        $totalClients = $clients->count();
+
+        // get categories where has client 1 or more
+        $clientCategories = ClientType::whereHas('clients')->pluck('client_type', 'id');
+        $clientCategoriesCount = $clientCategories->count();
+
         $clientTypes = ClientType::pluck('client_type', 'id');
 
         // return dd($data);
         return Inertia::render('Client/List', [
             'clients' => $data,
-            'clientTypes' => $clientTypes
+            'clientTypes' => $clientTypes,
+            'totalClients' => $totalClients,
+            'clientCategoriesCount' => $clientCategoriesCount,
         ]);
     }
 
@@ -101,4 +111,98 @@ class ClientController extends Controller
             'message' => 'Client created successfully.',
         ], 201);
     }
+
+    // show edit page
+    public function edit($id)
+    {
+        $client = Client::findOrFail($id); // Use `findOrFail` to handle non-existent clients gracefully
+
+        $data = [
+            'id' => $client->id,
+            'client_name' => $client->client_name,
+            'email' => $client->email,
+            'mst_client_type_id' => $client->mst_client_type_id,
+            'mst_address_id' => $client->mst_address_id,
+            'address' => [
+                'address' => $client->address->address ?? '',
+                'city_name' => $client->address->city_name ?? '',
+                'state_name' => $client->address->state_name ?? '',
+                'country_name' => $client->address->country_name ?? '',
+            ],
+            'client_phone_number' => $client->client_phone_number,
+            'contact_person' => $client->contact_person,
+            'contact_person_phone_number' => $client->contact_person_phone_number
+        ];
+
+        $clientTypes = ClientType::pluck('client_type', 'id');
+
+        return Inertia::render('Client/Edit', [
+            'client' => $data,
+            'clientTypes' => $clientTypes,
+        ]);
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        // Validate client-related fields
+        $validatedClient = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'client_phone_number' => 'required|string|max:20',
+            'contact_person' => 'nullable|string|max:255',
+            'contact_person_phone_number' => 'nullable|string|max:20',
+            'mst_client_type_id' => 'required|exists:mst_client_type,id',
+        ]);
+
+        // Validate address-related fields
+        $validatedAddress = $request->validate([
+            'address.address' => 'required|max:255',
+            'address.city_name' => 'required|max:255',
+            'address.state_name' => 'required|max:255',
+            'address.country_name' => 'required|max:255',
+        ]);
+
+        // Fetch client model
+        $client = Client::findOrFail($id);
+
+        // Check if the client has an associated address
+        $address = Address::find($client->mst_address_id);
+
+        // Update client if changes exist
+        $clientDirty = $client->fill($validatedClient)->isDirty();
+        if ($clientDirty) {
+            $client->save();
+        }
+
+        // Handle address logic
+        $addressDirty = false;
+        if ($address) {
+            // Update existing address
+            $addressDirty = $address->fill($validatedAddress['address'])->isDirty();
+            if ($addressDirty) {
+                $address->save();
+            }
+        } elseif (!empty($validatedAddress['address']['address'])) {
+            // Create new address if no address exists and address data is provided
+            $newAddress = Address::create($validatedAddress['address']);
+            $client->mst_address_id = $newAddress->id;
+            $client->save(); // Update client with the new address ID
+            $addressDirty = true;
+        }
+
+        // Prepare response
+        if (!$clientDirty && !$addressDirty) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No changes detected.',
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Client updated successfully.',
+        ], 200);
+    }
+
 }
