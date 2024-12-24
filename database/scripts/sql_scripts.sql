@@ -48,3 +48,50 @@ CREATE TABLE `mst_client_type` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE `mst_brands` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `created_by` VARCHAR(255) NOT NULL,
+    `updated_by` VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE `mst_product_categories` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `parent_id` INT DEFAULT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `created_by` VARCHAR(255) NOT NULL,
+    `updated_by` VARCHAR(255) NOT NULL,
+    FOREIGN KEY (`parent_id`) REFERENCES `mst_product_categories`(`id`) ON DELETE SET NULL
+);
+
+CREATE TABLE `mst_products` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `sku` VARCHAR(100) UNIQUE,
+    `barcode` VARCHAR(50) UNIQUE,
+    `price` DECIMAL(10, 2) DEFAULT 0.00,
+    `cost_price` DECIMAL(10, 2) DEFAULT NULL,
+    `currency` CHAR(3) DEFAULT 'USD',
+    `stock_quantity` INT DEFAULT 0,
+    `min_stock_level` INT DEFAULT 0,
+    `mst_product_category_id` INT NOT NULL,
+    `mst_brand_id` INT DEFAULT NULL,
+    `mst_client_id` INT DEFAULT NULL,
+    `weight` DECIMAL(10, 2) DEFAULT NULL,
+    `dimensions` VARCHAR(100) DEFAULT NULL,
+    `image_url` TEXT DEFAULT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `created_by` VARCHAR(255) NOT NULL,
+    `updated_by` VARCHAR(255) NOT NULL,
+    FOREIGN KEY (`mst_product_category_id`) REFERENCES `mst_product_categories`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`mst_brand_id`) REFERENCES `mst_brands`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`mst_client_id`) REFERENCES `mst_client`(`id`) ON DELETE SET NULL
+);

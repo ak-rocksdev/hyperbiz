@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\BrandController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -33,7 +35,6 @@ Route::middleware([
         Route::get('/list',         [UserController::class, 'index'])->name('user.list');
     });
 
-    // prefix "client"
     Route::prefix('client')->group(function () {
         Route::get('/list',             [ClientController::class, 'list'])->name('client.list');
         Route::get('/detail/{id}',      [ClientController::class, 'detail'])->name('client.detail');
@@ -41,5 +42,15 @@ Route::middleware([
         Route::get('/api/detail/{id}',  [ClientController::class, 'detailApi']);
         Route::post('/api/store',       [ClientController::class, 'store']);
         Route::put('/api/update/{id}', [ClientController::class, 'update']);
+    });
+
+    Route::prefix('transaction')->group(function () {
+        Route::get('/list',             [TransactionController::class, 'list'])->name('transaction.list');
+    });
+
+    Route::prefix('brand')->group(function () {
+        Route::get('/list',             [BrandController::class, 'list'])->name('brand.list');
+        Route::get('/api/detail/{id}',  [BrandController::class, 'detailApi']);
+        Route::post('/api/store',       [BrandController::class, 'store']);
     });
 });

@@ -1,7 +1,7 @@
 
 <script setup>
     import { ref, computed, watchEffect } from 'vue';
-    import { usePage } from '@inertiajs/vue3';
+    import { Link, usePage } from '@inertiajs/vue3';
 
     // set reactive variable to check the dark mode
     const darkMode = ref(false);
@@ -58,7 +58,7 @@
                 <!-- Sidebar Menu -->
                 <div class="menu flex flex-col grow gap-0.5" data-menu="true" data-menu-accordion-expand-all="false"
                     id="sidebar_menu">
-                    <a :class="['menu-item', isActive('/dashboard') ? 'active' : '']" :href="isActive('/dashboard') ? 'javascript:void(0)' : route('dashboard')">
+                    <Link :class="['menu-item', isActive('/dashboard') ? 'active' : '']" :href="isActive('/dashboard') ? 'javascript:void(0)' : route('dashboard')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -69,13 +69,13 @@
                                 Dashboards
                             </span>
                         </div>
-                    </a>
+                    </Link>
                     <div class="menu-item pt-2.25 pb-px">
                         <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
                             Menu
                         </span>
                     </div>
-                    <a
+                    <Link
                         :class="['menu-item', isActive('/user*') ? 'active' : '']"
                         :href="isActive('/user*') ? null : route('user.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
@@ -86,12 +86,12 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                User
+                                User Management
                             </span>
                         </div>
-                    </a>
+                    </Link>
                     <!-- Client -->
-                    <a :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client*') ? 'javascript:void(0)' : route('client.list')">
+                    <Link :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client*') ? 'javascript:void(0)' : route('client.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -103,7 +103,29 @@
                                 Client
                             </span>
                         </div>
-                    </a>
+                    </Link>
+                    <Link :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction*') ? 'javascript:void(0)' : route('transaction.list')">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-dollar text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Transactions
+                            </span>
+                        </div>
+                    </Link>
+                    <Link :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand*') ? 'javascript:void(0)' : route('brand.list')">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-dollar text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Brands
+                            </span>
+                        </div>
+                    </Link>
                 </div>
                 <!-- End of Sidebar Menu -->
             </div>
