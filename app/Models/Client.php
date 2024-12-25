@@ -56,5 +56,13 @@ class Client extends Model
     {
         return $this->belongsTo(ClientType::class, 'mst_client_type_id');
     }
+
+    /**
+     * Relationship with Product
+     */
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'mst_client_id');
+    }
 }
 

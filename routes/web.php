@@ -7,6 +7,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductCategoryController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -52,5 +54,18 @@ Route::middleware([
         Route::get('/list',             [BrandController::class, 'list'])->name('brand.list');
         Route::get('/api/detail/{id}',  [BrandController::class, 'detailApi']);
         Route::post('/api/store',       [BrandController::class, 'store']);
+    });
+
+    Route::prefix('product')->group(function () {
+        Route::get('/list',             [ProductController::class, 'list'])->name('product.list');
+        Route::get('/api/detail/{id}',  [ProductController::class, 'detailApi']);
+        Route::post('/api/store',       [ProductController::class, 'store']);
+    });
+
+    // product category
+    Route::prefix('product-category')->group(function () {
+        Route::get('/list',             [ProductCategoryController::class, 'list'])->name('product-category.list');
+        Route::get('/api/detail/{id}',  [ProductCategoryController::class, 'detailApi']);
+        Route::post('/api/store',       [ProductCategoryController::class, 'store']);
     });
 });

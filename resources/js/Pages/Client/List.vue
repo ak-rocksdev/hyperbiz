@@ -1,7 +1,6 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Head, Link } from '@inertiajs/vue3';
-    import Detail from './Detail.vue'; // Import the Detail component
+    import { Link } from '@inertiajs/vue3';
     import axios from 'axios';
     import { ref } from 'vue';
 

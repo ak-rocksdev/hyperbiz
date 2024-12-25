@@ -1,37 +1,37 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { ref } from 'vue';
-    import { Link, usePage } from '@inertiajs/vue3';
+    import { Link } from '@inertiajs/vue3';
     import axios from 'axios';
 
     // Data and Props
     const props = defineProps({
-        brands: Object,
-        totalBrands: Number,
+        productCategories: Object,
+        totalProductCategories: Number,
     });
 
     // State
-    const form = ref({}); // Used for creating/updating brands
-    const selectedBrand = ref(null); // Used for viewing/editing a specific brand
+    const form = ref({}); // Used for creating/updating categories
+    const selectedProductCategory = ref(null); // Used for viewing/editing a specific category
 
     // Methods
-    const viewBrandDetail = async (id) => {
-        selectedBrand.value = null;
+    const viewProductCategoryDetail = async (id) => {
+        selectedProductCategory.value = null;
         try {
-            const response = await axios.get(`/brand/api/detail/${id}`);
-            selectedBrand.value = response.data.brand;
+            const response = await axios.get(`/product-category/api/detail/${id}`);
+            selectedProductCategory.value = response.data.category;
         } catch (error) {
-            console.error('Error fetching brand details:', error);
+            console.error('Error fetching category details:', error);
         }
     };
 
     const submitForm = () => {
         try {
-            axios.post('/brand/api/store', form.value)
+            axios.post('/product-category/api/store', form.value)
                 .then((response) => {
                     form.value = {}; // Reset the form
-                    document.querySelector('#modal_create_new_brand').dispatchEvent(new Event('modal-dismiss')); // Close modal
-                    window.location.reload(); // Refresh the brand list
+                    document.querySelector('#modal_create_new_category').dispatchEvent(new Event('modal-dismiss')); // Close modal
+                    window.location.reload(); // Refresh the category list
                 })
                 .catch((error) => {
                     console.error('Error:', error);
@@ -43,10 +43,10 @@
 </script>
 
 <template>
-    <AppLayout title="Brands">
+    <AppLayout title="ProductCategory">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Brands
+                Product Category
             </h2>
         </template>
 
@@ -57,10 +57,10 @@
                     <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
                         <div class="flex flex-col gap-1 py-5 px-5">
                             <span class="text-3xl font-semibold text-gray-900">
-                                {{ totalBrands }}
+                                {{ totalProductCategories }}
                             </span>
                             <span class="text-2sm font-normal text-gray-700">
-                                Brands
+                                Product Category
                             </span>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header gap-5">
                         <h3 class="card-title">
-                            Brands
+                            Product Category
                         </h3>
                         <div class="card-toolbar">
                             <div class="flex gap-6">
@@ -78,10 +78,10 @@
                                     <i
                                         class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
                                     </i>
-                                    <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Brand" value="" />
+                                    <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Product Category" value="" />
                                 </div>
-                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_brand">
-                                    Add New Brand
+                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_category">
+                                    Add New Product Category
                                 </a>
                             </div>
                         </div>
@@ -125,26 +125,26 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-if="!brands || brands.length === 0">
+                                        <tr v-if="!categories || categories.length === 0">
                                             <td colspan="4" class="text-center text-gray-500">
-                                                No brands found.
+                                                No categories found.
                                             </td>
                                         </tr>
-                                        <tr v-else v-for="brand in brands" :key="brand.id">
+                                        <tr v-else v-for="category in categories" :key="category.id">
                                             <td class="text-center">
-                                                <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="brand.id"/>
+                                                <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="category.id"/>
                                             </td>
                                             <td>
                                                 <div class="flex items-center gap-2.5">
                                                     <div class="flex flex-col">
-                                                        <span data-modal-toggle="#modal_view_brand" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px" @click="viewBrandDetail(brand.id)">
-                                                            {{ brand.name }}
+                                                        <span data-modal-toggle="#modal_view_category" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px" @click="viewProductCategoryDetail(category.id)">
+                                                            {{ category.name }}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="text-center">
-                                                {{ brand.created_at }}
+                                                {{ category.created_at }}
                                             </td>
                                             <td class="text-center">
                                                 <div class="menu flex-inline justify-center" data-menu="true">
@@ -161,7 +161,7 @@
                                                         <div class="menu-dropdown menu-default w-full max-w-[175px]"
                                                             data-menu-dismiss="true">
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/brand/detail/' + brand.id">
+                                                                <Link class="menu-link" :href="'/category/detail/' + category.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-search-list">
                                                                         </i>
@@ -174,7 +174,7 @@
                                                             <div class="menu-separator">
                                                             </div>
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/brand/edit/' + brand.id">
+                                                                <Link class="menu-link" :href="'/category/edit/' + category.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-pencil">
                                                                         </i>
@@ -225,23 +225,23 @@
                 </div>
             </div>
 
-            <!-- Create New Brand Modal -->
-            <div id="modal_create_new_brand" data-modal="true" class="modal" aria-hidden="true">
+            <!-- Create New Product Category Modal -->
+            <div id="modal_create_new_category" data-modal="true" class="modal" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content max-w-[600px] top-[10%]">
                         <div class="modal-header">
-                            <h5 class="modal-title">Create New Brand</h5>
-                            <button type="button" class="btn-close" data-modal-dismiss="modal_create_new_brand" aria-label="Close"></button>
+                            <h5 class="modal-title">Create New Product Category</h5>
+                            <button type="button" class="btn-close" data-modal-dismiss="modal_create_new_category" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <form @submit.prevent="submitForm">
                                 <div class="mb-4">
-                                    <label for="brand_name" class="block text-sm font-medium text-gray-700">Brand Name</label>
-                                    <input type="text" id="brand_name" v-model="form.name" class="input input-bordered w-full mt-1" required />
+                                    <label for="category_name" class="block text-sm font-medium text-gray-700">Name</label>
+                                    <input type="text" id="category_name" v-model="form.name" class="input input-bordered w-full mt-1" required />
                                 </div>
                                 <!-- Additional form fields as needed -->
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-modal-dismiss="modal_create_new_brand">Cancel</button>
+                                    <button type="button" class="btn btn-light" data-modal-dismiss="modal_create_new_category">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Create</button>
                                 </div>
                             </form>
@@ -250,12 +250,12 @@
                 </div>
             </div>
 
-            <!-- View Brand Details Modal -->
-            <div class="modal pb-10" data-modal="true" id="modal_view_brand">
+            <!-- View Product Category Details Modal -->
+            <div class="modal pb-10" data-modal="true" id="modal_view_category">
                 <div class="modal-content max-w-[600px] top-[10%]">
                     <div class="modal-header">
                         <h3 class="modal-title">
-                            View Brand
+                            View Product Category
                         </h3>
                         <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
                             <i class="ki-outline ki-cross"></i>
@@ -263,15 +263,15 @@
                     </div>
                     <div class="modal-body">
                         <!-- If data is loaded -->
-                        <div v-if="selectedBrand">
+                        <div v-if="selectedProductCategory">
                             <div class="p-5">
                                 <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Brand Name</label>
-                                    <p class="!text-gray-500">{{ selectedBrand.name }}</p>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Name</label>
+                                    <p class="!text-gray-500">{{ selectedProductCategory.name }}</p>
                                 </div>
                                 <div class="mb-5">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Created At</label>
-                                    <p class="!text-gray-500">{{ selectedBrand.created_at }}</p>
+                                    <p class="!text-gray-500">{{ selectedProductCategory.created_at }}</p>
                                 </div>
                             </div>
                         </div>

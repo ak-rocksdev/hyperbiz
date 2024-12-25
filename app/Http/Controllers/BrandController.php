@@ -47,11 +47,8 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:mst_brands,name',
         ]);
-
-        $validatedData['created_by'] = auth()->id();
-        $validatedData['updated_by'] = auth()->id();
 
         $brand = Brand::create($validatedData);
 
