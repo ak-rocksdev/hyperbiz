@@ -2,7 +2,7 @@
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { Head, Link } from '@inertiajs/vue3';
     import axios from 'axios';
-    import { ref } from 'vue';
+    import { ref, watch } from 'vue';
 
     const form = ref({
         mst_client_id: '',
@@ -18,6 +18,7 @@
     });
 
     const selectedTransaction = ref(null);
+    const availableProducts = ref([]);
 
     const viewTransactionDetail = async (id) => {
         selectedTransaction.value = null;
@@ -26,6 +27,30 @@
             selectedTransaction.value = response.data.transaction;
         } catch (error) {
             console.error("Error fetching transaction details:", error);
+        }
+    };
+
+    const fetchProductsByClient = async (clientId) => {
+        try {
+            const response = await axios.get(`/api/products/by-client/${clientId}`);
+            availableProducts.value = response.data.products;
+        } catch (error) {
+            console.error("Error fetching products:", error);
+        }
+    };
+
+    watch(() => form.value.mst_client_id, (newClientId) => {
+        if (newClientId) {
+            fetchProductsByClient(newClientId);
+        } else {
+            availableProducts.value = [];
+        }
+    });
+
+    const updateProductPrice = (index) => {
+        const selectedProduct = availableProducts.value.find(product => product.id === form.value.products[index].id);
+        if (selectedProduct) {
+            form.value.products[index].price = selectedProduct.price;
         }
     };
 
@@ -224,9 +249,11 @@
                         <div class="mb-4">
                             <label class="form-label max-w-60 mb-2">Products</label>
                             <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2">
-                                <select class="select" v-model="product.id">
+                                <select class="select" v-model="product.id" @change="updateProductPrice(index)">
                                     <option value="" disabled>Select Product</option>
-                                    <!-- Add product options dynamically -->
+                                    <option v-for="(productOption) in availableProducts" :key="productOption.id" :value="productOption.id">
+                                        {{ productOption.name }}
+                                    </option>
                                 </select>
                                 <input class="input" type="text" readonly v-model="product.price" placeholder="Price"/>
                                 <button type="button" class="btn btn-sm btn-light" @click="form.products.splice(index, 1)">

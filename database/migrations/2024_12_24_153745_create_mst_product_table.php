@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->string('sku', 100)->unique();
+            $table->string('sku', 100)->unique()->nullable();
             $table->string('barcode', 50)->unique()->nullable();
             $table->decimal('price', 10, 2)->default(0.00);
             $table->decimal('cost_price', 10, 2)->nullable();
-            $table->char('currency', 3)->default('USD');
+            $table->char('currency', 3)->default('IDR');
             $table->integer('stock_quantity')->default(0);
             $table->integer('min_stock_level')->default(0);
             $table->unsignedBigInteger('mst_product_category_id');
@@ -30,8 +30,8 @@ return new class extends Migration
             $table->text('image_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->string('created_by');
-            $table->string('updated_by');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
 
             $table->foreign('mst_product_category_id')->references('id')->on('mst_product_categories')->onDelete('cascade');
             $table->foreign('mst_brand_id')->references('id')->on('mst_brands')->onDelete('set null');

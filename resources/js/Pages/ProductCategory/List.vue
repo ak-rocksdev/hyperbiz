@@ -19,7 +19,7 @@
         selectedProductCategory.value = null;
         try {
             const response = await axios.get(`/product-category/api/detail/${id}`);
-            selectedProductCategory.value = response.data.category;
+            selectedProductCategory.value = response.data.productCategory;
         } catch (error) {
             console.error('Error fetching category details:', error);
         }
@@ -104,6 +104,16 @@
                                                     </span>
                                                 </span>
                                             </th>
+                                            <!-- parents category -->
+                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="parent_id">
+                                                <span class="sort">
+                                                    <span class="sort-label">
+                                                        Parent Category
+                                                    </span>
+                                                    <span class="sort-icon">
+                                                    </span>
+                                                </span>
+                                            </th>
                                             <th class="min-w-[180px] w-[200px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
@@ -125,20 +135,29 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-if="!categories || categories.length === 0">
+                                        <tr v-if="!productCategories || productCategories.length === 0">
                                             <td colspan="4" class="text-center text-gray-500">
                                                 No categories found.
                                             </td>
                                         </tr>
-                                        <tr v-else v-for="category in categories" :key="category.id">
+                                        <tr v-else v-for="category in productCategories" :key="category.id">
                                             <td class="text-center">
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="category.id"/>
                                             </td>
                                             <td>
                                                 <div class="flex items-center gap-2.5">
                                                     <div class="flex flex-col">
-                                                        <span data-modal-toggle="#modal_view_category" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px" @click="viewProductCategoryDetail(category.id)">
+                                                        <span data-modal-toggle="#modal_view_category" class="text-sm font-medium text-gray-900 hover:text-primary-active hover:cursor-pointer mb-px" @click="viewProductCategoryDetail(category.id)">
                                                             {{ category.name }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-2.5">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-sm font-medium text-gray-900 mb-px">
+                                                            {{ category.parent }}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -239,6 +258,16 @@
                                     <label for="category_name" class="block text-sm font-medium text-gray-700">Name</label>
                                     <input type="text" id="category_name" v-model="form.name" class="input input-bordered w-full mt-1" required />
                                 </div>
+                                
+                                <!-- Parent Category -->
+                                <div class="mb-4">
+                                    <label for="category_parent" class="block text-sm font-medium text-gray-700">Parent Category</label>
+                                    <select id="category_parent" v-model="form.parent_id" class="select select-bordered w-full mt-1">
+                                        <option value="">Select Parent Category</option>
+                                        <option v-for="category in productCategories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                                    </select>
+                                </div>
+
                                 <!-- Additional form fields as needed -->
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-modal-dismiss="modal_create_new_category">Cancel</button>
@@ -268,6 +297,12 @@
                                 <div class="mb-5">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Name</label>
                                     <p class="!text-gray-500">{{ selectedProductCategory.name }}</p>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Parent Category</label>
+                                    <p class="!text-gray-500">
+                                        {{ selectedProductCategory.parent ? selectedProductCategory.parent.name : 'N/A' }}
+                                    </p>
                                 </div>
                                 <div class="mb-5">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Created At</label>

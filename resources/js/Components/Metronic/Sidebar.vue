@@ -126,8 +126,8 @@
                             </span>
                         </div>
                     </Link>
-                    <!-- create Link for Product -->
-                    <Link :class="['menu-item', isActive('/product*') ? 'active' : '']" :href="isActive('/product*') ? 'javascript:void(0)' : route('product.list')">
+                    
+                    <Link :class="['menu-item', isActive('/products*') ? 'active' : '']" :href="isActive('/products/list') ? '#' : route('product.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -135,6 +135,18 @@
                             </span>
                             <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
                                 Products
+                            </span>
+                        </div>
+                    </Link>
+                    
+                    <Link :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category*') ? '#' : route('product-category.list')">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-folder text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Product Categories
                             </span>
                         </div>
                     </Link>

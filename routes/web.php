@@ -43,7 +43,7 @@ Route::middleware([
         Route::get('/edit/{id}',        [ClientController::class, 'edit'])->name('client.edit');
         Route::get('/api/detail/{id}',  [ClientController::class, 'detailApi']);
         Route::post('/api/store',       [ClientController::class, 'store']);
-        Route::put('/api/update/{id}', [ClientController::class, 'update']);
+        Route::put('/api/update/{id}',  [ClientController::class, 'update']);
     });
 
     Route::prefix('transaction')->group(function () {
@@ -56,10 +56,12 @@ Route::middleware([
         Route::post('/api/store',       [BrandController::class, 'store']);
     });
 
-    Route::prefix('product')->group(function () {
+    Route::prefix('products')->group(function () {
         Route::get('/list',             [ProductController::class, 'list'])->name('product.list');
         Route::get('/api/detail/{id}',  [ProductController::class, 'detailApi']);
         Route::post('/api/store',       [ProductController::class, 'store']);
+        Route::get('/edit/{id}',        [ProductController::class, 'edit'])->name('product.edit');
+        Route::put('/api/update/{id}',  [ProductController::class, 'update']);
     });
 
     // product category

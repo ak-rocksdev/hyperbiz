@@ -18,8 +18,8 @@ class CreateMstClientTable extends Migration
             $table->string('contact_person_phone_number')->nullable();
             $table->unsignedBigInteger('mst_client_type_id');
             $table->timestamps();
-            $table->string('created_by');
-            $table->string('updated_by')->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
 
             // Foreign key constraints
             $table->foreign('mst_address_id')->references('id')->on('mst_address')->onDelete('cascade');

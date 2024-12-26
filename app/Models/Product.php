@@ -43,6 +43,10 @@ class Product extends Model
         'updated_by',
     ];
 
+    protected $attributes = [
+        'currency' => 'IDR', // Set your default currency here
+    ];
+
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'mst_product_category_id');

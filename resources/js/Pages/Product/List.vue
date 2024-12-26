@@ -12,17 +12,21 @@
         categories: Object,
         brands: Object,
         clients: Object,
+        totalCategoriesCount: Number,
+        totalProducts: Number,
     });
 
     const products = ref(props.products ?? []);
     const categories = ref(props.categories ?? {});
     const brands = ref(props.brands ?? {});
     const clients = ref(props.clients ?? {});
+    const totalCategoriesCount = ref(props.totalCategoriesCount ?? 0);
+    const totalProducts = ref(props.totalProducts ?? 0);
 
     const fetchProductDetail = async (id) => {
         selectedProduct.value = null; // Clear previous selection
         try {
-            const response = await axios.get(`/product/api/detail/${id}`);
+            const response = await axios.get(`/products/api/detail/${id}`);
             selectedProduct.value = response.data.product;
         } catch (error) {
             console.error("Error fetching product details:", error);
@@ -31,7 +35,7 @@
 
     const createProduct = async (formData) => {
         try {
-            await axios.post('/product/api/store', formData);
+            await axios.post('/products/api/store', formData);
             // Reload or fetch the updated list of products
             window.location.reload();
         } catch (error) {
@@ -58,7 +62,7 @@
                     <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
                         <div class="flex flex-col gap-1 py-5 px-5">
                             <span class="text-3xl font-semibold text-gray-900">
-                                {{ products.length }}
+                                {{ totalProducts }}
                             </span>
                             <span class="text-2sm font-normal text-gray-700">
                                 Total Products
@@ -68,7 +72,7 @@
                     <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
                         <div class="flex flex-col gap-1 py-5 px-5">
                             <span class="text-3xl font-semibold text-gray-900">
-                                {{ categories.length }}
+                                {{ totalCategoriesCount }}
                             </span>
                             <span class="text-2sm font-normal text-gray-700">
                                 Categories
@@ -116,6 +120,12 @@
                                                     <span class="sort-icon"></span>
                                                 </span>
                                             </th>
+                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
+                                                <span class="sort">
+                                                    <span class="sort-label">Client</span>
+                                                    <span class="sort-icon"></span>
+                                                </span>
+                                            </th>
                                             <th class="min-w-[150px] lg:w-[150px]">
                                                 <span class="sort">
                                                     <span class="sort-label">Category</span>
@@ -125,6 +135,12 @@
                                             <th class="min-w-[150px] lg:w-[150px]">
                                                 <span class="sort">
                                                     <span class="sort-label">Brand</span>
+                                                    <span class="sort-icon"></span>
+                                                </span>
+                                            </th>
+                                            <th class="min-w-[150px] lg:w-[150px] text-center">
+                                                <span class="sort">
+                                                    <span class="sort-label">Status</span>
                                                     <span class="sort-icon"></span>
                                                 </span>
                                             </th>
@@ -153,10 +169,17 @@
                                                 </span>
                                             </td>
                                             <td>
+                                                {{ product.client }}
+                                            </td>
+                                            <td>
                                                 {{ product.category }}
                                             </td>
                                             <td>
                                                 {{ product.brand }}
+                                            </td>
+                                            <td class="text-center">
+                                                <span v-if="product.is_active" class="badge badge-outline badge-success">Active</span>
+                                                <span v-else class="badge badge-outline badge-danger">Inactive</span>
                                             </td>
                                             <td class="text-center">
                                                 {{ product.created_at }}
@@ -189,7 +212,7 @@
                                                             <div class="menu-separator">
                                                             </div>
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/product/detail/' + product.id">
+                                                                <Link class="menu-link" :href="'/products/edit/' + product.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-pencil">
                                                                         </i>
@@ -260,7 +283,7 @@
                             <label class="form-label mb-1">Category <span class="text-red-500 ms-1">*</span></label>
                             <select 
                                 class="select" 
-                                v-model="form.mst_category_id">
+                                v-model="form.mst_product_category_id">
                                 <option value="" disabled>Select Category</option>
                                 <option 
                                     v-for="(category, id) in categories" 
@@ -273,11 +296,10 @@
 
                         <!-- Brand -->
                         <div class="mb-4">
-                            <label class="form-label mb-1">Brand <span class="text-red-500 ms-1">*</span></label>
+                            <label class="form-label mb-1">Brand (Optional)</label>
                             <select 
                                 class="select" 
-                                v-model="form.mst_brand_id" 
-                                required>
+                                v-model="form.mst_brand_id">
                                 <option value="" disabled>Select Brand</option>
                                 <option 
                                     v-for="(brand, id) in brands" 
@@ -293,7 +315,7 @@
                             <label class="form-label mb-1">Client <span class="text-red-500 ms-1">*</span></label>
                             <select 
                                 class="select" 
-                                v-model="form.client_id" 
+                                v-model="form.mst_client_id" 
                                 required>
                                 <option value="" disabled>Select Client</option>
                                 <option 
@@ -360,25 +382,35 @@
                             <!-- cost_price -->
                             <div class="mb-4">
                                 <label class="form-label mb-1">Cost Price / Base Price <span class="text-red-500 ms-1">*</span></label>
-                                <input 
-                                    class="input" 
-                                    v-model="form.cost_price" 
-                                    type="number" 
-                                    step="0.01" 
-                                    placeholder="Enter product cost price" 
-                                    required />
+                                <div class="input-group">
+                                    <span class="btn btn-input" style="border-color: #d8d8d8;">
+                                        IDR
+                                    </span>
+                                    <input 
+                                        class="input" 
+                                        v-model="form.cost_price" 
+                                        type="number" 
+                                        step="0.01" 
+                                        placeholder="Enter product cost price" 
+                                        required />
+                                </div>
                             </div>
 
                             <!-- Price -->
                             <div class="mb-4">
                                 <label class="form-label mb-1">Price <span class="text-red-500 ms-1">*</span></label>
-                                <input 
-                                    class="input" 
-                                    v-model="form.price" 
-                                    type="number" 
-                                    step="0.01" 
-                                    placeholder="Enter product price" 
-                                    required />
+                                <div class="input-group">
+                                    <span class="btn btn-input" style="border-color: #d8d8d8;">
+                                        IDR
+                                    </span>
+                                    <input 
+                                        class="input" 
+                                        v-model="form.price" 
+                                        type="number" 
+                                        step="0.01" 
+                                        placeholder="Enter product price" 
+                                        required />
+                                </div>
                             </div>
 
                             <!-- Stock -->
@@ -386,7 +418,7 @@
                                 <label class="form-label mb-1">Stock <span class="text-red-500 ms-1">*</span></label>
                                 <input 
                                     class="input" 
-                                    v-model="form.stock" 
+                                    v-model="form.stock_quantity" 
                                     type="number" 
                                     placeholder="Enter available stock" 
                                     required />
@@ -394,13 +426,18 @@
 
                             <!-- Weight -->
                             <div>
-                                <label class="form-label mb-1">Weight (Grams)</label>
-                                <input 
-                                    class="input" 
-                                    v-model="form.weight" 
-                                    type="number" 
-                                    placeholder="Enter product weight in grams"
-                                />
+                                <label class="form-label mb-1">Weight</label>
+                                <div class="input-group">
+                                    <input 
+                                        class="input" 
+                                        v-model="form.weight" 
+                                        type="number" 
+                                        placeholder="Enter product weight"
+                                    />
+                                    <span class="btn btn-input" style="border-color: #d8d8d8;">
+                                        Kg
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- is_active -->
@@ -446,18 +483,17 @@
                             </div>
                             <div class="p-5 mb-10 bg-white border-gray-300 border rounded-xl shadow-lg space-y-2 sm:py-4 sm:flex sm:items-start sm:space-y-0 sm:space-x-6">
                                 <div class="mb-5">
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-gray-600">Image</label>
-                                    <img :src="'https://picsum.photos/500'" alt="Product Image" class="w-full h-auto rounded shadow-lg" />
+                                    <img :src="'https://picsum.photos/500'" alt="Product Image" class="sm:w-full lg:max-w-[200px] h-auto rounded shadow-lg" />
                                     <!-- <p v-else class="!text-gray-500">No image available</p> -->
                                 </div>
-                                <div>
+                                <div class="flex-grow w-full">
                                     <div class="mb-5">
                                         <label class="form-label mb-1 !font-extrabold text-md !text-gray-600">Product Name</label>
                                         <p class="!text-gray-500">{{ selectedProduct.name }}</p>
                                     </div>
-                                    <div>
+                                    <div class="w-full">
                                         <label class="form-label mb-1 !font-extrabold text-md !text-gray-600">Description</label>
-                                        <p class="!text-gray-500">{{ selectedProduct.description }}</p>
+                                        <p class="!text-gray-500 text-sm">{{ selectedProduct.description }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -491,7 +527,7 @@
                                     <p class="!text-gray-500">{{ selectedProduct.price }} {{ selectedProduct.currency }}</p>
                                 </div>
                                 <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Cost Price</label>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Cost Price / Base Price</label>
                                     <p class="!text-gray-500">{{ selectedProduct.cost_price }} {{ selectedProduct.currency }}</p>
                                 </div>
                                 <div class="mb-5">

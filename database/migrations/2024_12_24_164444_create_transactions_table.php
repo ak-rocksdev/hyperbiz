@@ -17,7 +17,9 @@ return new class extends Migration
             $table->id(); // Auto-increment primary key
             $table->unsignedBigInteger('mst_client_id'); // Foreign key to mst_clients
             $table->unsignedBigInteger('mst_product_id'); // Foreign key to mst_products
+            $table->integer('quantity'); // Quantity of product
             $table->decimal('value', 10, 2); // Transaction value
+            $table->decimal('total_price', 10, 2); // Total price of transaction
             $table->timestamp('transaction_date'); // Transaction date and time
             $table->enum('status', ['pending', 'completed', 'cancelled']); // Enum values in quotes
             $table->timestamps(); // Created at and updated at
@@ -26,7 +28,7 @@ return new class extends Migration
 
             // Define foreign key relationships
             $table->foreign('mst_client_id')->references('id')->on('mst_client')->onDelete('cascade');
-            // $table->foreign('mst_product_id')->references('id')->on('mst_products')->onDelete('cascade');
+            $table->foreign('mst_product_id')->references('id')->on('mst_products')->onDelete('cascade');
         });
     }
 
