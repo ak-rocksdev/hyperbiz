@@ -142,7 +142,6 @@ class ClientController extends Controller
         ]);
     }
 
-
     public function update(Request $request, $id)
     {
         // Validate client-related fields

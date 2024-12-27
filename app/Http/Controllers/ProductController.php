@@ -98,7 +98,7 @@ class ProductController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'sku' => 'nullable|string|max:100|unique:products,sku',
+            'sku' => 'nullable|string|max:100|unique:mst_products,sku',
             'barcode' => 'nullable|string|max:100',
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',

@@ -30,18 +30,11 @@
         }
     };
 
-    const fetchProductsByClient = async (clientId) => {
-        try {
-            const response = await axios.get(`/api/products/by-client/${clientId}`);
-            availableProducts.value = response.data.products;
-        } catch (error) {
-            console.error("Error fetching products:", error);
-        }
-    };
-
     watch(() => form.value.mst_client_id, (newClientId) => {
+        form.value.products = [];
         if (newClientId) {
-            fetchProductsByClient(newClientId);
+            const selectedClient = props.clients.find(client => client.id === newClientId);
+            availableProducts.value = selectedClient?.products || [];
         } else {
             availableProducts.value = [];
         }
@@ -51,8 +44,43 @@
         const selectedProduct = availableProducts.value.find(product => product.id === form.value.products[index].id);
         if (selectedProduct) {
             form.value.products[index].price = selectedProduct.price;
+            form.value.products[index].stock_quantity = selectedProduct.stock_quantity;
         }
     };
+
+    watch(
+        () => form.value.products.map(product => ({ id: product.id, quantity: product.quantity })), // Watch both id and quantity
+        (newProducts, oldProducts) => {
+            newProducts.forEach((newProduct, index) => {
+                const oldProduct = oldProducts[index] || {};
+                const oldQuantity = oldProduct.quantity || 0;
+                const newQuantity = newProduct.quantity || 0;
+                const product = form.value.products[index];
+
+                // Skip processing if no product is selected
+                if (!newProduct.id) {
+                    return;
+                }
+
+                if (newQuantity > oldQuantity) {
+                    // If quantity increases, reduce stock
+                    const difference = newQuantity - oldQuantity;
+                    if (product.stock_quantity >= difference) {
+                        product.stock_quantity -= difference;
+                    } else {
+                        // Revert quantity if stock is insufficient
+                        form.value.products[index].quantity = oldQuantity;
+                        alert(`Insufficient stock for the selected product`);
+                    }
+                } else if (newQuantity < oldQuantity) {
+                    // If quantity decreases, return the difference to stock
+                    const difference = oldQuantity - newQuantity;
+                    product.stock_quantity += difference;
+                }
+            });
+        },
+        { deep: true } // Watch nested properties
+    );
 
     const submitForm = () => {
         console.log('Form submitted:', form.value);
@@ -129,9 +157,10 @@
                                     </i>
                                     <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Transaction" value="" />
                                 </div>
-                                <a class="btn btn-sm btn-primary min-w-[150px] justify-center" data-modal-toggle="#modal_create_new_transaction">
+                                <!-- data-modal-toggle="#modal_create_new_transaction" -->
+                                <Link class="btn btn-sm btn-primary min-w-[150px] justify-center" :href="route('transaction.create')">
                                     Add New Transaction
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -213,56 +242,102 @@
 
     <!-- Create Transaction Modal -->
     <div class="modal" data-modal="true" id="modal_create_new_transaction">
-        <div class="modal-content max-w-[600px] top-[10%]">
+        <div class="modal-content max-w-[800px] top-[10%]">
             <form @submit.prevent="submitForm">
                 <div class="modal-header">
-                    <h3 class="modal-title">
-                        Add Transaction
-                    </h3>
+                    <h3 class="modal-title">Add Transaction</h3>
                     <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
                         <i class="ki-outline ki-cross"></i>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
-                        <!-- Client -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">
-                                Client
-                                <span class="ms-1 text-danger">*</span>
-                            </label>
-                            <select class="select" v-model="form.mst_client_id">
-                                <option value="" disabled selected>Select Client</option>
-                                <option v-for="(name, id) in clients" :key="id" :value="id">
-                                    {{ name }}
-                                </option>
-                            </select>
-                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Client Dropdown -->
+                            <div class="mb-4">
+                                <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
+                                <select class="select" v-model="form.mst_client_id">
+                                    <option value="" disabled selected>Select Client</option>
+                                    <option v-for="client in props.clients" :key="client.id" :value="client.id">
+                                        {{ client.client_name }}
+                                    </option>
+                                </select>
+                            </div>
 
-                        <!-- Transaction Date -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Transaction Date</label>
-                            <input class="input" name="transaction_date" type="date" v-model="form.transaction_date"/>
+                            <!-- Transaction Date -->
+                            <div class="mb-4">
+                                <label class="form-label max-w-60 mb-2">Transaction Date</label>
+                                <input class="input" name="transaction_date" type="date" v-model="form.transaction_date" />
+                            </div>
                         </div>
 
                         <!-- Products -->
                         <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Products</label>
-                            <div v-for="(product, index) in form.products" :key="index" class="flex gap-2 mb-2">
-                                <select class="select" v-model="product.id" @change="updateProductPrice(index)">
-                                    <option value="" disabled>Select Product</option>
-                                    <option v-for="(productOption) in availableProducts" :key="productOption.id" :value="productOption.id">
-                                        {{ productOption.name }}
-                                    </option>
-                                </select>
-                                <input class="input" type="text" readonly v-model="product.price" placeholder="Price"/>
-                                <button type="button" class="btn btn-sm btn-light" @click="form.products.splice(index, 1)">
-                                    Remove
+                            <div class="flex justify-end items-center mb-5">
+                                <!-- <h3 class="text-lg font-bold">Products</h3> -->
+                                <button type="button" class="btn btn-primary" @click="form.products.push({ id: '', price: '', quantity: 1 })">
+                                    <i class="ki-outline ki-plus-squared"></i>
+                                    Add Product
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-primary" @click="form.products.push({ id: '', price: '' })">
-                                Add Product
-                            </button>
+                            <div class="overflow-x-auto">
+                                <table class="table-auto w-full text-sm">
+                                    <thead>
+                                        <tr class="text-left text-gray-700 border-b">
+                                            <th class="py-2 px-4">Product</th>
+                                            <th class="py-2 px-4 text-center">Stock</th>
+                                            <th class="py-2 px-4 text-center">Quantity</th>
+                                            <th class="py-2 px-4 text-right">Price</th>
+                                            <th class="py-2 px-4 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(product, index) in form.products" :key="index" class="hover:bg-gray-100">
+                                            <!-- Product dropdown -->
+                                            <td class="py-2 px-4">
+                                                <select class="select w-full" v-model="product.id" @change="updateProductPrice(index)">
+                                                    <option value="" disabled>Select Product</option>
+                                                    <option v-for="(productOption) in availableProducts" :key="productOption.id" :value="productOption.id">
+                                                        {{ productOption.name }}
+                                                    </option>
+                                                </select>
+                                            </td>
+                                            <!-- Current Stock -->
+                                            <td class="py-2 px-4 w-[125px] text-center">
+                                                {{ product.stock_quantity }}
+                                            </td>
+                                            <td class="py-2 px-4 w-[125px] text-center">
+                                                <input
+                                                    class="input text-center"
+                                                    type="number"
+                                                    v-model="product.quantity"
+                                                    placeholder="Qty"
+                                                    min="1"
+                                                />
+                                            </td>
+                                            <!-- Price -->
+                                            <td class="py-2 px-4 text-right w-[150px]">
+                                                <input class="input w-full text-right" type="text" readonly v-model="product.price" placeholder="Price" />
+                                            </td>
+                                            <!-- Remove button -->
+                                            <td class="py-2 px-4 text-center">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline btn-icon btn-danger"
+                                                    @click="form.products.splice(index, 1)"
+                                                >
+                                                    <i class="ki-filled ki-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="form.products.length === 0">
+                                            <td colspan="4" class="text-center text-gray-500 py-4">
+                                                No products added yet.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

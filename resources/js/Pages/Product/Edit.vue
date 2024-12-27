@@ -156,7 +156,7 @@ const updateProduct = () => {
                                         class="input"
                                         placeholder="Enter Stock Quantity"
                                         type="number"
-                                        v-model="product.stock"
+                                        v-model="product.stock_quantity"
                                     />
                                 </div>
                                 

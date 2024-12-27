@@ -34,7 +34,13 @@ class TransactionController extends Controller
         $totalTransactions = $transactions->count();
 
         $products = Product::pluck('name', 'id');
-        $clients = Client::pluck('client_name', 'id');
+        $clients = Client::all()->map(function ($client) {
+            return [
+                'id' => $client->id,
+                'client_name' => $client->client_name,
+                'products' => $client->products,
+            ];
+        });
 
         return Inertia::render('Transaction/List', [
             'transactions' => $data,
@@ -130,6 +136,40 @@ class TransactionController extends Controller
 
         return Inertia::render('Transaction/Edit', [
             'transaction' => $data,
+            'products' => $products,
+            'clients' => $clients,
+        ]);
+    }
+
+    public function create()
+    {
+        $products = Product::pluck('name', 'id');
+        $clients = Client::all()->map(function ($client) {
+            return [
+                'id' => $client->id,
+                'client_name' => $client->client_name,
+                'products' => $client->products->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'sku' => $product->sku,
+                        'barcode' => $product->barcode,
+                        'price' => $product->price,
+                        'cost_price' => $product->cost_price,
+                        'currency' => $product->currency,
+                        'stock_quantity' => $product->stock_quantity,
+                        'min_stock_level' => $product->min_stock_level,
+                        'weight' => $product->weight,
+                        'dimensions' => $product->dimensions,
+                        'image_url' => $product->image_url,
+                        'is_active' => $product->is_active,
+                    ];
+                }),
+            ];
+        });
+
+        return Inertia::render('Transaction/Create', [
             'products' => $products,
             'clients' => $clients,
         ]);

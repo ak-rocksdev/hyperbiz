@@ -38,16 +38,18 @@ Route::middleware([
     });
 
     Route::prefix('client')->group(function () {
-        Route::get('/list',             [ClientController::class, 'list'])->name('client.list');
-        Route::get('/detail/{id}',      [ClientController::class, 'detail'])->name('client.detail');
-        Route::get('/edit/{id}',        [ClientController::class, 'edit'])->name('client.edit');
-        Route::get('/api/detail/{id}',  [ClientController::class, 'detailApi']);
-        Route::post('/api/store',       [ClientController::class, 'store']);
-        Route::put('/api/update/{id}',  [ClientController::class, 'update']);
+        Route::get('/list',                     [ClientController::class, 'list'])->name('client.list');
+        Route::get('/detail/{id}',              [ClientController::class, 'detail'])->name('client.detail');
+        Route::get('/edit/{id}',                [ClientController::class, 'edit'])->name('client.edit');
+        Route::get('/api/detail/{id}',          [ClientController::class, 'detailApi']);
+        Route::post('/api/store',               [ClientController::class, 'store']);
+        Route::put('/api/update/{id}',          [ClientController::class, 'update']);
+        Route::get('/api/get/products/{id}',    [ClientController::class, 'getProducts']);
     });
 
     Route::prefix('transaction')->group(function () {
         Route::get('/list',             [TransactionController::class, 'list'])->name('transaction.list');
+        Route::get('/create',           [TransactionController::class, 'create'])->name('transaction.create');
     });
 
     Route::prefix('brand')->group(function () {

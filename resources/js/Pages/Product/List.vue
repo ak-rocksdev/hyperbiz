@@ -3,6 +3,7 @@
     import { Link } from '@inertiajs/vue3';
     import axios from 'axios';
     import { ref } from 'vue';
+    import Swal from 'sweetalert2';
 
     const form = ref({});
     const selectedProduct = ref(null);
@@ -35,9 +36,20 @@
 
     const createProduct = async (formData) => {
         try {
-            await axios.post('/products/api/store', formData);
-            // Reload or fetch the updated list of products
-            window.location.reload();
+            await axios.post('/products/api/store', formData)
+                .then(response => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message
+                    });
+
+                    window.location.reload();
+                });
         } catch (error) {
             console.error("Error creating product:", error);
         }
