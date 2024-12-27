@@ -23,14 +23,14 @@ class Transaction extends Model
     protected $table = 'transactions';
     
     protected $fillable = [
+        'transaction_code',
         'mst_client_id',
-        'mst_product_id',
-        'quantity',
-        'total_price',
         'transaction_date',
+        'grand_total',
+        'expedition_fee',
         'status',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     public function product()
@@ -41,5 +41,10 @@ class Transaction extends Model
     public function client()
     {
         return $this->belongsTo(Client::class, 'mst_client_id');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(TransactionDetail::class, 'transaction_id');
     }
 }

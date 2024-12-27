@@ -48,8 +48,9 @@ Route::middleware([
     });
 
     Route::prefix('transaction')->group(function () {
-        Route::get('/list',             [TransactionController::class, 'list'])->name('transaction.list');
-        Route::get('/create',           [TransactionController::class, 'create'])->name('transaction.create');
+        Route::get('/list',                     [TransactionController::class, 'list'])->name('transaction.list');
+        Route::get('/create',                   [TransactionController::class, 'create'])->name('transaction.create');
+        Route::post('/api/store',               [TransactionController::class, 'store']);
     });
 
     Route::prefix('brand')->group(function () {

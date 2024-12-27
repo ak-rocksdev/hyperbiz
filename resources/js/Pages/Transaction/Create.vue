@@ -1,13 +1,17 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, watch } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import Swal from 'sweetalert2';
+import { Inertia } from '@inertiajs/inertia';
 
 const form = ref({
     id: [],
     mst_client_id: '',
     products: [],
     transaction_date: '',
-    total_price: 0,
+    grand_total: 0,
+    expedition_fee: 0,
 });
 
 const props = defineProps({
@@ -52,12 +56,11 @@ const toggleProductSelection = (product) => {
 
 // Update total price whenever form.products changes
 watch(
-    () => form.value.products,
-    (newProducts) => {
-        form.value.total_price = newProducts.reduce((total, product) => {
-            let total_price = total + product.price * product.quantity;
-            return total_price;
-        }, 0);
+    () => [form.value.products, form.value.expedition_fee],
+    ([newProducts, expeditionFee]) => {
+        form.value.grand_total = newProducts.reduce((total, product) => {
+            return total + (product.price * product.quantity);
+        }, 0) + expeditionFee;
     },
     { deep: true } // Ensure deep watching for nested changes
 );
@@ -94,6 +97,29 @@ const formatCurrency = (value) => {
 const clearSearch = () => {
     searchQuery.value = '';
 };
+
+const submitTransaction = () => {
+    try {
+        axios.post('/transaction/api/store', form.value)
+            .then(response => {
+                console.log(response.data);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.data.message
+                });
+
+                // continue action after success using best practice
+                Inertia.visit(route('transaction.list'));
+            });
+    } catch (err) {
+        console.error('Failed to load script:', err);
+    }
+};
 </script>
 
 <template>
@@ -116,11 +142,10 @@ const clearSearch = () => {
                     <!--end::Card header-->
                     <!--begin::Card body-->
                     <div class="flex flex-col gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <div v-if="form.mst_client_id" class="overflow-x-auto">
+                            <label v-if="form.products.length == 0" class="block text-sm font-medium text-gray-700 mb-2">
                                 Add products to this order
                             </label>
-                            <!-- Display instructions if no products are selected -->
                             <div v-if="form.products.length === 0"
                                 class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 border border-dashed rounded-lg p-4 max-h-72 overflow-auto bg-gray-50">
                                 <span class="text-gray-500 text-sm">
@@ -128,31 +153,94 @@ const clearSearch = () => {
                                 </span>
                             </div>
                             <!-- Display selected products -->
-                            <div v-else
-                                class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 border border-dashed rounded-lg max-h-72 overflow-auto">
-                                <div v-for="product in form.products" :key="product.id"
-                                    class="flex items-center border border-1 border-gray-400 border-dashed rounded-lg p-4 bg-white">
-                                    <!-- Product image -->
-                                    <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
-                                        <img class="object-cover w-full h-full" :src="'https://picsum.photos/500'" alt="Product Image" />
-                                    </a>
-                                    <!-- Product details -->
-                                    <div class="ml-4">
-                                        <a href="#" class="text-gray-800 hover:text-primary font-medium text-sm">
-                                            {{ product.name }}
-                                        </a>
-                                        <div class="text-sm text-gray-600">
-                                            <div>Sell Price: <span>{{ formatCurrency(product.price) }}</span></div>
-                                        </div>
-                                        <div class="text-xs text-gray-500">
-                                            SKU: {{ product.sku ?? 'N/A' }}
-                                        </div>
+                            <div v-else class="overflow-x-auto">
+                                <table class="table-auto w-full text-sm rounded-lg">
+                                    <thead>
+                                        <tr class="text-left text-gray-700 border-gray-300 border-b-2 border-t-2">
+                                            <th class="py-2 px-4">Product</th>
+                                            <th class="py-2 px-4 text-center">Quantity</th>
+                                            <th class="py-2 px-4 text-right">Price</th>
+                                            <th class="py-2 px-4 text-right">Total</th>
+                                            <th class="py-2 px-4 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(product, index) in form.products" :key="index" class="hover:bg-gray-100 border-b border-dashed border-gray-400">
+                                            <!-- Product Details -->
+                                            <td class="py-4 px-4">
+                                                <div class="flex items-center">
+                                                    <!-- Product Image -->
+                                                    <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
+                                                        <img class="object-cover w-full h-full" :src="'https://picsum.photos/500'" alt="Product Image" />
+                                                    </a>
+                                                    <!-- Product Info -->
+                                                    <div class="ml-4">
+                                                        <a href="#" class="text-gray-800 hover:text-primary font-medium text-sm">
+                                                            {{ product.name }}
+                                                        </a>
+                                                        <div class="text-xs text-gray-500">
+                                                            SKU: {{ product.sku ?? 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <!-- Quantity -->
+                                            <td class="py-2 px-4 w-[125px] text-center">
+                                                <input
+                                                    class="input text-center"
+                                                    type="number"
+                                                    v-model="product.quantity"
+                                                    placeholder="Qty"
+                                                    min="1"
+                                                />
+                                            </td>
+                                            <!-- Price -->
+                                            <td class="py-2 px-4 text-right w-[150px]">
+                                                <span>{{ formatCurrency(product.price) }}</span>
+                                            </td>
+                                            <!-- Line Total -->
+                                            <td class="py-2 px-4 text-right w-[150px]">
+                                                <span>{{ formatCurrency(product.price * (product.quantity || 1)) }}</span>
+                                            </td>
+                                            <!-- Remove Button -->
+                                            <td class="py-2 px-4 text-center">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-outline btn-icon btn-danger"
+                                                    @click="form.products.splice(index, 1)"
+                                                >
+                                                    <i class="ki-filled ki-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="form.products.length === 0">
+                                            <td colspan="5" class="text-center text-gray-500 py-4">
+                                                No products added yet.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Grand Total Display -->
+                            <div class="flex flex-col py-4 border-gray-300 border-b text-lg font-bold text-gray-700 text-end justify-end">
+                                <div class="flex py-2 justify-end items-center">
+                                    Expedition Fee 
+                                    <div class="input-group ms-3">
+                                        <span class="btn btn-input" style="border-color: #d8d8d8;">
+                                            IDR
+                                        </span>
+                                        <input class="input w-[200px]" type="number" v-model="form.expedition_fee" />
                                     </div>
                                 </div>
+                                <div class="py-2">
+                                    Grand Total: <span :class="{'text-green-500': form.grand_total > 0}">{{ formatCurrency(form.grand_total) }}</span>
+                                </div>
                             </div>
-                            <!-- Total price display -->
-                            <div class="mt-4 text-lg font-bold text-gray-700">
-                                Total Cost: <span>{{ formatCurrency(form.total_price) }}</span>
+                            <!-- button submit -->
+                            <div class="flex justify-end my-4">
+                                <Link :href="route('transaction.list')" class="btn btn-light me-2">Cancel</Link>
+                                <button class="btn btn-primary" @click="submitTransaction">Create New Transaction</button>
                             </div>
                         </div>
 

@@ -123,7 +123,10 @@ const updateProduct = () => {
                                         </option>
                                     </select>
                                 </div>
-                                
+                            </div>
+
+                            <!-- Second Column -->
+                            <div class="grid grid-cols-2 gap-5 p-5">
                                 <!-- SKU -->
                                 <div>
                                     <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">SKU</label>
@@ -134,10 +137,7 @@ const updateProduct = () => {
                                         v-model="product.sku"
                                     />
                                 </div>
-                            </div>
-
-                            <!-- Second Column -->
-                            <div class="grid grid-cols-2 gap-5 p-5">
+                                
                                 <!-- Barcode -->
                                 <div>
                                     <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Barcode</label>

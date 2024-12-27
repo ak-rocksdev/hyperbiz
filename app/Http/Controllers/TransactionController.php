@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
 use App\Models\Product;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Number;
+use Illuminate\Support\Facades\Validator;
 
 class TransactionController extends Controller
 {
@@ -22,11 +24,11 @@ class TransactionController extends Controller
         $data = $transactions->map(function ($transaction) {
             return [
                 'id' => $transaction->id,
-                'product_name' => $transaction->product->name ?? 'N/A',
+                'transaction_code' => $transaction->transaction_code ?? 'N/A',
                 'client_name' => $transaction->client->client_name ?? 'N/A',
                 'quantity' => $transaction->quantity,
-                'total_price' => $transaction->total_price,
-                'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y - H:i'),
+                'grand_total' => $transaction->grand_total,
+                'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
                 'created_at' => Carbon::parse($transaction->created_at)->format('d M Y - H:i'),
             ];
         });
@@ -76,14 +78,38 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'client_id' => 'required|exists:clients,id',
-            'quantity' => 'required|integer|min:1',
-            'total_price' => 'required|numeric|min:0',
+            'mst_client_id' => 'required|exists:mst_client,id',
+            'products' => 'required|array|min:1',
+            'products.*.id' => 'required|exists:mst_products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.price' => 'required|numeric|min:1',
             'transaction_date' => 'required|date',
+            'expedition_fee' => 'nullable|numeric|min:0',
+            'grand_total' => 'required|numeric|min:1',
         ]);
-
-        Transaction::create($validatedData);
+    
+        // Save the transaction
+        $transaction = Transaction::create([
+            'transaction_code' => strtoupper(substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 6)),
+            'mst_client_id' => $validatedData['mst_client_id'],
+            'transaction_date' => $validatedData['transaction_date'] ?? now(),
+            'grand_total' => $validatedData['grand_total'],
+            'expedition_fee' => $validatedData['expedition_fee'] ?? 0,
+            'status' => 'pending'
+        ]);
+    
+        // Save transaction details
+        foreach ($validatedData['products'] as $product) {
+            TransactionDetail::create([
+                'transaction_id' => $transaction->id,
+                'mst_product_id' => $product['id'],
+                'quantity' => $product['quantity'],
+                'price' => $product['price'],
+            ]);
+    
+            // Decrease stock quantity
+            Product::where('id', $product['id'])->decrement('stock_quantity', $product['quantity']);
+        }
 
         return response()->json([
             'success' => true,

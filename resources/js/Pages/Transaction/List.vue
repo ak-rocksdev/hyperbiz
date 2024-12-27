@@ -107,6 +107,10 @@
             console.error('Error:', error);
         }
     };
+
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
+    };
 </script>
 
 <template>
@@ -174,15 +178,15 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox"/>
                                             </th>
                                             <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="transaction_id">
-                                                Transaction ID
+                                                Transaction Code
                                             </th>
-                                            <th class="w-[185px]" data-datatable-column="transaction_date">
+                                            <th class="w-[185px] text-center" data-datatable-column="transaction_date">
                                                 Transaction Date
                                             </th>
-                                            <th class="w-[185px]" data-datatable-column="client">
+                                            <th class="w-[185px] text-center" data-datatable-column="client">
                                                 Client
                                             </th>
-                                            <th class="min-w-[180px] w-[200px] text-center">
+                                            <th class="min-w-[180px] w-[200px] text-end">
                                                 Total Value
                                             </th>
                                             <th class="w-[85px] text-center">
@@ -196,16 +200,16 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="transaction.id"/>
                                             </td>
                                             <td>
-                                                {{ transaction.transaction_id }}
-                                            </td>
-                                            <td>
-                                                {{ transaction.transaction_date }}
-                                            </td>
-                                            <td>
-                                                {{ transaction.client_name }}
+                                                {{ transaction.transaction_code }}
                                             </td>
                                             <td class="text-center">
-                                                {{ transaction.total_value }}
+                                                {{ transaction.transaction_date }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ transaction.client_name }}
+                                            </td>
+                                            <td class="text-end">
+                                                {{ formatCurrency(transaction.grand_total) }}
                                             </td>
                                             <td class="text-center">
                                                 <button @click="viewTransactionDetail(transaction.id)" data-modal-toggle="#modal_view_transaction" class="btn btn-sm btn-icon btn-light btn-clear">
