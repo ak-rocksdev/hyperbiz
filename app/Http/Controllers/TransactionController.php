@@ -19,7 +19,7 @@ class TransactionController extends Controller
      */
     public function list()
     {
-        $transactions = Transaction::with('product', 'client')->orderByDesc('created_at')->get();
+        $transactions = Transaction::with('client')->orderByDesc('created_at')->get();
 
         $data = $transactions->map(function ($transaction) {
             return [
@@ -33,7 +33,11 @@ class TransactionController extends Controller
             ];
         });
 
-        $totalTransactions = $transactions->count();
+        $totalTransactionsCount = $transactions->count();
+
+        // get total transaction value
+        $totalTransactionValue = $transactions->sum('grand_total');
+
 
         $products = Product::pluck('name', 'id');
         $clients = Client::all()->map(function ($client) {
@@ -48,7 +52,8 @@ class TransactionController extends Controller
             'transactions' => $data,
             'products' => $products,
             'clients' => $clients,
-            'totalTransactions' => $totalTransactions,
+            'totalTransactions' => $totalTransactionsCount,
+            'totalTransactionValue' => $totalTransactionValue,
         ]);
     }
 
@@ -57,16 +62,25 @@ class TransactionController extends Controller
      */
     public function detailApi($id)
     {
-        $transaction = Transaction::with('product', 'client')->findOrFail($id);
+        $transaction = Transaction::with('details', 'client')->findOrFail($id);
 
         return response()->json([
             'transaction' => [
                 'id' => $transaction->id,
-                'product_name' => $transaction->product->name ?? 'N/A',
+                'transaction_code' => $transaction->transaction_code,
                 'client_name' => $transaction->client->client_name ?? 'N/A',
-                'quantity' => $transaction->quantity,
-                'total_price' => Number::currency($transaction->total_price, in: 'IDR', locale: 'id'),
-                'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y - H:i'),
+                'grand_total' => Number::currency($transaction->grand_total, in: 'IDR', locale: 'id'),
+                'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
+                'status' => $transaction->status,
+                'details' => $transaction->details->map(function ($detail) {
+                    return [
+                        'id' => $detail->id,
+                        'name' => $detail->product->name,
+                        'quantity' => $detail->quantity,
+                        'price' => $detail->price,
+                        'total_price' => Number::currency($detail->quantity * $detail->price, in: 'IDR', locale: 'id'),
+                    ];
+                }),
                 'created_at' => Carbon::parse($transaction->created_at)->format('d M Y - H:i'),
             ],
         ]);
@@ -85,7 +99,11 @@ class TransactionController extends Controller
             'products.*.price' => 'required|numeric|min:1',
             'transaction_date' => 'required|date',
             'expedition_fee' => 'nullable|numeric|min:0',
-            'grand_total' => 'required|numeric|min:1',
+            'grand_total' => 'numeric',
+        ], [], [
+            'products.*.quantity' => 'product quantity',
+            'products.*.id' => 'product ID',
+            'products.*.price' => 'product price',
         ]);
     
         // Save the transaction

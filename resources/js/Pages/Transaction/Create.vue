@@ -98,8 +98,11 @@ const clearSearch = () => {
     searchQuery.value = '';
 };
 
+const errors = ref({});
+
 const submitTransaction = () => {
     try {
+        errors.value = {};
         axios.post('/transaction/api/store', form.value)
             .then(response => {
                 console.log(response.data);
@@ -115,9 +118,32 @@ const submitTransaction = () => {
 
                 // continue action after success using best practice
                 Inertia.visit(route('transaction.list'));
+            }).catch(err => {
+                if (err.response?.data?.errors) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        icon: 'error',
+                        title: 'Failed!',
+                        text: err.response?.data?.message || 'An error occurred.',
+                    });
+
+                    errors.value = err.response.data.errors;
+                }
             });
     } catch (err) {
-        console.error('Failed to load script:', err);
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to create new transaction'
+        });
+        console.log(err.response);
     }
 };
 </script>
@@ -140,6 +166,15 @@ const submitTransaction = () => {
                         <h2 class="text-lg font-semibold text-gray-800">New Transaction</h2>
                     </div>
                     <!--end::Card header-->
+                    <div v-if="Object.keys(errors).length"
+                        class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
+                        <p class="font-bold mb-3">Error!</p>
+                        <ul class="list-disc pl-5 text-sm">
+                            <li v-for="(messages, field) in errors" :key="field">
+                                <span v-for="(message, index) in messages" :key="index">{{ message }}</span>
+                            </li>
+                        </ul>
+                    </div>
                     <!--begin::Card body-->
                     <div class="flex flex-col gap-6">
                         <div v-if="form.mst_client_id" class="overflow-x-auto">

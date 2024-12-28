@@ -33,11 +33,6 @@ class Transaction extends Model
         'updated_by',
     ];
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class, 'mst_product_id');
-    }
-
     public function client()
     {
         return $this->belongsTo(Client::class, 'mst_client_id');
