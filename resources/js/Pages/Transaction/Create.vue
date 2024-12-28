@@ -3,7 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import Swal from 'sweetalert2';
-import { Inertia } from '@inertiajs/inertia';
+import { router } from '@inertiajs/vue3';
 
 const form = ref({
     id: [],
@@ -117,7 +117,7 @@ const submitTransaction = () => {
                 });
 
                 // continue action after success using best practice
-                Inertia.visit(route('transaction.list'));
+                router.visit(route('transaction.list'));
             }).catch(err => {
                 if (err.response?.data?.errors) {
                     Swal.fire({
@@ -302,7 +302,7 @@ const submitTransaction = () => {
                             </div>
                         </div>
                         <!--begin::Search products-->
-                        <div class="flex items-center relative max-w-[300px] ">
+                        <div class="flex items-center relative max-w-[300px]">
                             <!-- Search Icon -->
                             <i class="ki-filled ki-magnifier absolute ms-4"></i>
 

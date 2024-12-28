@@ -1,46 +1,45 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, onMounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
-import { Inertia } from '@inertiajs/inertia';
-import axios from 'axios';
-import Swal from 'sweetalert2';
+    import AppLayout from '@/Layouts/AppLayout.vue';
+    import { ref } from 'vue';
+    import { Link, usePage } from '@inertiajs/vue3';
+    import axios from 'axios';
+    import Swal from 'sweetalert2';
 
-const { props } = usePage();
-const product = ref({ ...props.product });
-const clients = ref({ ...props.clients });
-const brands = ref({ ...props.brands });
-const productCategories = ref({ ...props.productCategories });
+    const { props } = usePage();
+    const product = ref({ ...props.product });
+    const clients = ref({ ...props.clients });
+    const brands = ref({ ...props.brands });
+    const productCategories = ref({ ...props.productCategories });
 
-const updateProduct = () => {
-    axios.put(`/products/api/update/${product.value.id}`, product.value)
-        .then(response => {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                icon: 'success',
-                title: 'Success',
-                text: response.data.message
+    const updateProduct = () => {
+        axios.put(`/products/api/update/${product.value.id}`, product.value)
+            .then(response => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.data.message
+                });
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.response.data.message || 'An error occurred while updating the product.',
+                });
+                console.error(error);
             });
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.response.data.message || 'An error occurred while updating the product.',
-            });
-            console.error(error);
-        });
-};
+    };
 </script>
 
 <template>
-    <AppLayout title="Edit Client">
+    <AppLayout title="Edit Product">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Edit Client
+                Edit Product
             </h2>
         </template>
 

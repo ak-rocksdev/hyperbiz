@@ -95,3 +95,19 @@ CREATE TABLE `mst_products` (
     FOREIGN KEY (`mst_brand_id`) REFERENCES `mst_brands`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`mst_client_id`) REFERENCES `mst_client`(`id`) ON DELETE SET NULL
 );
+
+CREATE TABLE `transaction_logs` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `transaction_id` BIGINT UNSIGNED NULL,
+    `action` ENUM('create', 'read', 'update', 'delete') NOT NULL,
+    `changed_fields` JSON NULL,
+    `user_id` BIGINT UNSIGNED NOT NULL,
+    `actor_role` VARCHAR(50) NULL, -- Nullable to account for missing role management
+    `ip_address` VARCHAR(45) NULL,
+    `user_agent` TEXT NULL,
+    `action_timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `remarks` TEXT NULL,
+    FOREIGN KEY (`transaction_id`) REFERENCES `transactions`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
