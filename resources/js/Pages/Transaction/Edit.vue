@@ -305,13 +305,13 @@
                                         <td class="py-4 px-4">
                                             <div class="flex items-center">
                                                 <!-- Product Thumbnail -->
-                                                <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
-                                                    <img
-                                                        class="object-cover w-full h-full"
-                                                        :src="'https://picsum.photos/500'"
-                                                        alt="Product Image"
-                                                    />
-                                                </a>
+                                                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                    <!-- Display initials -->
+                                                    {{ product.name.split(' ').length > 1 
+                                                        ? product.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                        : product.name[0].toUpperCase() 
+                                                    }}
+                                                </div>
                                                 <div class="ml-4">
                                                     <a href="#" class="text-gray-800 hover:text-primary font-medium text-sm">
                                                         {{ product.name }}
@@ -433,9 +433,13 @@
                                 <td class="py-2 px-4">
                                     <div class="flex items-center">
                                         <!--begin::Thumbnail-->
-                                        <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
-                                            <img class="object-cover w-full h-full" src="https://picsum.photos/500" alt="Product Image">
-                                        </a>
+                                        <div class="flex items-center justify-center text-xl w-16 h-16 rounded-full bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                            <!-- Display initials -->
+                                            {{ product.name.split(' ').length > 1 
+                                                ? product.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                : product.name[0].toUpperCase() 
+                                            }}
+                                        </div>
                                         <!--end::Thumbnail-->
                                         <div class="ml-4">
                                             <!--begin::Title-->

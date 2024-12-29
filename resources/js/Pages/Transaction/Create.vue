@@ -32,14 +32,11 @@
 
     // Manage selected products
     const toggleProductSelection = (product) => {
-        // Check if the product is already selected
         const productIndex = form.value.products.findIndex(p => p.id === product.id);
 
         if (productIndex !== -1) {
-            // Remove product if already selected
             form.value.products = form.value.products.filter((_, index) => index !== productIndex);
         } else {
-            // Add product with default quantity
             form.value.products = [
                 ...form.value.products,
                 {
@@ -63,24 +60,47 @@
                 return total + (product.price * product.quantity);
             }, 0) + expeditionFee;
         },
-        { deep: true } // Ensure deep watching for nested changes
+        { deep: true }
     );
 
     // Update available products based on client selection
     watch(() => form.value.mst_client_id, (newClientId) => {
         form.value.products = []; // Clear selected products when client changes
         const selectedClient = props.clients.find(client => client.id === newClientId);
-        availableProducts.value = selectedClient?.products || [];
+
+        if (selectedClient?.products) {
+            // Convert the products object to an array
+            availableProducts.value = Array.isArray(selectedClient.products)
+                ? selectedClient.products
+                : Object.values(selectedClient.products); // Convert object to array
+        } else {
+            availableProducts.value = [];
+        }
     });
 
     // Filter products by search query
     watch(searchQuery, (newQuery) => {
-        const clientProducts = props.clients
-            .find(client => client.id === form.value.mst_client_id)?.products || [];
-        availableProducts.value = clientProducts.filter(product =>
-            product.name.toLowerCase().includes(newQuery.toLowerCase())
-        );
+        // Get the selected client
+        const selectedClient = props.clients.find(client => client.id === form.value.mst_client_id);
+
+        // Convert products to an array
+        const clientProducts = Array.isArray(selectedClient?.products)
+            ? selectedClient.products
+            : Object.values(selectedClient?.products || {});
+
+        // Filter products based on the search query
+        availableProducts.value = clientProducts.filter(product => {
+            const productName = product.name || ''; // Default to empty string if undefined
+            return productName.toLowerCase().includes(newQuery.toLowerCase());
+        });
+
+        // Reset to full list if search query is empty
+        if (!newQuery.trim()) {
+            availableProducts.value = clientProducts;
+        }
     });
+
+
 
     // Debounced search input handling
     let debounceTimeout;
@@ -256,9 +276,16 @@
                                             <td class="py-4 px-4">
                                                 <div class="flex items-center">
                                                     <!-- Product Image -->
-                                                    <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
+                                                    <!-- <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
                                                         <img class="object-cover w-full h-full" :src="'https://picsum.photos/500'" alt="Product Image" />
-                                                    </a>
+                                                    </a> -->
+                                                    <div class="flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                        <!-- Display initials -->
+                                                        {{ product.name.split(' ').length > 1 
+                                                            ? product.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                            : product.name[0].toUpperCase() 
+                                                        }}
+                                                    </div>
                                                     <!-- Product Info -->
                                                     <div class="ml-4">
                                                         <a href="#" class="text-gray-800 hover:text-primary font-medium text-sm">
@@ -378,9 +405,16 @@
                                     <td class="py-2 px-4">
                                         <div class="flex items-center">
                                             <!--begin::Thumbnail-->
-                                            <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
+                                            <!-- <a href="#" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-success">
                                                 <img class="object-cover w-full h-full" src="https://picsum.photos/500" alt="Product Image">
-                                            </a>
+                                            </a> -->
+                                            <div class="flex items-center justify-center text-xl w-16 h-16 rounded-full bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                <!-- Display initials -->
+                                                {{ product.name.split(' ').length > 1 
+                                                    ? product.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                    : product.name[0].toUpperCase() 
+                                                }}
+                                            </div>
                                             <!--end::Thumbnail-->
                                             <div class="ml-4">
                                                 <!--begin::Title-->

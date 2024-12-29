@@ -102,7 +102,7 @@ class TransactionController extends Controller
     {
         $validatedData = $request->validate([
             'mst_client_id' => 'required|exists:mst_client,id',
-            'transaction_type' => 'required|in:sales,purchase',
+            'transaction_type' => 'required|in:sell,purchase',
             'products' => 'required|array|min:1',
             'products.*.id' => 'required|exists:mst_products,id',
             'products.*.quantity' => 'required|integer|min:1',
@@ -171,6 +171,8 @@ class TransactionController extends Controller
         // Validate the incoming data
         $validatedData = $request->validate([
             'id' => 'required|exists:transactions,id',
+            'transaction_code' => 'required|size:6',
+            'transaction_type' => 'required|in:sell,purchase',
             'mst_client_id' => 'required|exists:mst_client,id',
             'grand_total' => 'required|numeric|min:0',
             'expedition_fee' => 'required|numeric|min:0',
@@ -302,7 +304,6 @@ class TransactionController extends Controller
             ], 500);
         }
     }
-
 
     /**
      * Show the edit page for a transaction.

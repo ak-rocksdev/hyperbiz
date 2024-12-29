@@ -126,7 +126,7 @@
                                             <th class="w-[60px]">
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox" />
                                             </th>
-                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
+                                            <th class="min-w-[250px] lg:w-[300px]" data-datatable-column="name">
                                                 <span class="sort">
                                                     <span class="sort-label">Product Name</span>
                                                     <span class="sort-icon"></span>
@@ -144,9 +144,9 @@
                                                     <span class="sort-icon"></span>
                                                 </span>
                                             </th>
-                                            <th class="min-w-[150px] lg:w-[150px]">
+                                            <th class="min-w-[100px] lg:w-[100px] text-end">
                                                 <span class="sort">
-                                                    <span class="sort-label">Brand</span>
+                                                    <span class="sort-label">Stock</span>
                                                     <span class="sort-icon"></span>
                                                 </span>
                                             </th>
@@ -175,10 +175,27 @@
                                             <td class="text-center">
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="product.id" />
                                             </td>
-                                            <td>
-                                                <span class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer" @click="fetchProductDetail(product.id)" data-modal-toggle="#modal_view_product">
-                                                    {{ product.name }}
-                                                </span>
+                                            <td class="flex items-center gap-4">
+                                                <!-- Circle Avatar -->
+                                                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                    <!-- Display initials -->
+                                                    {{ product.name.split(' ').length > 1 
+                                                        ? product.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                        : product.name[0].toUpperCase() 
+                                                    }}
+                                                </div>
+                                                <!-- Product Name and Brand -->
+                                                <div class="flex flex-col">
+                                                    <span
+                                                        class="text-md font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer"
+                                                        @click="fetchProductDetail(product.id)"
+                                                        data-modal-toggle="#modal_view_product">
+                                                        {{ product.name }}
+                                                    </span>
+                                                    <div class="text-xs text-gray-500">
+                                                        {{ product.brand }}
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td>
                                                 {{ product.client }}
@@ -186,8 +203,8 @@
                                             <td>
                                                 {{ product.category }}
                                             </td>
-                                            <td>
-                                                {{ product.brand }}
+                                            <td class="text-end">
+                                                {{ product.stock_quantity }}
                                             </td>
                                             <td class="text-center">
                                                 <span v-if="product.is_active" class="badge badge-outline badge-success">Active</span>
@@ -495,8 +512,15 @@
                             </div>
                             <div class="p-5 mb-10 bg-white border-gray-300 border rounded-xl shadow-lg space-y-2 sm:py-4 sm:flex sm:items-start sm:space-y-0 sm:space-x-6">
                                 <div class="mb-5">
-                                    <img :src="'https://picsum.photos/500'" alt="Product Image" class="sm:w-full lg:max-w-[200px] h-auto rounded shadow-lg" />
+                                    <!-- <img :src="'https://picsum.photos/500'" alt="Product Image" class="sm:w-full lg:max-w-[200px] h-auto rounded shadow-lg" /> -->
                                     <!-- <p v-else class="!text-gray-500">No image available</p> -->
+                                    <div class="flex items-center justify-center text-4xl w-28 h-28 rounded-lg bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                        <!-- Display initials -->
+                                        {{ selectedProduct.name.split(' ').length > 1 
+                                            ? selectedProduct.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                            : selectedProduct.name[0].toUpperCase() 
+                                        }}
+                                    </div>
                                 </div>
                                 <div class="flex-grow w-full">
                                     <div class="mb-5">
