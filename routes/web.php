@@ -54,6 +54,7 @@ Route::middleware([
         Route::get('/api/detail/{id}',          [TransactionController::class, 'detailApi']);
         Route::get('/edit/{id}',                [TransactionController::class, 'edit'])->name('transaction.edit');
         Route::put('/api/update/{id}',          [TransactionController::class, 'update']);
+        Route::delete('/api/delete/{id}',       [TransactionController::class, 'delete'])->name('transaction.delete');
     });
 
     Route::prefix('brand')->group(function () {

@@ -130,6 +130,21 @@ class TransactionController extends Controller
                 ], 442);
             }
         }
+
+        // check for product is_active
+        foreach ($validatedData['products'] as $product) {
+            $productModel = Product::findOrFail($product['id']);
+
+            if ($productModel->is_active == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Product is not active: {$productModel->name}",
+                    'errors' => [
+                        "Product is not active: {$productModel->name}",
+                    ],
+                ], 442);
+            }
+        }
     
         // Save the transaction
         $transaction = Transaction::create([
@@ -374,6 +389,69 @@ class TransactionController extends Controller
             'clients' => $clients,
         ]);
     }
+
+    public function delete($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $transaction = Transaction::with('details')->findOrFail($id);
+
+            // Collect log details for the transaction
+            $logDetails = [
+                'transaction_code' => $transaction->transaction_code,
+                'transaction_type' => $transaction->transaction_type,
+                'grand_total' => $transaction->grand_total,
+                'expedition_fee' => $transaction->expedition_fee,
+                'products' => $transaction->details->map(function ($detail) {
+                    return [
+                        'mst_product_id' => $detail->mst_product_id,
+                        'quantity' => $detail->quantity,
+                        'cost_price' => $detail->product->cost_price,
+                        'price' => $detail->price,
+                    ];
+                })->toArray(),
+            ];
+
+            // Revert stock changes based on transaction type
+            foreach ($transaction->details as $detail) {
+                $product = Product::findOrFail($detail->mst_product_id);
+                if ($transaction->transaction_type === 'sell') {
+                    $product->increment('stock_quantity', $detail->quantity);
+                } elseif ($transaction->transaction_type === 'purchase') {
+                    $product->decrement('stock_quantity', $detail->quantity);
+                }
+            }
+
+            // Delete transaction details and the transaction itself
+            $transaction->details()->delete();
+            $transaction->delete();
+
+            // Log the deletion action
+            $this->logTransactionAction(
+                'delete',
+                $logDetails,
+                $transaction->id,
+                'Transaction and associated details deleted successfully.'
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction deleted successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete transaction.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+    
     private function logTransactionAction(
         string $action,
         ?array $changedFields = null,

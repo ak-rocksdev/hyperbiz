@@ -1,8 +1,9 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Head, Link } from '@inertiajs/vue3';
+    import { Head, Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
     import { ref, watch } from 'vue';
+    import Swal from 'sweetalert2';
 
     const form = ref({
         mst_client_id: '',
@@ -111,6 +112,52 @@
 
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
+    };
+
+    const removeTransaction = (transactionId) => {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This action will permanently delete the transaction and adjust stock levels.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                axios
+                    .delete(`/transaction/api/delete/${transactionId}`)
+                    .then((response) => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.data.message,
+                            timer: 2000,
+                            showConfirmButton: false,
+                        });
+
+                        // Refresh the list of transactions
+                        router.reload({
+                            only: [
+                                'transactions', 
+                                'totalTransactions', 
+                                'totalPurchaseValue', 
+                                'totalSellValue',
+                                'products',
+                                'clients',
+                            ],
+                            preserveScroll: true,
+                        });
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: error.response?.data?.message || 'Something went wrong!',
+                        });
+                    });
+            }
+        });
     };
 </script>
 
@@ -281,7 +328,7 @@
                                                             <div class="menu-separator">
                                                             </div>
                                                             <div class="menu-item">
-                                                                <a class="menu-link" href="#">
+                                                                <button class="menu-link" @click.prevent="removeTransaction(transaction.id)">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-trash">
                                                                         </i>
@@ -289,7 +336,7 @@
                                                                     <span class="menu-title !text-red-500 hover:!text-red-600">
                                                                         Remove
                                                                     </span>
-                                                                </a>
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </div>

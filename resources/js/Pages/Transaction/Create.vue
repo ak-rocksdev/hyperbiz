@@ -1,9 +1,8 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { ref, watch, computed } from 'vue';
-    import { Link } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
-    import { router } from '@inertiajs/vue3';
 
     const form = ref({
         id: [],
