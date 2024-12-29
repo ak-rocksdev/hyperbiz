@@ -1,151 +1,162 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, watch } from 'vue';
-import { Link } from '@inertiajs/vue3';
-import Swal from 'sweetalert2';
-import { router } from '@inertiajs/vue3';
+    import AppLayout from '@/Layouts/AppLayout.vue';
+    import { ref, watch, computed } from 'vue';
+    import { Link } from '@inertiajs/vue3';
+    import Swal from 'sweetalert2';
+    import { router } from '@inertiajs/vue3';
 
-const form = ref({
-    id: [],
-    mst_client_id: '',
-    products: [],
-    transaction_date: '',
-    grand_total: 0,
-    expedition_fee: 0,
-});
+    const form = ref({
+        id: [],
+        mst_client_id: '',
+        products: [],
+        transaction_date: '',
+        grand_total: 0,
+        expedition_fee: 0,
+        transaction_type: null,
+    });
 
-const props = defineProps({
-    transactions: {
-        type: Object,
-        required: false,
-        default: () => ({}),
-    },
-    clients: {
-        type: Array,
-        required: true,
-    },
-});
+    const props = defineProps({
+        transactions: {
+            type: Object,
+            required: false,
+            default: () => ({}),
+        },
+        clients: {
+            type: Array,
+            required: true,
+        },
+    });
 
-const availableProducts = ref([]);
-const searchQuery = ref('');
+    const availableProducts = ref([]);
+    const searchQuery = ref('');
 
-// Manage selected products
-const toggleProductSelection = (product) => {
-    // Check if the product is already selected
-    const productIndex = form.value.products.findIndex(p => p.id === product.id);
+    // Manage selected products
+    const toggleProductSelection = (product) => {
+        // Check if the product is already selected
+        const productIndex = form.value.products.findIndex(p => p.id === product.id);
 
-    if (productIndex !== -1) {
-        // Remove product if already selected
-        form.value.products = form.value.products.filter((_, index) => index !== productIndex);
-    } else {
-        // Add product with default quantity
-        form.value.products = [
-            ...form.value.products,
-            {
-                id: product.id,
-                price: product.price,
-                quantity: 1,
-                stock_quantity: product.stock_quantity,
-                name: product.name,
-                cost_price: product.cost_price,
-                sku: product.sku,
-            },
-        ];
-    }
-};
+        if (productIndex !== -1) {
+            // Remove product if already selected
+            form.value.products = form.value.products.filter((_, index) => index !== productIndex);
+        } else {
+            // Add product with default quantity
+            form.value.products = [
+                ...form.value.products,
+                {
+                    id: product.id,
+                    price: product.price,
+                    quantity: 1,
+                    stock_quantity: product.stock_quantity,
+                    name: product.name,
+                    cost_price: product.cost_price,
+                    sku: product.sku,
+                },
+            ];
+        }
+    };
 
-// Update total price whenever form.products changes
-watch(
-    () => [form.value.products, form.value.expedition_fee],
-    ([newProducts, expeditionFee]) => {
-        form.value.grand_total = newProducts.reduce((total, product) => {
-            return total + (product.price * product.quantity);
-        }, 0) + expeditionFee;
-    },
-    { deep: true } // Ensure deep watching for nested changes
-);
-
-// Update available products based on client selection
-watch(() => form.value.mst_client_id, (newClientId) => {
-    form.value.products = []; // Clear selected products when client changes
-    const selectedClient = props.clients.find(client => client.id === newClientId);
-    availableProducts.value = selectedClient?.products || [];
-});
-
-// Filter products by search query
-watch(searchQuery, (newQuery) => {
-    const clientProducts = props.clients
-        .find(client => client.id === form.value.mst_client_id)?.products || [];
-    availableProducts.value = clientProducts.filter(product =>
-        product.name.toLowerCase().includes(newQuery.toLowerCase())
+    // Update total price whenever form.products changes
+    watch(
+        () => [form.value.products, form.value.expedition_fee],
+        ([newProducts, expeditionFee]) => {
+            form.value.grand_total = newProducts.reduce((total, product) => {
+                return total + (product.price * product.quantity);
+            }, 0) + expeditionFee;
+        },
+        { deep: true } // Ensure deep watching for nested changes
     );
-});
 
-// Debounced search input handling
-let debounceTimeout;
-const handleSearchInput = (event) => {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-        searchQuery.value = event.target.value;
-    }, 300);
-};
+    // Update available products based on client selection
+    watch(() => form.value.mst_client_id, (newClientId) => {
+        form.value.products = []; // Clear selected products when client changes
+        const selectedClient = props.clients.find(client => client.id === newClientId);
+        availableProducts.value = selectedClient?.products || [];
+    });
 
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
-};
+    // Filter products by search query
+    watch(searchQuery, (newQuery) => {
+        const clientProducts = props.clients
+            .find(client => client.id === form.value.mst_client_id)?.products || [];
+        availableProducts.value = clientProducts.filter(product =>
+            product.name.toLowerCase().includes(newQuery.toLowerCase())
+        );
+    });
 
-const clearSearch = () => {
-    searchQuery.value = '';
-};
+    // Debounced search input handling
+    let debounceTimeout;
+    const handleSearchInput = (event) => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            searchQuery.value = event.target.value;
+        }, 300);
+    };
 
-const errors = ref({});
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
+    };
 
-const submitTransaction = () => {
-    try {
-        errors.value = {};
-        axios.post('/transaction/api/store', form.value)
-            .then(response => {
-                console.log(response.data);
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    icon: 'success',
-                    title: 'Success',
-                    text: response.data.message
-                });
+    const clearSearch = () => {
+        searchQuery.value = '';
+    };
 
-                // continue action after success using best practice
-                router.visit(route('transaction.list'));
-            }).catch(err => {
-                if (err.response?.data?.errors) {
+    const errors = ref({});
+
+    const submitTransaction = () => {
+        try {
+            errors.value = {};
+            axios.post('/transaction/api/store', form.value)
+                .then(response => {
+                    console.log(response.data);
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
                         timer: 3000,
-                        icon: 'error',
-                        title: 'Failed!',
-                        text: err.response?.data?.message || 'An error occurred.',
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message
                     });
 
-                    errors.value = err.response.data.errors;
-                }
+                    // continue action after success using best practice
+                    router.visit(route('transaction.list'));
+                }).catch(err => {
+                    if (err.response?.data?.errors) {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            icon: 'error',
+                            title: 'Failed!',
+                            text: err.response?.data?.message || 'An error occurred.',
+                        });
+
+                        errors.value = err.response.data.errors;
+                    }
+                });
+        } catch (err) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to create new transaction'
             });
-    } catch (err) {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to create new transaction'
-        });
-        console.log(err.response);
-    }
-};
+        }
+    };
+    const purchaseButtonClasses = computed(() => {
+        return form.value.transaction_type === 'purchase'
+            ? 'btn-success text-white'
+            : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-green-600';
+    });
+
+    const sellButtonClasses = computed(() => {
+        return form.value.transaction_type === 'sell'
+            ? 'btn-success text-white'
+            : 'bg-white text-gray-900 hover:bg-gray-100 hover:text-green-600';
+    });
 </script>
 
 <template>
@@ -176,7 +187,47 @@ const submitTransaction = () => {
                         </ul>
                     </div>
                     <!--begin::Card body-->
-                    <div class="flex flex-col gap-6">
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Transaction Type <span class="ms-1 text-danger">*</span></label>
+                            <div class="inline-flex rounded-md shadow-sm" role="group">
+                                <button type="button"
+                                    :class="['inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-200 rounded-s-lg focus:z-10 focus:ring-0', purchaseButtonClasses]"
+                                    @click="form.transaction_type = 'purchase'"
+                                >
+                                    <i class="ki-solid ki-entrance-left me-2"></i>
+                                    Purchase
+                                </button>
+                                <button type="button"
+                                    :class="['inline-flex items-center px-4 py-2 text-sm font-medium border-t border-b border-e rounded-e-lg border-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700', sellButtonClasses]"
+                                    @click="form.transaction_type = 'sell'"
+                                >
+                                    <i class="ki-solid ki-exit-left me-2"></i>
+                                    Sell
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <!-- Client Dropdown -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
+                            <select class="select" v-model="form.mst_client_id">
+                                <option value="" disabled selected>Select Client</option>
+                                <option v-for="client in props.clients" :key="client.id" :value="client.id">
+                                    {{ client.client_name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Transaction Date -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Transaction Date</label>
+                            <input class="input" name="transaction_date" type="date" v-model="form.transaction_date" />
+                        </div>
+                    </div>
+                    <div class="border-t pb-5"></div>
+                    <div v-if="form.mst_client_id && form.transaction_type" class="flex flex-col gap-3">
                         <div v-if="form.mst_client_id" class="overflow-x-auto">
                             <label v-if="form.products.length == 0" class="block text-sm font-medium text-gray-700 mb-2">
                                 Add products to this order
@@ -278,29 +329,8 @@ const submitTransaction = () => {
                                 <button class="btn btn-primary" @click="submitTransaction">Create New Transaction</button>
                             </div>
                         </div>
-
                         <!--end::Input group-->
-                        <!--begin::Separator-->
-                        <div class="border-t"></div>
-                        <!--end::Separator-->
-                        <div class="grid grid-cols-2 gap-4">
-                            <!-- Client Dropdown -->
-                            <div class="mb-4">
-                                <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
-                                <select class="select" v-model="form.mst_client_id">
-                                    <option value="" disabled selected>Select Client</option>
-                                    <option v-for="client in props.clients" :key="client.id" :value="client.id">
-                                        {{ client.client_name }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Transaction Date -->
-                            <div class="mb-4">
-                                <label class="form-label max-w-60 mb-2">Transaction Date</label>
-                                <input class="input" name="transaction_date" type="date" v-model="form.transaction_date" />
-                            </div>
-                        </div>
+                        
                         <!--begin::Search products-->
                         <div class="flex items-center relative max-w-[300px]">
                             <!-- Search Icon -->
@@ -331,16 +361,19 @@ const submitTransaction = () => {
                                 <tr class="text-gray-500 text-xs font-bold uppercase border-b">
                                     <th class="py-3 px-2 w-6 pr-2"></th>
                                     <th class="py-3 px-4">Product</th>
+                                    <th class="py-3 px-4">Weight</th>
                                     <th class="py-3 px-4 text-right">Qty Remaining</th>
                                 </tr>
                             </thead>
                             <tbody class="text-gray-700">
-                                <tr v-if="availableProducts.length" class="hover:bg-gray-100" v-for="(product, index) in availableProducts" :key="index">
+                                <tr v-if="availableProducts" class="hover:bg-gray-100" v-for="(product, index) in availableProducts" :key="index">
                                     <td class="py-2 px-2 w-6 pr-2">
                                         <input class="checkbox" type="checkbox" 
                                             :value="product.id"
                                             :checked="form.products.some(p => p.id === product.id)"
-                                            @change="toggleProductSelection(product)" />
+                                            @change="toggleProductSelection(product)"
+                                            :disabled="product.stock_quantity == 0"
+                                            />
                                     </td>
                                     <td class="py-2 px-4">
                                         <div class="flex items-center">
@@ -353,6 +386,7 @@ const submitTransaction = () => {
                                                 <!--begin::Title-->
                                                 <a href="#" class="text-gray-800 hover:text-primary font-medium text-sm">
                                                     {{ product.name }}
+                                                    <span v-if="product.stock_quantity == 0" class="text-xs text-danger ms-1">(Out of Stock)</span>
                                                 </a>
                                                 <!--end::Title-->
                                                 <!--begin::Price-->
@@ -369,8 +403,13 @@ const submitTransaction = () => {
                                             </div>
                                         </div>
                                     </td>
+                                    <td class="py-2 px-4">
+                                        <span>{{ product.weight }} Kg</span>
+                                    </td>
                                     <td class="py-2 px-4 text-right">
-                                        <span class="font-semibold">{{ product.stock_quantity }}</span>
+                                        <span :class="{'text-danger': product.stock_quantity < product.min_stock_level}" class="font-semibold">
+                                            {{ product.stock_quantity }} Pcs
+                                        </span>
                                     </td>
                                 </tr>
                                 <tr v-else class="text-center">
@@ -379,6 +418,17 @@ const submitTransaction = () => {
                             </tbody>
                         </table>
                         <!--end::Table-->
+                    </div>
+                    <!-- else -->
+                    <div v-else>
+                        <!-- separator -->
+                        <div class="flex items-center justify-center h-52">
+                            <!-- message -->
+                            <div class="flex flex-col items-center">
+                                <i class="ki-solid ki-handcart text-8xl text-gray-300 mb-4"></i>
+                                <span class="text-gray-500 text-md">Please Select Client and Transaction Type to Continue</span>
+                            </div>
+                        </div>
                     </div>
                     <!--end::Card body-->
                 </div>

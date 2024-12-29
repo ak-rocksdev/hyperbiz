@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { ref, watch, onMounted } from 'vue';
+    import { ref, watch, computed, onMounted } from 'vue';
     import { router } from '@inertiajs/vue3';
     import Swal from 'sweetalert2';
 
@@ -20,6 +20,7 @@
     const form = ref({
         id                  : props.transaction ? props.transaction.id : '',
         transaction_code    : props.transaction ? props.transaction.transaction_code : '',
+        transaction_type    : props.transaction ? props.transaction.transaction_type : '',
         client              : props.transaction ? props.transaction.client : '',
         mst_client_id       : props.transaction ? props.transaction.mst_client_id : '',
         products            : props.transaction ? props.transaction.products : [],
@@ -199,6 +200,18 @@
             }
         });
     };
+
+    const purchaseButtonClasses = computed(() => {
+        return form.value.transaction_type === 'purchase'
+            ? 'btn-success text-white'
+            : 'bg-white text-gray-800 hover:bg-gray-100 hover:text-green-600';
+    });
+
+    const sellButtonClasses = computed(() => {
+        return form.value.transaction_type === 'sell'
+            ? 'btn-success text-white'
+            : 'bg-white text-gray-900 hover:bg-gray-100 hover:text-green-600';
+    });
 </script>
 
 <template>
@@ -230,27 +243,47 @@
                     </div>
 
                     <!-- Card Body -->
-                    <div class="flex flex-col gap-6">
-                        <!-- Client Selection -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <!-- Client Dropdown -->
-                            <div class="mb-4">
-                                <label class="form-label max-w-60 mb-2">Client <span class="text-red-500">*</span></label>
-                                <select class="select" v-model="props.transaction.mst_client_id">
-                                    <option value="" disabled>Select Client</option>
-                                    <option v-for="client in props.clients" :key="client.id" :value="client.id">
-                                        {{ client.client_name }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Transaction Date -->
-                            <div class="mb-4">
-                                <label class="form-label max-w-60 mb-2">Transaction Date</label>
-                                <input class="input" name="transaction_date" type="date" v-model="props.transaction.transaction_date" />
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Transaction Type <span class="ms-1 text-danger">*</span></label>
+                            <div class="inline-flex rounded-md shadow-sm" role="group">
+                                <button type="button"
+                                    :class="['inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-200 rounded-s-lg focus:z-10 focus:ring-0', purchaseButtonClasses]"
+                                    @click="form.transaction_type = 'purchase'"
+                                >
+                                    <i class="ki-solid ki-entrance-left me-2"></i>
+                                    Purchase
+                                </button>
+                                <button type="button"
+                                    :class="['inline-flex items-center px-4 py-2 text-sm font-medium border-t border-b border-e rounded-e-lg border-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700', sellButtonClasses]"
+                                    @click="form.transaction_type = 'sell'"
+                                >
+                                    <i class="ki-solid ki-exit-left me-2"></i>
+                                    Sell
+                                </button>
                             </div>
                         </div>
 
+
+                        <!-- Client Dropdown -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
+                            <select class="select" v-model="form.mst_client_id">
+                                <option value="" disabled selected>Select Client</option>
+                                <option v-for="client in props.clients" :key="client.id" :value="client.id">
+                                    {{ client.client_name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Transaction Date -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Transaction Date</label>
+                            <input class="input" name="transaction_date" type="date" v-model="form.transaction_date" />
+                        </div>
+                    </div>
+                    <div class="border-t pb-5"></div>
+                    <div class="flex flex-col gap-6">
                         <!-- Selected Products -->
                         <div class="overflow-x-auto">
                             <table class="table-auto w-full text-sm rounded-lg">

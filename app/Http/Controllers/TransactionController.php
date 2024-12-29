@@ -28,6 +28,7 @@ class TransactionController extends Controller
             return [
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code ?? 'N/A',
+                'transaction_type' => $transaction->transaction_type,
                 'client_name' => $transaction->client->client_name ?? 'N/A',
                 'quantity' => $transaction->quantity,
                 'grand_total' => $transaction->grand_total,
@@ -36,12 +37,14 @@ class TransactionController extends Controller
             ];
         });
 
+        // Calculate total counts
         $totalTransactionsCount = $transactions->count();
 
-        // get total transaction value
-        $totalTransactionValue = $transactions->sum('grand_total');
+        // Calculate totals for purchases and sales
+        $totalPurchaseValue = $transactions->where('transaction_type', 'purchase')->sum('grand_total');
+        $totalSellValue = $transactions->where('transaction_type', 'sell')->sum('grand_total');
 
-
+        // Products and clients
         $products = Product::pluck('name', 'id');
         $clients = Client::all()->map(function ($client) {
             return [
@@ -56,9 +59,11 @@ class TransactionController extends Controller
             'products' => $products,
             'clients' => $clients,
             'totalTransactions' => $totalTransactionsCount,
-            'totalTransactionValue' => $totalTransactionValue,
+            'totalPurchaseValue' => $totalPurchaseValue,
+            'totalSellValue' => $totalSellValue,
         ]);
     }
+
 
     /**
      * Fetch transaction details via API.
@@ -71,6 +76,7 @@ class TransactionController extends Controller
             'transaction' => [
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code,
+                'transaction_type' => $transaction->transaction_type,
                 'client_name' => $transaction->client->client_name ?? 'N/A',
                 'grand_total' => Number::currency($transaction->grand_total, in: 'IDR', locale: 'id'),
                 'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
@@ -96,6 +102,7 @@ class TransactionController extends Controller
     {
         $validatedData = $request->validate([
             'mst_client_id' => 'required|exists:mst_client,id',
+            'transaction_type' => 'required|in:sales,purchase',
             'products' => 'required|array|min:1',
             'products.*.id' => 'required|exists:mst_products,id',
             'products.*.quantity' => 'required|integer|min:1',
@@ -108,10 +115,26 @@ class TransactionController extends Controller
             'products.*.id' => 'product ID',
             'products.*.price' => 'product price',
         ]);
+
+        // check foreach product if stock is enough
+        foreach ($validatedData['products'] as $product) {
+            $productModel = Product::findOrFail($product['id']);
+
+            if ($productModel->stock_quantity < $product['quantity']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Insufficient stock for product: {$productModel->name}",
+                    'errors' => [
+                        "Not enough stock for product: {$productModel->name}",
+                    ],
+                ], 442);
+            }
+        }
     
         // Save the transaction
         $transaction = Transaction::create([
             'transaction_code' => strtoupper(substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 6)),
+            'transaction_type' => $validatedData['transaction_type'],
             'mst_client_id' => $validatedData['mst_client_id'],
             'transaction_date' => $validatedData['transaction_date'] ?? now(),
             'grand_total' => $validatedData['grand_total'],
@@ -291,6 +314,7 @@ class TransactionController extends Controller
         $data = [
             'id' => $transaction->id,
             'transaction_code' => $transaction->transaction_code,
+            'transaction_type' => $transaction->transaction_type,
             'mst_client_id' => $transaction->mst_client_id,
             'client' => $transaction->client,
             'products' => $transaction->details->map(function ($detail) {
@@ -317,12 +341,14 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $products = Product::pluck('name', 'id');
+        $products = Product::where('is_active', 1)->pluck('name', 'id');
         $clients = Client::all()->map(function ($client) {
             return [
                 'id' => $client->id,
                 'client_name' => $client->client_name,
-                'products' => $client->products->map(function ($product) {
+                'products' => $client->products->filter(function ($product) {
+                    return $product->is_active == 1; // Ensure only active products are included
+                })->map(function ($product) {
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
@@ -337,7 +363,6 @@ class TransactionController extends Controller
                         'weight' => $product->weight,
                         'dimensions' => $product->dimensions,
                         'image_url' => $product->image_url,
-                        'is_active' => $product->is_active,
                     ];
                 }),
             ];
@@ -348,7 +373,6 @@ class TransactionController extends Controller
             'clients' => $clients,
         ]);
     }
-
     private function logTransactionAction(
         string $action,
         ?array $changedFields = null,

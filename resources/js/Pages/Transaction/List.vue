@@ -14,7 +14,8 @@
         transactions: Object,
         clients: Object,
         totalTransactions: Number,
-        totalTransactionValue: Number,
+        totalPurchaseValue: Number,
+        totalSellValue: Number,
     });
 
     const selectedTransaction = ref(null);
@@ -124,7 +125,8 @@
         <!-- Container -->
         <div class="container-fixed">
             <div class="py-5">
-                <div class="grid grid-cols-2 gap-5 lg:gap-7.5 w-full items-stretch">
+                <div class="grid grid-cols-3 lg:grid-cols-3 gap-6 w-full items-stretch">
+                    <!-- Total Transactions -->
                     <div class="card flex-col justify-between gap-6 h-full bg-cover">
                         <div class="flex flex-col gap-1 py-5 px-5">
                             <span class="text-3xl font-semibold text-gray-900">
@@ -135,13 +137,34 @@
                             </span>
                         </div>
                     </div>
+
+                    <!-- Total Purchases -->
                     <div class="card flex-col justify-between gap-6 h-full bg-cover">
-                        <div class="flex flex-col gap-1 py-5 px-5">
-                            <span class="text-3xl font-semibold text-gray-900">
-                                {{ formatCurrency(totalTransactionValue) }}
+                        <div class="flex flex-col gap-1 py-5 px-5 relative">
+                            <!-- create overlay icon for background this element using absolute position for icon <i class="ki-solid ki-entrance-left me-2 text-green-200"></i> position on the left -->
+                            <span class="text-7xl absolute start-2 -translate-y-1/2 font-semibold text-gray-900 top-1/2 z-0">
+                                <i class="ki-solid ki-entrance-left me-2 text-orange-100"></i>
                             </span>
-                            <span class="text-2sm font-normal text-gray-700">
-                                Total Transaction Value
+                            <span class="text-3xl font-semibold text-gray-900 z-10">
+                                {{ formatCurrency(totalPurchaseValue) }}
+                            </span>
+                            <span class="text-2sm font-normal text-gray-700 z-10">
+                                Total Purchases Value
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Total Sales -->
+                    <div class="card flex-col justify-between gap-6 h-full bg-cover">
+                        <div class="flex flex-col gap-1 py-5 px-5 relative">
+                            <span class="text-7xl absolute start-2 -translate-y-1/2 font-semibold text-gray-900 top-1/2 z-0">
+                                <i class="ki-solid ki-exit-left me-2 text-green-100"></i>
+                            </span>
+                            <span class="text-3xl font-semibold text-gray-900 z-10">
+                                {{ formatCurrency(totalSellValue) }}
+                            </span>
+                            <span class="text-2sm font-normal text-gray-700 z-10">
+                                Total Sales Value
                             </span>
                         </div>
                     </div>
@@ -155,12 +178,12 @@
                         </h3>
                         <div class="card-toolbar">
                             <div class="flex gap-6">
-                                <div class="relative">
+                                <!-- <div class="relative">
                                     <i
                                         class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
                                     </i>
                                     <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Transaction" value="" />
-                                </div>
+                                </div> -->
                                 <!-- data-modal-toggle="#modal_create_new_transaction" -->
                                 <Link class="btn btn-sm btn-primary min-w-[150px] justify-center" :href="route('transaction.create')">
                                     Add New Transaction
@@ -176,6 +199,9 @@
                                         <tr>
                                             <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="transaction_code">
                                                 Client
+                                            </th>
+                                            <th class="w-[185px] text-center" data-datatable-column="transaction_type">
+                                                Transaction Type
                                             </th>
                                             <th class="w-[185px] text-center" data-datatable-column="transaction_date">
                                                 Transaction Date
@@ -202,6 +228,11 @@
                                                     <span>Transaction Code: {{ transaction.transaction_code }}</span>
                                                 </div>
 
+                                            </td>
+                                            <td class="text-center">
+                                                <span :class="{'badge-warning': transaction.transaction_type == 'purchase', 'badge-success': transaction.transaction_type != 'purchase' }" class="badge badge-outline">
+                                                    {{ transaction.transaction_type }}
+                                                </span>
                                             </td>
                                             <td class="text-center">
                                                 {{ transaction.transaction_date }}
@@ -414,15 +445,21 @@
             <div class="modal-body">
                 <div v-if="selectedTransaction">
                     <div class="p-5">
-                        <div class="flex flex-row gap-3 mb-4">
-                            <label class="form-label !font-extrabold text-md !text-blue-500">Status</label>
-                            <p class="!text-gray-500">
-                                <span v-if="selectedTransaction.status" 
-                                    :class="{'badge-warning': selectedTransaction.status == 'pending', 'badge-success': selectedTransaction.status != 'pending' }"
-                                    class="badge badge-outline">
-                                    {{ selectedTransaction.status }}
-                                </span>
-                            </p>
+                        <div class="flex flex-col gap-3 mb-4">
+                            <div class="flex flex-row gap-3 w-full">
+                                <label class="form-label !font-extrabold text-md !text-blue-500">Status</label>
+                                <p class="!text-gray-500">
+                                    <span v-if="selectedTransaction.status" 
+                                        :class="{'badge-warning': selectedTransaction.status == 'pending', 'badge-success': selectedTransaction.status != 'pending' }"
+                                        class="badge badge-outline">
+                                        {{ selectedTransaction.status }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="flex flex-row gap-3 w-full">
+                                <label class="form-label !font-extrabold text-md !text-blue-500">Grand Total</label>
+                                <p class="!text-cyan-900 font-bold">{{ selectedTransaction.grand_total }}</p>
+                            </div>
                         </div>
                         <div class="p-5 mb-10 bg-white border-gray-300 border rounded-xl shadow-lg space-y-2 sm:py-4 sm:flex sm:items-start sm:space-y-0 sm:space-x-6">
                             <div class="mb-5">
@@ -430,13 +467,25 @@
                                 <!-- <p v-else class="!text-gray-500">No image available</p> -->
                             </div>
                             <div class="flex-grow w-full">
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-gray-600">Client</label>
+                                <div class="mb-2">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Client</label>
                                     <p class="!text-gray-500">{{ selectedTransaction.client_name }}</p>
                                 </div>
-                                <div class="w-full">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-gray-600">Transaction Date</label>
+                                <div class="mb-2 w-full">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Date</label>
                                     <p class="!text-gray-500 text-sm">{{ selectedTransaction.transaction_date }}</p>
+                                </div>
+                                <!-- transaction type -->
+                                <div class="w-full">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Type</label>
+                                    <span class="capitalize">
+                                        <span v-if="selectedTransaction.transaction_type == 'sell'">
+                                            <i class="ki-solid ki-entrance-left me-1 text-green-500"></i> {{ selectedTransaction.transaction_type }}
+                                        </span>
+                                        <span v-else>
+                                            <i class="ki-solid ki-exit-left me-1 text-orange-500"></i> {{ selectedTransaction.transaction_type }}
+                                        </span>
+                                    </span>
                                 </div>
                             </div>
                         </div>

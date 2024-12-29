@@ -24,6 +24,7 @@ class Transaction extends Model
     
     protected $fillable = [
         'transaction_code',
+        'transaction_type',
         'mst_client_id',
         'transaction_date',
         'grand_total',
