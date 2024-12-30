@@ -19,16 +19,21 @@ class ClientController extends Controller
         $perPage = $request->get('per_page', 5); // Default to 5 items per page
 
         // Query clients with optional search
-        $clientsQuery = Client::with('clientType');
+        $clientsQuery = Client::with(['clientType', 'address']);
         if ($search) {
             $clientsQuery->where(function ($query) use ($search) {
                 $query->where('client_name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%')
-                        ->orWhereHas('clientType', function ($query) use ($search) {
-                            $query->where('client_type', 'like', '%' . $search . '%');
-                        })
-                        ->orWhere('client_phone_number', 'like', '%' . $search . '%');
-            });
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhereHas('clientType', function ($query) use ($search) {
+                        $query->where('client_type', 'like', '%' . $search . '%');
+                    })
+                    ->orWhere('client_phone_number', 'like', '%' . $search . '%')
+                    ->orWhereHas('address', function ($query) use ($search) {
+                        $query->where('city_name', 'like', '%' . $search . '%')
+                                ->orWhere('state_name', 'like', '%' . $search . '%')
+                                ->orWhere('country_name', 'like', '%' . $search . '%');
+                    });
+                });
         }
 
         $totalSearchResults = $clientsQuery->count();

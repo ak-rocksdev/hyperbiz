@@ -153,6 +153,11 @@
             }
         }
     };
+
+    const clearSearch = () => {
+        searchQuery.value = '';
+        searchClients();
+    };
 </script>
 
 <template>
@@ -203,6 +208,14 @@
                                     </i>
                                     <input class="input input-sm ps-8" placeholder="Search Client" v-model="searchQuery"
                                         @input="searchClients" />
+                                    <button 
+                                        v-if="searchQuery" 
+                                        @click="clearSearch" 
+                                        class="absolute right-2 flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200"
+                                        style="right: 10px; top: 50%; transform: translateY(-50%);"
+                                        aria-label="Clear Search">
+                                        <i class="ki-filled ki-cross-circle text-gray-500"></i>
+                                    </button>
                                 </div>
                                 <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_client">
                                     Add New Client
