@@ -74,16 +74,15 @@
         router.get(route('client.list'), {
             page: newPage,
             per_page: newPerPage,
+            ...(searchQuery.value ? { search: searchQuery.value } : {}),
         }, { preserveState: true, replace: true });
     });
 
     // Handle page change
     const goToPage = (page) => {
         if (page !== '...') {
-            console.log('Go to page:', page);
             currentPage.value = page;
-            // Send a request to fetch the data for the selected page
-            router.get(route('client.list'), { page }, { preserveState: true, replace: true });
+            router.get(route('client.list'), { search: searchQuery.value, page }, { preserveState: true, replace: true });
         }
     };
 
