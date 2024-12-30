@@ -2,7 +2,7 @@
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { Head, Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
-    import { ref, watch } from 'vue';
+    import { ref, watch, computed } from 'vue';
     import Swal from 'sweetalert2';
 
     const form = ref({
@@ -13,6 +13,10 @@
 
     const props = defineProps({
         transactions: Object,
+        pagination: {
+            type: Object,
+            required: true,
+        },
         clients: Object,
         totalTransactions: Number,
         totalPurchaseValue: Number,
@@ -25,7 +29,36 @@
                 sell: [],
             }),
         },
+        resultCount: Number,
+        allTransactionsCount: Number,
+        });
+
+    const urlQuery = new URLSearchParams(window.location.search);
+    const searchQuery = ref(urlQuery.get('search') || '');
+    const currentPage = ref(props.pagination.current_page || 1);
+    const perPageOptions = ref([1, 5, 10, 25, 50]);
+    const selectedPerPage = ref(props.pagination.per_page || 5);
+
+    watch([currentPage, selectedPerPage], ([newPage, newPerPage]) => {
+        router.get(route('transaction.list'), {
+            page: newPage,
+            per_page: newPerPage,
+        }, { preserveState: true, replace: true });
     });
+
+    const fetchTransactions = () => {
+        router.get(route('transaction.list'), {
+            search: searchQuery.value,
+            per_page: selectedPerPage.value,
+            page: currentPage.value,
+        }, { preserveScroll: true, preserveState: true });
+    };
+
+    // Perform Search
+    const performSearch = () => {
+        currentPage.value = 1; // Reset to the first page when performing a search
+        fetchTransactions();
+    };
 
     const selectedTransaction = ref(null);
     const availableProducts = ref([]);
@@ -38,6 +71,22 @@
         } catch (error) {
             console.error("Error fetching transaction details:", error);
         }
+    };
+
+    const visiblePages = computed(() => {
+        const total = props.pagination.last_page;
+        const current = currentPage.value;
+
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+        if (current <= 4) return [1, 2, 3, 4, '...', total];
+        if (current >= total - 3) return [1, '...', total - 3, total - 2, total - 1, total];
+
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    });
+
+    const goToPage = (page) => {
+        if (page !== '...') currentPage.value = page;
     };
 
     watch(() => form.value.mst_client_id, (newClientId) => {
@@ -251,12 +300,13 @@
                         </h3>
                         <div class="card-toolbar">
                             <div class="flex gap-6">
-                                <!-- <div class="relative">
+                                <div class="relative">
                                     <i
                                         class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
                                     </i>
-                                    <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Transaction" value="" />
-                                </div> -->
+                                    <input v-model="searchQuery" class="input input-sm pl-8"
+                                        placeholder="Search Transactions" @input="performSearch" />
+                                </div>
                                 <!-- data-modal-toggle="#modal_create_new_transaction" -->
                                 <Link class="btn btn-sm btn-primary min-w-[150px] justify-center" :href="route('transaction.create')">
                                     Add New Transaction
@@ -291,11 +341,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="transaction in transactions" :key="transaction.id" class="hover:bg-slate-100">
+                                        <tr v-for="transaction in transactions" :key="transaction.id" class="hover:bg-slate-100" v-if="transactions.length > 0">
                                             <td>
-                                                <div class="flex flex-col gap-2 cursor-pointer group" @click="viewTransactionDetail(transaction.id)" data-modal-toggle="#modal_view_transaction">
+                                                <div class="flex flex-col gap-2 group">
                                                     <!-- Client Name -->
-                                                    <span class="font-bold text-blue-500 group-hover:text-blue-700 flex items-center">
+                                                    <span class="font-bold text-blue-500 group-hover:text-blue-700 flex cursor-pointer items-center" 
+                                                        @click="viewTransactionDetail(transaction.id)" data-modal-toggle="#modal_view_transaction">
                                                         {{ transaction.client_name }}
                                                         <!-- Magnifier Icon -->
                                                         <i class="ki-filled ki-magnifier ms-2 hidden group-hover:inline text-gray-600"></i>
@@ -303,7 +354,6 @@
                                                     <!-- Transaction Code -->
                                                     <span>Transaction Code: {{ transaction.transaction_code }}</span>
                                                 </div>
-
                                             </td>
                                             <td class="text-center">
                                                 <span :class="{'badge-warning': transaction.transaction_type == 'purchase', 'badge-success': transaction.transaction_type != 'purchase' }" class="badge badge-outline">
@@ -379,22 +429,45 @@
                                                 </div>
                                             </td>
                                         </tr>
+                                        <tr v-else class="w-full">
+                                            <td colspan="100%">
+                                                <!-- Centered content -->
+                                                <div class="flex items-center justify-center h-52">
+                                                    <div class="flex flex-col items-center">
+                                                        <i class="ki-filled ki-calculator text-8xl text-gray-300 mb-4"></i>
+                                                        <span class="text-gray-500 text-md">No Data Available!</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div
-                                class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
-                                <div class="flex items-center gap-2 order-2 md:order-1">
+                                class="card-footer justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
+                                <div class="flex items-center gap-2">
                                     Show
-                                    <select class="select select-sm w-16" data-datatable-size="true" name="perpage">
+                                    <select v-model="selectedPerPage" class="select select-sm w-16">
+                                        <option v-for="option in perPageOptions" :key="option" :value="option">
+                                            {{ option }}</option>
                                     </select>
                                     per page
                                 </div>
-                                <div class="flex items-center gap-4 order-1 md:order-2">
-                                    <span data-datatable-info="true">
+                                <span v-if="resultCount > 0">
+                                    Showing {{ resultCount }} of {{ allTransactionsCount }} results
+                                </span>
+                                <div class="pagination flex items-center">
+                                    <button class="btn" :disabled="currentPage <= 1" @click="currentPage--">
+                                        <i class="ki-outline ki-black-left"></i>
+                                    </button>
+                                    <span v-for="page in visiblePages" :key="page" class="btn"
+                                        :class="{ active: page === currentPage }" @click="goToPage(page)">
+                                        {{ page }}
                                     </span>
-                                    <div class="pagination" data-datatable-pagination="true">
-                                    </div>
+                                    <button class="btn" :disabled="currentPage >= props.pagination.last_page"
+                                        @click="currentPage++">
+                                        <i class="ki-outline ki-black-right"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -549,17 +622,17 @@
                                 <img :src="'https://picsum.photos/500'" alt="Product Image" class="sm:w-full lg:max-w-[200px] h-auto rounded shadow-lg" />
                                 <!-- <p v-else class="!text-gray-500">No image available</p> -->
                             </div>
-                            <div class="flex-grow w-full">
-                                <div class="mb-2">
+                            <div class="grid grid-cols-2 gap-4 w-full">
+                                <div class="mb-3">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Client</label>
                                     <p class="!text-gray-500">{{ selectedTransaction.client_name }}</p>
                                 </div>
-                                <div class="mb-2 w-full">
+                                <div class="w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Date</label>
                                     <p class="!text-gray-500 text-sm">{{ selectedTransaction.transaction_date }}</p>
                                 </div>
                                 <!-- transaction type -->
-                                <div class="w-full">
+                                <div class="mb-3 w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Type</label>
                                     <span class="capitalize">
                                         <span v-if="selectedTransaction.transaction_type == 'sell'">
@@ -569,6 +642,11 @@
                                             <i class="ki-solid ki-exit-left me-1 text-orange-500"></i> {{ selectedTransaction.transaction_type }}
                                         </span>
                                     </span>
+                                </div>
+                                <!-- show transaction_code -->
+                                <div class="w-full">
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Code</label>
+                                    <p class="!text-gray-500">{{ selectedTransaction.transaction_code }}</p>
                                 </div>
                             </div>
                         </div>

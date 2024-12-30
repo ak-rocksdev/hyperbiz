@@ -12,24 +12,43 @@ use Carbon\Carbon;
 
 class ClientController extends Controller
 {
-    public function list()
+    public function list(Request $request)
     {
-        $clients = Client::all();
+        $search = $request->get('search', null);
+        $perPage = $request->get('per_page', 5); // Default to 5 items per page
 
-        $data = $clients->map(function($client) {
+        // Query clients with optional search
+        $clientsQuery = Client::with('clientType');
+        if ($search) {
+            $clientsQuery->where(function ($query) use ($search) {
+                $query->where('client_name', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhereHas('clientType', function ($query) use ($search) {
+                            $query->where('client_type', 'like', '%' . $search . '%');
+                        })
+                        ->orWhere('client_phone_number', 'like', '%' . $search . '%');
+            });
+        }
+
+        $totalSearchResults = $clientsQuery->count();
+
+        $clients = $clientsQuery->paginate($perPage);
+
+        // Map paginated data for the frontend
+        $data = $clients->map(function ($client) {
             return [
                 'id' => $client->id,
                 'name' => $client->client_name,
                 'email' => $client->email,
-                'client_type' => $client->clientType->client_type,
+                'client_type' => $client->clientType->client_type ?? 'N/A',
                 'address' => $client->address,
                 'phone_number' => $client->client_phone_number,
-                'register_at' => Carbon::parse($client->created_at)->format('d M Y - H:i')
+                'register_at' => Carbon::parse($client->created_at)->format('d M Y - H:i'),
             ];
         });
 
         // count all clients
-        $totalClients = $clients->count();
+        $totalClients = Client::count();
 
         // get categories where has client 1 or more
         $clientCategories = ClientType::whereHas('clients')->pluck('client_type', 'id');
@@ -37,9 +56,15 @@ class ClientController extends Controller
 
         $clientTypes = ClientType::pluck('client_type', 'id');
 
-        // return dd($data);
         return Inertia::render('Client/List', [
             'clients' => $data,
+            'pagination' => [
+                'total' => $clients->total(),
+                'per_page' => $clients->perPage(),
+                'current_page' => $clients->currentPage(),
+                'last_page' => $clients->lastPage(),
+            ],
+            'totalSearchResults' => $totalSearchResults,
             'clientTypes' => $clientTypes,
             'totalClients' => $totalClients,
             'clientCategoriesCount' => $clientCategoriesCount,

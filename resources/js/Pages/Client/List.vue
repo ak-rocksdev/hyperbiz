@@ -1,17 +1,89 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Link } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
-    import { ref } from 'vue';
+    import { ref, watch, computed } from 'vue';
 
     const form = ref({});
+    const page = ref('');
+    const searchQuery = ref('');
 
     const props = defineProps({
         clients: Object,
+        pagination: {
+            type: Object,
+            required: true,
+        },
         clientTypes: Object,
         totalClients: Number,
         clientCategoriesCount: Number,
+        totalSearchResults: Number,
     });
+
+    const currentPage = ref(props.pagination.current_page || 1);
+    const perPageOptions = ref([5, 10, 25, 50]);
+    const selectedPerPage = ref(props.pagination.per_page);
+
+    const searchClients = () => {
+        currentPage.value = 1; // Reset to the first page
+        router.get(
+            route('client.list'),
+            { search: searchQuery.value }, // Remove 'page' parameter
+            { preserveState: true, preserveScroll: true }
+        );
+    };
+
+    watch(currentPage, (newPage) => {
+        router.get(route('client.list'), { search: searchQuery.value, page: newPage }, { preserveState: true });
+    });
+
+    // Calculate the visible page buttons
+    const visiblePages = computed(() => {
+        const totalPages = props.pagination.last_page || 1;
+        const maxVisible = 5; // Maximum visible buttons
+        const pages = [];
+
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            if (currentPage.value <= 3) {
+                pages.push(1, 2, 3, 4, '...', totalPages);
+            } else if (currentPage.value > totalPages - 3) {
+                pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+            } else {
+                pages.push(
+                    1,
+                    '...',
+                    currentPage.value - 1,
+                    currentPage.value,
+                    currentPage.value + 1,
+                    '...',
+                    totalPages
+                );
+            }
+        }
+
+        return pages;
+    });
+
+    watch([currentPage, selectedPerPage], ([newPage, newPerPage]) => {
+        router.get(route('client.list'), {
+            page: newPage,
+            per_page: newPerPage,
+        }, { preserveState: true, replace: true });
+    });
+
+    // Handle page change
+    const goToPage = (page) => {
+        if (page !== '...') {
+            console.log('Go to page:', page);
+            currentPage.value = page;
+            // Send a request to fetch the data for the selected page
+            router.get(route('client.list'), { page }, { preserveState: true, replace: true });
+        }
+    };
 
     const selectedClient = ref(null);
 
@@ -95,7 +167,8 @@
                                     <i
                                         class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
                                     </i>
-                                    <input data-datatable-search="#data_container" class="input input-sm ps-8" placeholder="Search Client" value="" />
+                                    <input class="input input-sm ps-8" placeholder="Search Client" v-model="searchQuery"
+                                        @input="searchClients" />
                                 </div>
                                 <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_client">
                                     Add New Client
@@ -170,7 +243,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="client in clients" :key="client.id">
+                                        <tr v-for="client in clients" v-if="clients.length" :key="client.id">
                                             <td class="text-center">
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="client.id"/>
                                             </td>
@@ -289,23 +362,57 @@
                                                 </div>
                                             </td>
                                         </tr>
+                                        <tr v-else class="w-full">
+                                            <td colspan="100%">
+                                                <!-- Centered content -->
+                                                <div class="flex items-center justify-center h-52">
+                                                    <div class="flex flex-col items-center">
+                                                        <i class="ki-filled ki-user-square text-8xl text-gray-300 mb-4"></i>
+                                                        <span class="text-gray-500 text-md">No Data Available!</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div
-                                class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
-                                <div class="flex items-center gap-2 order-2 md:order-1">
+                            <div class="card-footer flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
+                                <div class="flex items-center gap-2">
                                     Show
-                                    <select class="select select-sm w-16" data-datatable-size="true" name="perpage">
+                                    <select v-model="selectedPerPage" class="select select-sm w-16">
+                                        <option v-for="option in perPageOptions" :key="option" :value="option">
+                                            {{ option }}
+                                        </option>
                                     </select>
                                     per page
                                 </div>
-                                <div class="flex items-center gap-4 order-1 md:order-2">
-                                    <span data-datatable-info="true">
+                                <span v-if="totalSearchResults > 0" class="text-slate-500 text-sm ms-4">
+                                    Total: {{ totalSearchResults }} Result{{ totalSearchResults === 1 ? '' : 's' }}
+                                </span>
+                                <div class="pagination flex items-center gap-2">
+                                    <!-- Previous button -->
+                                    <button class="btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
+                                        <i class="ki-outline ki-black-left"></i>
+                                    </button>
+
+                                    <!-- Page buttons -->
+                                    <span v-for="(page, index) in visiblePages" :key="index" class="btn"
+                                        :class="{ 'active': page === currentPage }"
+                                        @click="goToPage(page)"
+                                        v-if="page !== '...'">
+                                        {{ page }}
                                     </span>
-                                    <div class="pagination" data-datatable-pagination="true">
-                                    </div>
+
+                                    <!-- Ellipsis -->
+                                    <span v-else class="btn disabled">...</span>
+
+                                    <!-- Next button -->
+                                    <button class="btn" :disabled="currentPage >= props.pagination.last_page"
+                                        @click="goToPage(currentPage + 1)">
+                                        <i class="ki-outline ki-black-right"></i>
+                                    </button>
                                 </div>
+
                             </div>
                         </div>
                     </div>

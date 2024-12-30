@@ -22,11 +22,30 @@ class TransactionController extends Controller
     /**
      * Display a list of transactions.
      */
-    public function list()
+    public function list(Request $request)
     {
-        $transactions = Transaction::with('client')->orderByDesc('created_at')->get();
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 5);
 
-        $data = $transactions->map(function ($transaction) {
+        $transactionsQuery = Transaction::with(['client', 'details.product']);
+
+        if ($search) {
+            $transactionsQuery->where(function ($query) use ($search) {
+                $query->whereHas('client', function ($clientQuery) use ($search) {
+                    $clientQuery->where('client_name', 'like', '%' . $search . '%');
+                })
+                ->orWhere('transaction_code', 'like', '%' . $search . '%')
+                ->orWhere('transaction_type', 'like', '%' . $search . '%')
+                ->orWhere('status', 'like', '%' . $search . '%')
+                ->orWhereHas('details.product', function ($productQuery) use ($search) {
+                    $productQuery->where('name', 'like', '%' . $search . '%');
+                });
+            });
+        }
+
+        $transactions = $transactionsQuery->paginate($perPage);
+
+        $data = $transactions->getCollection()->map(function ($transaction) {
             return [
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code ?? 'N/A',
@@ -44,8 +63,8 @@ class TransactionController extends Controller
         $totalTransactionsCount = $transactions->count();
 
         // Calculate totals for purchases and sales
-        $totalPurchaseValue = $transactions->where('transaction_type', 'purchase')->sum('grand_total');
-        $totalSellValue = $transactions->where('transaction_type', 'sell')->sum('grand_total');
+        $totalPurchaseValue = (float) Transaction::where('transaction_type', 'purchase')->sum('grand_total');
+        $totalSellValue = (float) Transaction::where('transaction_type', 'sell')->sum('grand_total');
 
         // Products and clients
         $products = Product::pluck('name', 'id');
@@ -75,9 +94,17 @@ class TransactionController extends Controller
 
         return Inertia::render('Transaction/List', [
             'transactions' => $data,
+            'pagination' => [
+                'total' => $transactions->total(),
+                'per_page' => $transactions->perPage(),
+                'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
+            ],
             'products' => $products,
             'clients' => $clients,
             'statuses' => $statuses,
+            'resultCount' => $data->count(),
+            'allTransactionsCount' => Transaction::count(),
             'totalTransactions' => $totalTransactionsCount,
             'totalPurchaseValue' => $totalPurchaseValue,
             'totalSellValue' => $totalSellValue,

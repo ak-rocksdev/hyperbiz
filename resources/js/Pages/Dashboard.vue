@@ -52,7 +52,7 @@
                                     User Management
                                 </Link>
                                 <span class="text-2sm text-gray-700 leading-5">
-                                    Efficient management of user and roles.
+                                    Efficient management of user and roles<br><span class="text-2sm text-emerald-500 font-black leading-5">(roles management is under development)</span>.
                                 </span>
                             </div>
                         </div>
@@ -81,7 +81,7 @@
                             <div class="flex flex-col gap-3">
                                 <Link class="text-base font-medium leading-none text-gray-900 hover:text-primary-active"
                                     :href="route('client.list')">
-                                    Client
+                                    Clients
                                 </Link>
                                 <span class="text-2sm text-gray-700 leading-5">
                                     Client management and information.
@@ -114,7 +114,7 @@
                             <div class="flex flex-col gap-3">
                                 <Link class="text-base font-medium leading-none text-gray-900 hover:text-primary-active"
                                     :href="route('brand.list')">
-                                    Brand
+                                    Brands
                                 </Link>
                                 <span class="text-2sm text-gray-700 leading-5">
                                     Master Data for Brand Management.
