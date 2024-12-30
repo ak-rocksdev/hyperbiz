@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\ClientType;
 use App\Models\Address;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller
 {
@@ -125,16 +126,35 @@ class ClientController extends Controller
             'client_phone_number' => 'required|string|max:20',
             'contact_person' => 'required|string|max:255',
             'contact_person_phone_number' => 'required|string|max:20',
+        ], [
+            'client_name.required' => 'The client name is required.',
+            'email.required' => 'A valid email address is required.',
+            'mst_client_type_id.required' => 'Please select a client type.',
+            'client_phone_number.required' => 'The client phone number is required.',
+            'contact_person.required' => 'The contact person name is required.',
+            'contact_person_phone_number.required' => 'The contact person phone number is required.',
         ]);
 
-        $validatedData['created_by'] = auth()->id();
+        DB::beginTransaction();
+        try {
+            $validatedData['created_by'] = auth()->id();
+            $client = Client::create($validatedData);
 
-        $client = Client::create($validatedData);
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Client created successfully.',
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Client created successfully.',
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create client.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     // show edit page

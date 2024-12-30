@@ -3,8 +3,10 @@
     import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
     import { ref, watch, computed } from 'vue';
+    import Swal from 'sweetalert2';
 
     const form = ref({});
+    const errors = ref({});
     const page = ref('');
     const searchQuery = ref('');
 
@@ -98,7 +100,7 @@
     };
 
     const submitForm = () => {
-        console.log('Form submitted:', form.value);
+        errors.value = {};
         
         try {
             axios.post('/client/api/store', form.value)
@@ -106,17 +108,49 @@
                     // Reset the form
                     form.value = {};
 
-                    // Close the modal
-                    document.querySelector('#modal_create_new_client').dispatchEvent(new Event('modal-dismiss'));
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                    });
+
+                    KTModal.init();
+
+                    const modalEl = document.querySelector('#modal_create_new_client');
+                    const modal = KTModal.getInstance(modalEl);
+
+                    modal.hide();
 
                     // Refresh the clients list
-                    window.location.reload();
+                    router.visit(route('client.list'), { search: '', page: '' }, { preserveState: true });
                 })
                 .catch(error => {
-                    console.error('Error:', error);
+                    // Swal toast
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: error.response.data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                    });
+                    if (error.response && error.response.status === 422) {
+                        errors.value = error.response.data.errors;
+                    } else {
+                        console.error('An unexpected error occurred:', error);
+                    }
                 });
         } catch (error) {
-            console.error('Error:', error);
+            if (error.response && error.response.status === 422) {
+                errors.value = error.response.data.errors;
+            } else {
+                console.error('An unexpected error occurred:', error);
+            }
         }
     };
 </script>
@@ -435,6 +469,14 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
+                        <p class="font-bold mb-3">Error!</p>
+                        <ul class="list-disc pl-5 text-sm">
+                            <li v-for="(messages, field) in errors" :key="field">
+                                <span v-for="(message, index) in messages" :key="index">{{ message }}</span>
+                            </li>
+                        </ul>
+                    </div>
                     <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
                         <!-- Client Name -->
                         <div class="mb-4">
