@@ -17,6 +17,14 @@
         totalTransactions: Number,
         totalPurchaseValue: Number,
         totalSellValue: Number,
+        statuses: {
+            type: Object,
+            required: true,
+            default: () => ({
+                purchase: [],
+                sell: [],
+            }),
+        },
     });
 
     const selectedTransaction = ref(null);
@@ -159,6 +167,24 @@
             }
         });
     };
+    
+    const statusColors = {
+        pending             : 'bg-yellow-100 text-yellow-600 border-yellow-300',
+        processing          : 'bg-blue-100 text-blue-600 border-blue-300',
+        completed           : 'bg-green-100 text-green-600 border-green-300',
+        cancelled           : 'bg-red-100 text-red-600 border-red-300',
+        approved            : 'bg-purple-100 text-purple-600 border-purple-300',
+        received            : 'bg-teal-100 text-teal-600 border-teal-300',
+        partially_received  : 'bg-orange-100 text-orange-600 border-orange-300',
+        rejected            : 'bg-gray-100 text-gray-600 border-gray-300',
+        refunded            : 'bg-pink-100 text-pink-600 border-pink-300',
+        backordered         : 'bg-indigo-100 text-indigo-600 border-indigo-300',
+        paid                : 'bg-green-100 text-green-600 border-green-300',
+        shipped             : 'bg-blue-100 text-blue-600 border-blue-300',
+        delivered           : 'bg-green-100 text-green-600 border-green-300',
+        partially_delivered : 'bg-orange-100 text-orange-600 border-orange-300',
+        returned            : 'bg-red-100 text-red-600 border-red-300',
+    };
 </script>
 
 <template>
@@ -244,17 +270,20 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="transaction_code">
+                                            <th class="min-w-[200px] lg:w-[300px]" data-datatable-column="transaction_code">
                                                 Client
                                             </th>
-                                            <th class="w-[185px] text-center" data-datatable-column="transaction_type">
+                                            <th class="w-[150px] text-center" data-datatable-column="transaction_type">
                                                 Transaction Type
                                             </th>
-                                            <th class="w-[185px] text-center" data-datatable-column="transaction_date">
+                                            <th class="w-[150px] text-center" data-datatable-column="transaction_date">
                                                 Transaction Date
                                             </th>
+                                            <th class="py-2 px-4 w-[100px] text-center">
+                                                Status
+                                            </th>
                                             <th class="min-w-[180px] w-[200px] text-end">
-                                                Total Value
+                                                Transaction Value
                                             </th>
                                             <th class="w-[85px] text-center">
                                                 Action
@@ -283,6 +312,13 @@
                                             </td>
                                             <td class="text-center">
                                                 {{ transaction.transaction_date }}
+                                            </td>
+                                            <!-- Status -->
+                                            <td class="py-4 px-4 text-center">
+                                                <span v-if="statuses[transaction.transaction_type]"
+                                                    :class="`text-xs rounded-lg px-2 py-1 border ${statusColors[transaction.status]}`">
+                                                    {{ statuses[transaction.transaction_type].find(s => s.value === transaction.status)?.label || 'Unknown' }}
+                                                </span>
                                             </td>
                                             <td class="text-end">
                                                 {{ formatCurrency(transaction.grand_total) }}

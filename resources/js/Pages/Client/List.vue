@@ -176,8 +176,12 @@
                                             </td>
                                             <td>
                                                 <div class="flex items-center gap-2.5">
-                                                    <div class="size-12 rounded-full overflow-hidden flex-shrink-0">
-                                                        <img :src="'https://picsum.photos/500/300.jpg'" alt="Client Image" class="object-cover w-full h-full" />
+                                                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100 text-purple-700 font-bold border border-purple-400 shrink-0">
+                                                        <!-- Display initials -->
+                                                        {{ client.name.split(' ').length > 1 
+                                                            ? client.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                            : client.name[0].toUpperCase() 
+                                                        }}
                                                     </div>
                                                     <div class="flex flex-col">
                                                         <span @click="viewClientDetail(client.id)" data-modal-toggle="#modal_view_client" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer">

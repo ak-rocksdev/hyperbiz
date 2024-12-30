@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TransactionStatus;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\Product;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Models\TransactionLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
@@ -33,6 +35,7 @@ class TransactionController extends Controller
                 'quantity' => $transaction->quantity,
                 'grand_total' => $transaction->grand_total,
                 'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
+                'status' => $transaction->status,
                 'created_at' => Carbon::parse($transaction->created_at)->format('d M Y - H:i'),
             ];
         });
@@ -54,10 +57,27 @@ class TransactionController extends Controller
             ];
         });
 
+        $statuses = [
+            'purchase' => collect(TransactionStatus::purchaseStatuses())->map(function ($status) {
+                // return dd($status);
+                return [
+                    'value' => $status['value'],
+                    'label' => $status['label'],
+                ];
+            })->toArray(),
+            'sell' => collect(TransactionStatus::sellStatuses())->map(function ($status) {
+                return [
+                    'value' => $status['value'],
+                    'label' => $status['label'],
+                ];
+            })->toArray(),
+        ];
+
         return Inertia::render('Transaction/List', [
             'transactions' => $data,
             'products' => $products,
             'clients' => $clients,
+            'statuses' => $statuses,
             'totalTransactions' => $totalTransactionsCount,
             'totalPurchaseValue' => $totalPurchaseValue,
             'totalSellValue' => $totalSellValue,
@@ -92,6 +112,98 @@ class TransactionController extends Controller
                 }),
                 'created_at' => Carbon::parse($transaction->created_at)->format('d M Y - H:i'),
             ],
+        ]);
+    }
+
+    /**
+     * Show the edit page for a transaction.
+     */
+    public function edit($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        $data = [
+            'id' => $transaction->id,
+            'transaction_code' => $transaction->transaction_code,
+            'transaction_type' => $transaction->transaction_type,
+            'mst_client_id' => $transaction->mst_client_id,
+            'client' => $transaction->client,
+            'products' => $transaction->details->map(function ($detail) {
+                return [
+                    'id' => $detail->product->id,
+                    'name' => $detail->product->name,
+                    'quantity' => $detail->quantity,
+                    'sku' => $detail->product->sku,
+                    'price' => $detail->price,
+                    'total_price' => $detail->quantity * $detail->price,
+                ];
+            }),
+            'transaction_date' => Carbon::parse($transaction->transaction_date)->format('Y-m-d'),
+            'grand_total' => $transaction->grand_total,
+            'expedition_fee' => $transaction->expedition_fee,
+            'status' => $transaction->status,
+        ];
+
+        $statuses = [
+            'purchase' => collect(TransactionStatus::purchaseStatuses())->map(function ($status) {
+                return [
+                    'value' => $status['value'],
+                    'label' => $status['label'],
+                ];
+            })->toArray(),
+            'sell' => collect(TransactionStatus::sellStatuses())->map(function ($status) {
+                return [
+                    'value' => $status['value'],
+                    'label' => $status['label'],
+                ];
+            })->toArray(),
+        ];
+
+        return Inertia::render('Transaction/Edit', [
+            'transaction' => $data,
+            'clients' => Client::with('products')->get(),
+            'statuses' => $statuses,
+        ]);
+    }
+
+    public function create()
+    {
+        $products = Product::where('is_active', 1)->pluck('name', 'id');
+        $clients = Client::all()->map(function ($client) {
+            return [
+                'id' => $client->id,
+                'client_name' => $client->client_name,
+                'products' => $client->products->filter(function ($product) {
+                    return $product->is_active == 1; // Ensure only active products are included
+                })->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'description' => $product->description,
+                        'sku' => $product->sku,
+                        'barcode' => $product->barcode,
+                        'price' => $product->price,
+                        'cost_price' => $product->cost_price,
+                        'currency' => $product->currency,
+                        'stock_quantity' => $product->stock_quantity,
+                        'min_stock_level' => $product->min_stock_level,
+                        'weight' => $product->weight,
+                        'dimensions' => $product->dimensions,
+                        'image_url' => $product->image_url,
+                    ];
+                }),
+            ];
+        });
+        
+        $statuses = [
+            'purchase' => TransactionStatus::purchaseStatuses(),
+            'sell' => TransactionStatus::sellStatuses(),
+        ];
+
+        return Inertia::render('Transaction/Create', [
+            'products' => $products,
+            'clients' => $clients,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -187,7 +299,15 @@ class TransactionController extends Controller
         $validatedData = $request->validate([
             'id' => 'required|exists:transactions,id',
             'transaction_code' => 'required|size:6',
-            'transaction_type' => 'required|in:sell,purchase',
+            'transaction_type' => [
+                'required',
+                'in:sell,purchase',
+                function ($attribute, $value, $fail) use ($transaction) {
+                    if ($value !== $transaction->transaction_type) {
+                        $fail('The Transaction Type cannot be changed, to revert use the "Remove" transaction.');
+                    }
+                },
+            ],
             'mst_client_id' => 'required|exists:mst_client,id',
             'grand_total' => 'required|numeric|min:0',
             'expedition_fee' => 'required|numeric|min:0',
@@ -197,6 +317,12 @@ class TransactionController extends Controller
             'products.*.stock_quantity' => 'required|integer',
             'products.*.total_price' => 'required|numeric|min:0',
             'transaction_date' => 'required|date',
+            'status' => ['required', Rule::in(array_column(TransactionStatus::cases(), 'value'))],
+        ], [], [
+            'transaction_type' => 'Transaction Type',
+            'products.*.quantity' => 'Product Quantity',
+            'products.*.id' => 'Product ID',
+            'products.*.price' => 'Product Price',
         ]);
 
         DB::beginTransaction();
@@ -238,12 +364,7 @@ class TransactionController extends Controller
             }
 
             // Update the transaction
-            $transaction->update([
-                'mst_client_id' => $validatedData['mst_client_id'],
-                'transaction_date' => $validatedData['transaction_date'],
-                'grand_total' => $validatedData['grand_total'],
-                'expedition_fee' => $validatedData['expedition_fee'],
-            ]);
+            $transaction->update($validatedData);
 
             // Update transaction details
             $transaction->details()->delete(); // Remove old details
@@ -318,76 +439,6 @@ class TransactionController extends Controller
                 ],
             ], 500);
         }
-    }
-
-    /**
-     * Show the edit page for a transaction.
-     */
-    public function edit($id)
-    {
-        $transaction = Transaction::findOrFail($id);
-
-        $data = [
-            'id' => $transaction->id,
-            'transaction_code' => $transaction->transaction_code,
-            'transaction_type' => $transaction->transaction_type,
-            'mst_client_id' => $transaction->mst_client_id,
-            'client' => $transaction->client,
-            'products' => $transaction->details->map(function ($detail) {
-                return [
-                    'id' => $detail->product->id,
-                    'name' => $detail->product->name,
-                    'quantity' => $detail->quantity,
-                    'sku' => $detail->product->sku,
-                    'price' => $detail->price,
-                    'total_price' => $detail->quantity * $detail->price,
-                ];
-            }),
-            'transaction_date' => Carbon::parse($transaction->transaction_date)->format('Y-m-d'),
-            'grand_total' => $transaction->grand_total,
-            'expedition_fee' => $transaction->expedition_fee,
-            'status' => $transaction->status,
-        ];
-
-        return Inertia::render('Transaction/Edit', [
-            'transaction' => $data,
-            'clients' => Client::with('products')->get(),
-        ]);
-    }
-
-    public function create()
-    {
-        $products = Product::where('is_active', 1)->pluck('name', 'id');
-        $clients = Client::all()->map(function ($client) {
-            return [
-                'id' => $client->id,
-                'client_name' => $client->client_name,
-                'products' => $client->products->filter(function ($product) {
-                    return $product->is_active == 1; // Ensure only active products are included
-                })->map(function ($product) {
-                    return [
-                        'id' => $product->id,
-                        'name' => $product->name,
-                        'description' => $product->description,
-                        'sku' => $product->sku,
-                        'barcode' => $product->barcode,
-                        'price' => $product->price,
-                        'cost_price' => $product->cost_price,
-                        'currency' => $product->currency,
-                        'stock_quantity' => $product->stock_quantity,
-                        'min_stock_level' => $product->min_stock_level,
-                        'weight' => $product->weight,
-                        'dimensions' => $product->dimensions,
-                        'image_url' => $product->image_url,
-                    ];
-                }),
-            ];
-        });
-
-        return Inertia::render('Transaction/Create', [
-            'products' => $products,
-            'clients' => $clients,
-        ]);
     }
 
     public function delete($id)

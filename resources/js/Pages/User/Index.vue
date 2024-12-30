@@ -1,6 +1,6 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Head, Link, router } from '@inertiajs/vue3';
+    import { Head, Link } from '@inertiajs/vue3';
     import { ref, onMounted } from 'vue';
     import axios from 'axios';
 
@@ -178,15 +178,6 @@
                                                     </span>
                                                 </span>
                                             </th>
-                                            <th class="w-[185px]">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Email
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
                                             <th class="min-w-[180px] w-[200px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
@@ -212,11 +203,23 @@
                                             <td class="text-center">
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="user.id"/>
                                             </td>
-                                            <td>
-                                                {{ user.name }}
-                                            </td>
-                                            <td>
-                                                {{ user.email }}
+                                            <td class="flex items-center gap-4">
+                                                <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                    <!-- Display initials -->
+                                                    {{ user.name.split(' ').length > 1 
+                                                        ? user.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
+                                                        : user.name[0].toUpperCase() 
+                                                    }}
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span
+                                                        class="text-md font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer">
+                                                        {{ user.name }}
+                                                    </span>
+                                                    <span class="text-sm text-gray-600">
+                                                        {{ user.email }}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td class="text-center">
                                                 {{ user.created_at }}

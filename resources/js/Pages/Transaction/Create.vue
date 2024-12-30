@@ -24,6 +24,10 @@
             type: Array,
             required: true,
         },
+        statuses: {
+            type: Array,
+            required: true, // Pass the statuses array from the backend
+        },
     });
 
     const availableProducts = ref([]);
@@ -206,7 +210,7 @@
                         </ul>
                     </div>
                     <!--begin::Card body-->
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid lg:grid-cols-4 sm:grid-cols-1 gap-4">
                         <div class="mb-4">
                             <label class="form-label max-w-60 mb-2">Transaction Type <span class="ms-1 text-danger">*</span></label>
                             <div class="inline-flex rounded-md shadow-sm" role="group">
@@ -227,6 +231,17 @@
                             </div>
                         </div>
 
+                        <!-- Transaction Status -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">Transaction Status <span
+                                    class="ms-1 text-danger">*</span></label>
+                            <select v-model="form.status" class="input" :disabled="!form.transaction_type">
+                                <option v-for="status in statuses[form.transaction_type]" :key="status.value"
+                                    :value="status.value">
+                                    {{ status.label }}
+                                </option>
+                            </select>
+                        </div>
 
                         <!-- Client Dropdown -->
                         <div class="mb-4">

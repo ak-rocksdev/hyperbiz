@@ -14,6 +14,10 @@
             type: Array,
             required: true,
         },
+        statuses: {
+            type: Object, // statuses is an object with "purchase" and "sell" arrays
+            required: true,
+        },
     });
 
     // Reactive form state
@@ -27,7 +31,25 @@
         transaction_date    : props.transaction ? props.transaction.transaction_date : '',
         grand_total         : props.transaction ? props.transaction.grand_total : 0,
         expedition_fee      : props.transaction ? props.transaction.expedition_fee : 0,
+        status              : props.transaction ? props.transaction.status : '',
     });
+
+    watch(
+        () => form.value.transaction_type,
+        (newTransactionType) => {
+            if (newTransactionType) {
+                const validStatuses = props.statuses[newTransactionType]?.map((status) => status.value) || [];
+                if (!validStatuses.includes(form.value.status)) {
+                    // Set to the first valid status or reset to an empty string
+                    form.value.status = validStatuses.length > 0 ? validStatuses[0] : '';
+                }
+            } else {
+                // Reset the status if transaction_type is not selected
+                form.value.status = '';
+            }
+        },
+        { immediate: true } // Ensures this logic runs when the component is mounted
+    );
 
     // Available products for the selected client
     const availableProducts = ref([]);
@@ -243,27 +265,37 @@
                     </div>
 
                     <!-- Card Body -->
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid lg:grid-cols-4 sm:grid-cols-1 gap-4">
                         <div class="mb-4">
                             <label class="form-label max-w-60 mb-2">Transaction Type <span class="ms-1 text-danger">*</span></label>
                             <div class="inline-flex rounded-md shadow-sm" role="group">
                                 <button type="button"
                                     :class="['inline-flex items-center px-4 py-2 text-sm font-medium border border-gray-200 rounded-s-lg focus:z-10 focus:ring-0', purchaseButtonClasses]"
-                                    @click="form.transaction_type = 'purchase'"
-                                >
+                                    @click="form.transaction_type = 'purchase'">
                                     <i class="ki-solid ki-entrance-left me-2"></i>
                                     Purchase
                                 </button>
                                 <button type="button"
                                     :class="['inline-flex items-center px-4 py-2 text-sm font-medium border-t border-b border-e rounded-e-lg border-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700', sellButtonClasses]"
-                                    @click="form.transaction_type = 'sell'"
-                                >
+                                    @click="form.transaction_type = 'sell'">
                                     <i class="ki-solid ki-exit-left me-2"></i>
                                     Sell
                                 </button>
                             </div>
                         </div>
 
+                        <!-- Transaction Status -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Transaction Status <span class="ms-1 text-danger">*</span>
+                            </label>
+                            <select v-model="form.status" class="input" :disabled="!form.transaction_type">
+                                <option v-for="status in statuses[form.transaction_type]" :key="status.value"
+                                    :value="status.value">
+                                    {{ status.label }}
+                                </option>
+                            </select>
+                        </div>
 
                         <!-- Client Dropdown -->
                         <div class="mb-4">
