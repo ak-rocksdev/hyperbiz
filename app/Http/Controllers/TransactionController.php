@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TransactionLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransactionController extends Controller
 {
@@ -528,6 +529,52 @@ class TransactionController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function previewPdf($id)
+    {
+        $transaction = Transaction::with('details', 'client')->findOrFail($id);
+
+        $data = [
+                'id' => $transaction->id,
+                'transaction_code' => $transaction->transaction_code,
+                'transaction_type' => $transaction->transaction_type,
+                'client_name' => $transaction->client->client_name ?? 'N/A',
+                'grand_total' => Number::currency($transaction->grand_total, in: 'IDR', locale: 'id'),
+                'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
+                'status' => $transaction->status,
+                'details' => $transaction->details->map(function ($detail) {
+                    return [
+                        'id' => $detail->id,
+                        'name' => $detail->product->name,
+                        'quantity' => $detail->quantity,
+                        'price' => $detail->price,
+                        'total_price' => Number::currency($detail->quantity * $detail->price, in: 'IDR', locale: 'id'),
+                    ];
+                }),
+                'created_at' => Carbon::parse($transaction->created_at)->format('d M Y - H:i'),
+            ];
+
+        return Inertia::render('Transaction/Pdf', [
+            'transaction' => $data,
+        ]);
+    }
+
+    public function exportPdf($id)
+    {
+        $transaction = Transaction::with(['details.product'])->findOrFail($id);
+
+        $pdf = Pdf::loadView('pdf.transaction', compact('transaction'));
+        
+        return $pdf->stream('transaction-details.pdf');
+        // return view('pdf.transaction', compact('transaction'));
+
+        // return Inertia::render('Transaction/ExportPdf', [
+        //     'transaction' => $transaction,
+        // ]);
+        
+        
+        // return $pdf->download('transaction-details.pdf');
     }
     
     private function logTransactionAction(

@@ -55,6 +55,9 @@ Route::middleware([
         Route::get('/edit/{id}',                [TransactionController::class, 'edit'])->name('transaction.edit');
         Route::put('/api/update/{id}',          [TransactionController::class, 'update']);
         Route::delete('/api/delete/{id}',       [TransactionController::class, 'delete'])->name('transaction.delete');
+        Route::get('/{id}/export-pdf',          [TransactionController::class, 'exportPdf'])->name('transactions.export-pdf');
+        Route::get('/{id}/preview',             [TransactionController::class, 'previewPdf']);
+
     });
 
     Route::prefix('brand')->group(function () {

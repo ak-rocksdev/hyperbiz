@@ -234,6 +234,48 @@
         partially_delivered : 'bg-orange-100 text-orange-600 border-orange-300',
         returned            : 'bg-red-100 text-red-600 border-red-300',
     };
+
+    const exportPdf = (id) => {
+        router.visit(route('transactions.export-pdf', { id }), {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const showPdf = ref(false);
+    const pdfUrl = ref(null); // Original dynamic URL
+    const cachedPdfUrl = ref(null); // Cached URL to prevent reload
+
+    // Watch for changes to pdfUrl
+    watch(pdfUrl, async (newUrl) => {
+        if (!newUrl) {
+            cachedPdfUrl.value = null; // Reset cached URL if source is cleared
+            return;
+        }
+        cachedPdfUrl.value = null; // Clear cached URL to prevent reuse
+        try {
+            // Preload the PDF URL to prevent iframe reloads
+            await fetch(newUrl, { method: 'HEAD' });
+            cachedPdfUrl.value = newUrl; // Update cached URL
+        } catch (error) {
+            console.error('Error loading PDF:', error);
+            cachedPdfUrl.value = null; // Handle errors gracefully
+        }
+    });
+
+    // Function to set the PDF URL and show the modal
+    const previewPdf = (id) => {
+        showPdf.value = true; // Open the modal
+        // open new blank page to go to the link
+        // window.open(`/transaction/${id}/export-pdf`, '_blank');
+        pdfUrl.value = '/transaction/' + id + '/export-pdf'; // Set the PDF URL
+    };
+
+    // Function to close the modal and reset the URL
+    const closeModal = () => {
+        showPdf.value = false;
+        pdfUrl.value = '';
+    };
 </script>
 
 <template>
@@ -388,7 +430,25 @@
                                                         <div class="menu-dropdown menu-default w-full max-w-[175px]"
                                                             data-menu-dismiss="true">
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/transaction/detail/' + transaction.id">
+                                                                <button class="menu-link" @click="previewPdf(transaction.id)" data-modal-toggle="#modal_pdf_preview">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-printer">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title">
+                                                                        Print Preview
+                                                                    </span>
+                                                                </button>
+                                                                <Link class="menu-link" :href="'/transaction/' + transaction.id + '/preview'">
+                                                                    <span class="menu-icon">
+                                                                        <i class="ki-filled ki-document">
+                                                                        </i>
+                                                                    </span>
+                                                                    <span class="menu-title">
+                                                                        View Detail
+                                                                    </span>
+                                                                </Link>
+                                                                <!-- <Link class="menu-link" :href="'/transaction/detail/' + transaction.id">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-search-list">
                                                                         </i>
@@ -396,7 +456,7 @@
                                                                     <span class="menu-title">
                                                                         View Detail
                                                                     </span>
-                                                                </Link>
+                                                                </Link> -->
                                                             </div>
                                                             <div class="menu-separator">
                                                             </div>
@@ -709,6 +769,44 @@
                         Close
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="showPdf" class="modal" data-modal="true" id="modal_pdf_preview">
+        <div class="modal-content max-w-[800px]">
+            <div class="modal-header flex justify-between items-center">
+                <h3 class="modal-title">Transaction Preview</h3>
+                <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                    <i class="ki-outline ki-cross"></i>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <iframe
+                    v-if="cachedPdfUrl"
+                    :src="cachedPdfUrl"
+                    frameborder="0"
+                    class="w-full h-[600px]"
+                    title="PDF Preview"
+                ></iframe>
+                <div v-else>
+                    <div class="flex items-center justify-center h-52">
+                        <div class="flex flex-row gap-1 items-center bg-slate-100 px-5 py-2 border border-gray-300 border-1 rounded-lg">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-700" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" stroke="currentColor" stroke-width="4" cx="12" cy="12"
+                                    r="10"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            <span class="text-gray-600 text-md">Loading</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-modal-dismiss="true" @click="closeModal">Close</button>
             </div>
         </div>
     </div>
