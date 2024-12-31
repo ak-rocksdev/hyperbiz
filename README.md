@@ -1,7 +1,7 @@
 <p align="center"><img src="https://socialify.git.ci/ak-rocksdev/bkpi/image?description=1&font=KoHo&language=1&name=1&owner=1&pattern=Circuit%20Board&stargazers=1&theme=Light" alt="bkpi" width="640" height="320" /></p>
 
-## About BKPI
-BKPI (Berkah Khidmah Pangan Indonesia) apps, is a web application designed for managing transactions, HRIS, and various activities related to the company's operations. This platform aims to streamline and simplify the management processes within the organization, ensuring efficiency and productivity.
+## About HyperBiz
+HyperBiz apps, is a web application designed for managing transactions, HRIS, and various activities related to the general company's operations. This platform aims to streamline and simplify the management processes within the organization, ensuring efficiency and productivity.
 
 ## Learning Laravel
 

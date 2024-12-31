@@ -8,12 +8,12 @@
 
 <template>
     <div class="flex items-center gap-2 lg:gap-3.5">
-        <button
+        <!-- <button
             class="btn btn-icon btn-icon-lg size-9 rounded-full hover:bg-primary-light hover:text-primary text-gray-500"
             data-modal-toggle="#search_modal">
             <i class="ki-filled ki-magnifier">
             </i>
-        </button>
+        </button> -->
         <!-- <div class="dropdown" data-dropdown="true" data-dropdown-offset="170px, 10px"
             data-dropdown-offset-rtl="-170px, 10px" data-dropdown-placement="bottom-end"
             data-dropdown-placement-rtl="bottom-start" data-dropdown-trigger="click|lg:click">
@@ -479,7 +479,7 @@
                 </div>
             </div>
         </div> -->
-        <div class="dropdown" data-dropdown="true" data-dropdown-offset="70px, 10px"
+        <!-- <div class="dropdown" data-dropdown="true" data-dropdown-offset="70px, 10px"
             data-dropdown-offset-rtl="-70px, 10px" data-dropdown-placement="bottom-end"
             data-dropdown-placement-rtl="bottom-start" data-dropdown-trigger="click|lg:click">
             <button
@@ -1782,7 +1782,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
         <div class="menu" data-menu="true">
             <div class="menu-item" data-menu-item-offset="20px, 10px" data-menu-item-offset-rtl="-20px, 10px"
                 data-menu-item-placement="bottom-end" data-menu-item-placement-rtl="bottom-start"

@@ -13,12 +13,13 @@
         <!-- Container -->
         <div class="container-fixed" style="margin-left: 0;">
             <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
-                <div class="flex order-2 md:order-1 gap-2 font-normal text-2sm">
+                <div class="flex order-2 md:order-1 gap-2 font-normal text-2sm items-center">
                     <span class="text-gray-500">
                         {{ year }}©
                     </span>
+                    <img class="max-h-[20px] w-auto" src="/assets/media/app/logo.png" />
                     <span class="text-gray-600 hover:text-primary">
-                        Enterprise Resource Planning System
+                        an Enterprise Resource Planning System
                     </span>
                 </div>
                 <nav class="flex order-1 md:order-2 gap-4 font-normal text-2sm text-gray-600">

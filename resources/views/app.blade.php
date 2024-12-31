@@ -12,18 +12,18 @@
         <meta content="noindex" name="robots"/>
         <!-- <link href="https://127.0.0.1:8001/metronic-tailwind-html/demo1/index.html" rel="canonical"/> -->
         <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport"/>
-        <meta content="BKPI - Berkah Khidmah Pangan Indonesia" name="description"/>
+        <meta content="HyperBiz - Enterprise Resource Planning System" name="description"/>
         <meta content="@ak_rocks" name="twitter:site"/>
         <meta content="@ak_rocks" name="twitter:creator"/>
         <meta content="summary_large_image" name="twitter:card"/>
-        <meta content="BKPI " name="twitter:title"/>
+        <meta content="HyperBiz - ERP System" name="twitter:title"/>
         <meta content="" name="twitter:description"/>
         <meta content="/assets/media/app/og-image.png" name="twitter:image"/>
         <!-- <meta content="https://127.0.0.1:8001/metronic-tailwind-html/demo1/index.html" property="og:url"/> -->
         <meta content="en_US" property="og:locale"/>
         <meta content="website" property="og:type"/>
-        <meta content="BKPI" property="og:site_name"/>
-        <meta content="BKPI - Berkah Khidmah Pangan Indonesia " property="og:title"/>
+        <meta content="HyperBiz" property="og:site_name"/>
+        <meta content="HyperBiz - ERP System " property="og:title"/>
         <meta content="" property="og:description"/>
         <meta content="/assets/media/app/og-image.png" property="og:image"/>
         <link href="/assets/media/app/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>

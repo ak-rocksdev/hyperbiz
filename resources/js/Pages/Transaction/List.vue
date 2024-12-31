@@ -289,7 +289,7 @@
         <!-- Container -->
         <div class="container-fixed">
             <div class="py-5">
-                <div class="grid grid-cols-3 lg:grid-cols-3 gap-6 w-full items-stretch">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full items-stretch">
                     <!-- Total Transactions -->
                     <div class="card flex-col justify-between gap-6 h-full bg-cover">
                         <div class="flex flex-col gap-1 py-5 px-5">

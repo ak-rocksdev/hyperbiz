@@ -20,11 +20,11 @@
                         <h1 class="text-2xl font-semibold leading-none text-gray-900 mb1.5">
                             Account
                         </h1>
-                        <div class="flex items-center gap-2 text-sm font-medium">
+                        <div class="flex sm:flex-col lg:flex-row items-center gap-2 text-sm font-medium">
                             <span class="text-gray-800 font-medium">
                                 {{ $page.props.auth.user.name }}
                             </span>
-                            <a class="text-gray-700 hover:text-primary" href="mailto:jaytatum@ktstudio.com">
+                            <a class="text-gray-700 hover:text-primary" :href="`mailto:${$page.props.auth.user.email}`">
                                 {{ $page.props.auth.user.email }}
                             </a>
                             <span class="size-0.75 bg-gray-600 rounded-full">

@@ -36,11 +36,11 @@
         <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0"
             id="sidebar_header">
             <a v-if="!darkMode" href="/dashboard">
-                <img class="default-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
+                <img class="default-logo min-h-[22px] max-w-[150px]" src="/assets/media/app/logo.png" />
                 <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
             </a>
             <a v-else href="/dashboard">
-                <img class="default-logo min-h-[22px] max-w-[80px]" src="/assets/media/app/logo.png" />
+                <img class="default-logo min-h-[22px] max-w-[150px]" src="/assets/media/app/logo.png" />
                 <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
             </a>
             <button

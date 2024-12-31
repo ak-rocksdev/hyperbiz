@@ -1,5 +1,6 @@
 <script setup>
     import Topbar from '@/Components/Metronic/Topbar.vue';
+    import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
@@ -9,9 +10,9 @@
         <div class="container-fixed flex justify-between lg:justify-end items-stretch lg:gap-4" id="header_container">
             <!-- Mobile Logo -->
             <div class="flex gap-1 lg:hidden items-center -ms-1">
-                <a class="shrink-0" href="html/demo1.html">
-                    <img class="max-h-[25px] w-full" src="/assets/media/app/logo.png" />
-                </a>
+                <Link class="shrink-0" :href="'/dashboard'">
+                    <img class="max-h-[25px] w-auto" src="/assets/media/app/logo.png" />
+                </Link>
                 <div class="flex items-center">
                     <button class="btn btn-icon btn-light btn-clear btn-sm" data-drawer-toggle="#sidebar">
                         <i class="ki-filled ki-menu">
