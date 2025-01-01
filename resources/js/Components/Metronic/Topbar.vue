@@ -1801,9 +1801,8 @@
                                 <span class="text-sm text-gray-800 font-semibold leading-none">
                                     {{ $page.props.auth.user.name }}
                                 </span>
-                                <a class="text-xs text-gray-600 hover:text-primary font-medium leading-none"
-                                    href="html/demo1/account/home/get-started.html">
-                                    {{ $page.props.auth.user.email }}
+                                <a :href="$page.props.company.website" target="_blank" class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
+                                    {{ $page.props.company.name }}
                                 </a>
                             </div>
                             </img>
@@ -1827,7 +1826,7 @@
                             </a>
                         </div> -->
                         <div class="menu-item">
-                            <a class="menu-link" href="html/demo1/account/home/user-profile.html">
+                            <a class="menu-link" href="#">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-profile-circle">
                                     </i>
@@ -1836,6 +1835,17 @@
                                     My Profile
                                 </span>
                             </a>
+                        </div>
+                        <div class="menu-item">
+                            <Link class="menu-link" :href="route('company.edit', { id: 1 })">
+                                <span class="menu-icon">
+                                    <i class="ki-filled ki-briefcase">
+                                    </i>
+                                </span>
+                                <span class="menu-title">
+                                    My Company
+                                </span>
+                            </Link>
                         </div>
                         <!-- <div class="menu-item" data-menu-item-offset="-50px, 0" data-menu-item-placement="left-start"
                             data-menu-item-placement-rtl="right-start" data-menu-item-toggle="dropdown"
@@ -1997,7 +2007,7 @@
                                                 src="/assets/media/flags/saudi-arabia.svg" />
                                         </span>
                                         <span class="menu-title">
-                                            Arabic(Saudi)
+                                            Arabic (Saudi)
                                         </span>
                                     </a>
                                 </div>

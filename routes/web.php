@@ -9,6 +9,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
+use App\Http\Controllers\CompanyController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -38,7 +39,11 @@ Route::middleware([
     });
 
     Route::prefix('company')->group(function () {
-        Route::get('/edit',                     [CompanyController::class, 'index'])->name('company.list');
+        Route::get('/edit/{id}',                [CompanyController::class, 'edit'])->name('company.edit');
+        Route::post('/api/update/{id}',         [CompanyController::class, 'update']);
+        Route::get('/api/latest', function () {
+            return response()->json(['company' => \App\Models\Company::first()]);
+        })->name('company.latest');
     });
 
     Route::prefix('client')->group(function () {

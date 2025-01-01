@@ -100,6 +100,22 @@ CREATE TABLE `mst_products` (
     FOREIGN KEY (`mst_client_id`) REFERENCES `mst_client`(`id`) ON DELETE SET NULL
 );
 
+CREATE TABLE `mst_company` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `address` VARCHAR(255) NOT NULL,
+    `phone` VARCHAR(255) NOT NULL,
+    `email` VARCHAR(255) NOT NULL UNIQUE,
+    `website` VARCHAR(255) NULL,
+    `logo` VARCHAR(255) NULL,
+    `created_by` INT NOT NULL,
+    `updated_by` INT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
+);
+
 CREATE TABLE `transaction_logs` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     `transaction_id` BIGINT UNSIGNED NULL,
@@ -115,3 +131,4 @@ CREATE TABLE `transaction_logs` (
     FOREIGN KEY (`transaction_id`) REFERENCES `transactions`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 );
+
