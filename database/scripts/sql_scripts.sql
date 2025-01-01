@@ -17,11 +17,15 @@ CREATE TABLE `mst_client` (
     `contact_person` VARCHAR(255) NOT NULL,
     `contact_person_phone_number` VARCHAR(255) NOT NULL,
     `mst_client_type_id` INT NOT NULL,
+    `is_customer` BOOL DEFAULT FALSE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `created_by` VARCHAR(255) NOT NULL,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` VARCHAR(255) NOT NULL
 );
+
+-- alter table mst_client add column is_customer BOOL DEFAULT FALSE;
+ALTER TABLE `mst_client` ADD COLUMN `is_customer` BOOL DEFAULT FALSE AFTER `mst_client_type_id`;
 
 -- mst_address
 CREATE TABLE `mst_address` (

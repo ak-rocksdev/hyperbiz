@@ -508,23 +508,36 @@
                         </div>
 
                         <!-- Client Type -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">
-                                Client Type
-                                <span class="ms-1 text-danger">
-                                    *
-                                </span>
-                            </label>
-                            <select
-                                class="select"
-                                name="mst_client_type_id"
-                                v-model="form.mst_client_type_id"
-                            >
-                                <option value="" disabled selected>Select Client Type</option>
-                                <option v-for="(name, id) in clientTypes" :key="id" :value="id">
-                                    {{ name }}
-                                </option>
-                            </select>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label max-w-60 mb-2">
+                                    Client Type
+                                    <span class="ms-1 text-danger">
+                                        *
+                                    </span>
+                                </label>
+                                <select
+                                    class="select"
+                                    name="mst_client_type_id"
+                                    v-model="form.mst_client_type_id"
+                                >
+                                    <option value="" disabled selected>Select Client Type</option>
+                                    <option v-for="(name, id) in clientTypes" :key="id" :value="id">
+                                        {{ name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label max-w-60 mb-4">
+                                    Is a Customer
+                                    <span class="ms-1 text-danger">
+                                        *
+                                    </span>
+                                </label>
+                                <label class="switch switch-lg">
+                                    <input class="order-2" v-model="form.is_customer" type="checkbox" />
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Client Phone Number -->

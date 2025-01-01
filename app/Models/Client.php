@@ -37,6 +37,7 @@ class Client extends Model
         'contact_person',
         'contact_person_phone_number',
         'mst_client_type_id',
+        'is_customer',
         'created_by',
         'updated_by',
     ];

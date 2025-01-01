@@ -2,16 +2,14 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ref, onMounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Inertia } from '@inertiajs/inertia';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const { props } = usePage();
-const client = ref({ ...props.client });
-const clientTypes = ref({ ...props.clientTypes });
+const company = ref({ ...props.company });
 
-const updateClient = () => {
-    axios.put(`/client/api/update/${client.value.id}`, client.value)
+const updateCompany = () => {
+    axios.put(`/company/api/update/${company.value.id}`, company.value)
         .then(response => {
             Swal.fire({
                 toast: true,
@@ -27,7 +25,7 @@ const updateClient = () => {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.response.data.message || 'An error occurred while updating the client.',
+                text: error.response.data.message || 'An error occurred while updating the company.',
             });
             console.error(error);
         });
@@ -35,10 +33,10 @@ const updateClient = () => {
 </script>
 
 <template>
-    <AppLayout title="Edit Client">
+    <AppLayout title="Edit Company">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Edit Client
+                Edit Company
             </h2>
         </template>
 
@@ -47,85 +45,39 @@ const updateClient = () => {
                 <div class="card card-grid min-w-full">
                     <div class="card-header gap-5">
                         <h3 class="card-title">
-                            Edit Client
+                            Edit Company
                         </h3>
                     </div>
-                    <form class="card-body" @submit.prevent="updateClient">
+                    <form class="card-body" @submit.prevent="updateCompany">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                             <!-- First Column -->
                             <div class="grid grid-cols-2 gap-5 p-5">
                                 <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Client Name</label>
+                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Company Name</label>
                                     <input
                                         class="input"
-                                        placeholder="Enter Client Name"
+                                        placeholder="Enter Company Name"
                                         type="text"
-                                        v-model="client.client_name"
+                                        v-model="company.name"
                                     />
                                 </div>
                                 <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Client Phone</label>
+                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Company Phone</label>
                                     <input
                                         class="input"
-                                        placeholder="Client Phone"
+                                        placeholder="Company Phone"
                                         type="text"
-                                        v-model="client.client_phone_number"
+                                        v-model="company.phone"
                                     />
                                 </div>
                                 <div>
                                     <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Email</label>
                                     <input
                                         class="input"
-                                        placeholder="Enter Client Email"
+                                        placeholder="Enter Company Email"
                                         type="email"
-                                        v-model="client.email"
+                                        v-model="company.email"
                                     />
-                                </div>
-                                <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Contact Person</label>
-                                    <input
-                                        class="input"
-                                        placeholder="Enter Contact Person"
-                                        type="text"
-                                        v-model="client.contact_person"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Contact Person Phone</label>
-                                    <input
-                                        class="input"
-                                        placeholder="Enter Contact Person Phone"
-                                        type="text"
-                                        v-model="client.contact_person_phone_number"
-                                    />
-                                </div>
-                                <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Client Type</label>
-                                    <select
-                                        class="select"
-                                        v-model="client.mst_client_type_id"
-                                    >
-                                        <option disabled value="">Select Client Type</option>
-                                        <option
-                                            v-for="(name, id) in clientTypes"
-                                            :key="id"
-                                            :value="id"
-                                        >
-                                            {{ name }}
-                                        </option>
-                                    </select>
-                                </div>
-                                <!-- create is customer -->
-                                <div class="mb-4">
-                                    <label class="form-label max-w-60 mb-4">
-                                        Is a Customer
-                                        <span class="ms-1 text-danger">
-                                            *
-                                        </span>
-                                    </label>
-                                    <label class="switch switch-lg">
-                                        <input class="order-2" v-model="client.is_customer" :checked="client.is_customer" type="checkbox" />
-                                    </label>
                                 </div>
                             </div>
 
@@ -137,7 +89,7 @@ const updateClient = () => {
                                         class="input"
                                         placeholder="Enter Address"
                                         type="text"
-                                        v-model="client.address.address"
+                                        v-model="company.address.address"
                                     />
                                 </div>
                                 <div>
@@ -146,7 +98,7 @@ const updateClient = () => {
                                         class="input"
                                         placeholder="Enter City"
                                         type="text"
-                                        v-model="client.address.city_name"
+                                        v-model="company.address.city_name"
                                     />
                                 </div>
                                 <div>
@@ -155,7 +107,7 @@ const updateClient = () => {
                                         class="input"
                                         placeholder="Enter State"
                                         type="text"
-                                        v-model="client.address.state_name"
+                                        v-model="company.address.state_name"
                                     />
                                 </div>
                                 <div>
@@ -164,7 +116,7 @@ const updateClient = () => {
                                         class="input"
                                         placeholder="Enter Country"
                                         type="text"
-                                        v-model="client.address.country_name"
+                                        v-model="company.address.country_name"
                                     />
                                 </div>
                             </div>
@@ -172,7 +124,7 @@ const updateClient = () => {
 
                         <!-- Footer Buttons -->
                         <div class="flex justify-between px-5 pb-5">
-                            <Link href="/client/list" class="btn btn-light">
+                            <Link href="/company/list" class="btn btn-light">
                                 Back
                             </Link>
                             <button type="submit" class="btn btn-primary">

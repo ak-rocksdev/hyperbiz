@@ -34,7 +34,11 @@ Route::middleware([
     })->name('dashboard');
 
     Route::prefix('user')->group(function () {
-        Route::get('/list',         [UserController::class, 'index'])->name('user.list');
+        Route::get('/list',                     [UserController::class, 'index'])->name('user.list');
+    });
+
+    Route::prefix('company')->group(function () {
+        Route::get('/edit',                     [CompanyController::class, 'index'])->name('company.list');
     });
 
     Route::prefix('client')->group(function () {

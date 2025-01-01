@@ -50,6 +50,7 @@ class ClientController extends Controller
                 'address' => $client->address,
                 'phone_number' => $client->client_phone_number,
                 'register_at' => Carbon::parse($client->created_at)->format('d M Y - H:i'),
+                'is_customer' => $client->is_customer,
             ];
         });
 
@@ -86,6 +87,7 @@ class ClientController extends Controller
             'name' => $client->client_name,
             'email' => $client->email,
             'client_type' => $client->clientType->client_type,
+            'is_customer' => $client->is_customer,
             'address' => $client->address,
             'phone_number' => $client->client_phone_number,
             'contact_person' => $client->contact_person,
@@ -109,6 +111,7 @@ class ClientController extends Controller
                 'email' => $client->email,
                 'phone_number' => $client->client_phone_number,
                 'client_type' => $client->clientType->client_type ?? null,
+                'is_customer' => $client->is_customer,
                 'contact_person' => $client->contact_person ?? null,
                 'contact_person_phone_number' => $client->contact_person_phone_number ?? null,
                 'address' => $client->address ? [
@@ -131,6 +134,7 @@ class ClientController extends Controller
             'client_phone_number' => 'required|string|max:20',
             'contact_person' => 'required|string|max:255',
             'contact_person_phone_number' => 'required|string|max:20',
+            'is_customer' => 'required|boolean',
         ], [
             'client_name.required' => 'The client name is required.',
             'email.required' => 'A valid email address is required.',
@@ -172,6 +176,7 @@ class ClientController extends Controller
             'client_name' => $client->client_name,
             'email' => $client->email,
             'mst_client_type_id' => $client->mst_client_type_id,
+            'is_customer' => $client->is_customer,
             'mst_address_id' => $client->mst_address_id,
             'address' => [
                 'address' => $client->address->address ?? '',
@@ -202,6 +207,7 @@ class ClientController extends Controller
             'contact_person' => 'nullable|string|max:255',
             'contact_person_phone_number' => 'nullable|string|max:20',
             'mst_client_type_id' => 'required|exists:mst_client_type,id',
+            'is_customer' => 'required|boolean',
         ]);
 
         // Validate address-related fields

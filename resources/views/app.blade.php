@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ config('app.name') }}</title>
 
         <!-- Metronic -->
         <!-- <meta content="follow, index" name="robots"/> -->

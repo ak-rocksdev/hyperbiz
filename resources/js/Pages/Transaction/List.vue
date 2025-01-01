@@ -1,9 +1,18 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Head, Link, router } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
-    import { ref, watch, computed } from 'vue';
+    import { ref, watch, computed, watchEffect } from 'vue';
     import Swal from 'sweetalert2';
+
+    // set reactive variable to check the dark mode
+    const darkMode = ref(false);
+
+    // watch for changes in the data-theme-mode attribute
+    watch(() => document.documentElement.getAttribute('data-theme-mode'), (themeMode) => {
+        darkMode.value = themeMode == 'dark';
+        console.log('Dark Mode:', darkMode.value);
+    });
 
     const form = ref({
         mst_client_id: '',
@@ -307,12 +316,12 @@
                         <div class="flex flex-col gap-1 py-5 px-5 relative">
                             <!-- create overlay icon for background this element using absolute position for icon <i class="ki-solid ki-entrance-left me-2 text-green-200"></i> position on the left -->
                             <span class="text-7xl absolute start-2 -translate-y-1/2 font-semibold text-gray-900 top-1/2 z-0">
-                                <i class="ki-solid ki-entrance-left me-2 text-orange-100"></i>
+                                <i class="ki-solid ki-entrance-left me-2" :class="!darkMode ? 'text-orange-100' : 'text-orange-900'"></i>
                             </span>
-                            <span class="text-3xl font-semibold text-gray-900 z-10">
+                            <span class="text-3xl font-semibold text-gray-900" style="z-index: 1;">
                                 {{ formatCurrency(totalPurchaseValue) }}
                             </span>
-                            <span class="text-2sm font-normal text-gray-700 z-10">
+                            <span class="text-2sm font-normal text-gray-700" style="z-index: 1;">
                                 Total Purchases Value
                             </span>
                         </div>
@@ -324,10 +333,10 @@
                             <span class="text-7xl absolute start-2 -translate-y-1/2 font-semibold text-gray-900 top-1/2 z-0">
                                 <i class="ki-solid ki-exit-left me-2 text-green-100"></i>
                             </span>
-                            <span class="text-3xl font-semibold text-gray-900 z-10">
+                            <span class="text-3xl font-semibold text-gray-900" style="z-index: 1;">
                                 {{ formatCurrency(totalSellValue) }}
                             </span>
-                            <span class="text-2sm font-normal text-gray-700 z-10">
+                            <span class="text-2sm font-normal text-gray-700" style="z-index: 1;">
                                 Total Sales Value
                             </span>
                         </div>
@@ -677,7 +686,7 @@
                                 <p class="!text-cyan-900 font-bold">{{ selectedTransaction.grand_total }}</p>
                             </div>
                         </div>
-                        <div class="p-5 mb-10 bg-white border-gray-300 border rounded-xl shadow-lg space-y-2 sm:py-4 sm:flex sm:items-start sm:space-y-0 sm:space-x-6">
+                        <div class="p-5 mb-10 border-gray-300 border rounded-xl shadow-lg space-y-2 sm:py-4 sm:flex sm:items-start sm:space-y-0 sm:space-x-6">
                             <div class="mb-5">
                                 <img :src="'https://picsum.photos/500'" alt="Product Image" class="sm:w-full lg:max-w-[200px] h-auto rounded shadow-lg" />
                                 <!-- <p v-else class="!text-gray-500">No image available</p> -->
@@ -685,28 +694,28 @@
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 <div class="mb-3">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Client</label>
-                                    <p class="!text-gray-500">{{ selectedTransaction.client_name }}</p>
+                                    <p class="dark:text-gray-100 text-gray-700">{{ selectedTransaction.client_name }}</p>
                                 </div>
                                 <div class="w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Date</label>
-                                    <p class="!text-gray-500 text-sm">{{ selectedTransaction.transaction_date }}</p>
+                                    <p class="dark:text-gray-100 text-gray-700 text-sm">{{ selectedTransaction.transaction_date }}</p>
                                 </div>
                                 <!-- transaction type -->
                                 <div class="mb-3 w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Type</label>
                                     <span class="capitalize">
                                         <span v-if="selectedTransaction.transaction_type == 'sell'">
-                                            <i class="ki-solid ki-entrance-left me-1 text-green-500"></i> {{ selectedTransaction.transaction_type }}
+                                            <i class="ki-solid ki-entrance-left me-1 text-green-500"></i><span class="dark:text-white text-gray-700 ms-1">{{ selectedTransaction.transaction_type }}</span>
                                         </span>
                                         <span v-else>
-                                            <i class="ki-solid ki-exit-left me-1 text-orange-500"></i> {{ selectedTransaction.transaction_type }}
+                                            <i class="ki-solid ki-exit-left me-1 text-orange-500"></i><span class="dark:text-white text-gray-700 ms-1">{{ selectedTransaction.transaction_type }}</span>
                                         </span>
                                     </span>
                                 </div>
                                 <!-- show transaction_code -->
                                 <div class="w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Code</label>
-                                    <p class="!text-gray-500">{{ selectedTransaction.transaction_code }}</p>
+                                    <p class="dark:text-gray-100 text-gray-700">{{ selectedTransaction.transaction_code }}</p>
                                 </div>
                             </div>
                         </div>
