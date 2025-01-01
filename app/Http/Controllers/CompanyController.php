@@ -67,7 +67,7 @@ class CompanyController extends Controller
             'phone' => $company->phone,
             'website' => $company->website,
             'logo' => $company->logo,
-            'register_at' => Carbon::parse($company->created_at)->format('d M Y - H:i')
+            'created_at' => Carbon::parse($company->created_at)->format('d M Y - H:i')
         ];
 
         return Inertia::render('Company/Detail', [
@@ -191,9 +191,9 @@ class CompanyController extends Controller
 
         if (!$companyDirty) {
             return response()->json([
-                'success' => true,
+                'success' => false,
                 'message' => 'No changes detected.',
-            ], 200);
+            ], 201);
         }
 
         return response()->json([

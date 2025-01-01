@@ -29,7 +29,6 @@
 
     // Get the company logo from the props
     const companyLogo = computed(() => {
-        console.log('Company Logo:', page.props);
         const logo = page.props.company?.logo;
         return logo ? `/storage/${logo}` : null;
     });

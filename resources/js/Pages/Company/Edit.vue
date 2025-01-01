@@ -44,7 +44,9 @@
                     text: response.data.message,
                 });
 
-                router.visit({ name: 'company.edit' });
+                if(response.data.success === true) {
+                    router.visit(route('company.detail', { id: company.value.id }));
+                }
             })
             .catch((error) => {
                 console.error(error);

@@ -1837,7 +1837,7 @@
                             </a>
                         </div>
                         <div class="menu-item">
-                            <Link class="menu-link" :href="route('company.edit', { id: 1 })">
+                            <Link class="menu-link" :href="route('company.detail', { id: 1 })">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-briefcase">
                                     </i>

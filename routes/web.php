@@ -41,9 +41,7 @@ Route::middleware([
     Route::prefix('company')->group(function () {
         Route::get('/edit/{id}',                [CompanyController::class, 'edit'])->name('company.edit');
         Route::post('/api/update/{id}',         [CompanyController::class, 'update']);
-        Route::get('/api/latest', function () {
-            return response()->json(['company' => \App\Models\Company::first()]);
-        })->name('company.latest');
+        Route::get('/detail/{id}',              [CompanyController::class, 'detail'])->name('company.detail');
     });
 
     Route::prefix('client')->group(function () {
