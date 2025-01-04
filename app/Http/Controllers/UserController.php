@@ -85,6 +85,8 @@ class UserController extends Controller
                 'id' => $user->id,
                 'email' => $user->email,
                 'name' => $user->name,
+                'profile_photo_path' => $user->profile_photo_path,
+                'profile_photo_url' => $user->profile_photo_url,
                 'created_at' => Carbon::parse($user->created_at)->format('d M Y - H:i'),
             ];
         });

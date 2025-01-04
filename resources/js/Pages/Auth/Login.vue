@@ -109,9 +109,9 @@
                         <span class="text-2sm text-gray-700 me-1.5">
                             Need an account?
                         </span>
-                        <a class="text-2sm link" href="/register">
+                        <Link class="text-2sm link" :href="'/register'">
                             Sign up
-                        </a>
+                        </Link>
                     </div>
                 </div>
                 <!-- <div class="grid grid-cols-2 gap-2.5">

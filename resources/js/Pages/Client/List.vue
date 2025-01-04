@@ -252,17 +252,17 @@
                                             <th class="w-[185px]">
                                                 <span class="sort">
                                                     <span class="sort-label">
-                                                        Phone
+                                                        Location
                                                     </span>
                                                     <span class="sort-icon">
                                                     </span>
                                                 </span>
                                             </th>
                                             <!-- location -->
-                                            <th class="w-[185px]">
+                                            <th class="w-[185px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
-                                                        Location
+                                                        Total Sales Value
                                                     </span>
                                                     <span class="sort-icon">
                                                     </span>
@@ -271,7 +271,7 @@
                                             <th class="min-w-[180px] w-[200px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
-                                                        Registered At
+                                                        Total Purchase Value
                                                     </span>
                                                     <span class="sort-icon">
                                                     </span>
@@ -309,6 +309,9 @@
                                                         <span class="text-2sm text-gray-700 font-normal">
                                                             {{ client.email }}
                                                         </span>
+                                                        <span class="text-2sm text-gray-700 font-normal">
+                                                            {{ client.phone_number }}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -316,9 +319,6 @@
                                                 <span class="badge badge-outline badge-success">
                                                     {{ client.client_type }}
                                                 </span>
-                                            </td>
-                                            <td>
-                                                {{ client.phone_number }}
                                             </td>
                                             <td>
                                                 <span v-if="client.address">
@@ -329,7 +329,10 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">
-                                                {{ client.register_at }}
+                                                {{ client.sell_value }}
+                                            </td>
+                                            <td class="text-center">
+                                                {{ client.purchase_value }}
                                             </td>
                                             <td class="text-center">
                                                 <div class="menu flex-inline justify-center" data-menu="true">

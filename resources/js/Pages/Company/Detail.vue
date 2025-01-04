@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 
 const { props } = usePage();
 const company = ref({ ...props.company });
-const logoFile = ref(null);
+
 const logoPreview = ref(company.value.logo ? `/storage/${company.value.logo}` : null);
 </script>
 
@@ -60,7 +60,7 @@ const logoPreview = ref(company.value.logo ? `/storage/${company.value.logo}` : 
                                     </span>
                                     <!-- visit link -->
                                     <a :href="company.website" target="_blank" class="btn btn-link btn-sm">
-                                        <i class="ki-filled ki-paper-clip me-2"></i>
+                                        <i class="ki-filled ki-arrow-up-right me-2"></i>
                                         Visit
                                     </a>
                                 </td>
@@ -86,13 +86,8 @@ const logoPreview = ref(company.value.logo ? `/storage/${company.value.logo}` : 
                                     Address
                                 </td>
                                 <td class="py-3 text-gray-700 text-2sm font-normal">
-                                    {{ company.address || 'You have no an address yet' }}
+                                    {{ company.address }}
                                 </td>
-                                <!-- <td class="py-3 text-center">
-                                    <a class="btn btn-link btn-sm" href="#">
-                                        Add
-                                    </a>
-                                </td> -->
                             </tr>
                         </table>
                     </div>

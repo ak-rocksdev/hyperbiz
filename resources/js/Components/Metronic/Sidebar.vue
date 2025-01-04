@@ -65,7 +65,7 @@
                 <!-- Sidebar Menu -->
                 <div class="menu flex flex-col grow gap-0.5" data-menu="true" data-menu-accordion-expand-all="false"
                     id="sidebar_menu">
-                    <Link :class="['menu-item', isActive('/dashboard') ? 'active' : '']" :href="isActive('/dashboard') ? 'javascript:void(0)' : route('dashboard')">
+                    <Link :class="['menu-item', isActive('/dashboard') ? 'active' : '']" :href="isActive('/dashboard') ? '#' : route('dashboard')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -82,9 +82,7 @@
                             Menu
                         </span>
                     </div>
-                    <Link
-                        :class="['menu-item', isActive('/user*') ? 'active' : '']"
-                        :href="isActive('/user*') ? null : route('user.list')">
+                    <Link :class="['menu-item', isActive('/user*') ? 'active' : '']" :href="isActive('/user/list') ? '#' : route('user.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -98,7 +96,7 @@
                         </div>
                     </Link>
                     <!-- Client -->
-                    <Link :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client*') ? 'javascript:void(0)' : route('client.list')">
+                    <Link :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client/list') ? '#' : route('client.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -111,7 +109,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction/list') ? 'javascript:void(0)' : route('transaction.list')">
+                    <Link :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction/list') ? '#' : route('transaction.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -122,7 +120,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand*') ? 'javascript:void(0)' : route('brand.list')">
+                    <Link :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand/list') ? '#' : route('brand.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -146,7 +144,7 @@
                         </div>
                     </Link>
                     
-                    <Link :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category*') ? '#' : route('product-category.list')">
+                    <Link :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category/list') ? '#' : route('product-category.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">

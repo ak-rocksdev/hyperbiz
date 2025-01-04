@@ -10,6 +10,7 @@ use App\Models\ClientType;
 use App\Models\Address;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Number;
 
 class ClientController extends Controller
 {
@@ -39,6 +40,7 @@ class ClientController extends Controller
         $totalSearchResults = $clientsQuery->count();
 
         $clients = $clientsQuery->paginate($perPage);
+        
 
         // Map paginated data for the frontend
         $data = $clients->map(function ($client) {
@@ -51,6 +53,8 @@ class ClientController extends Controller
                 'phone_number' => $client->client_phone_number,
                 'register_at' => Carbon::parse($client->created_at)->format('d M Y - H:i'),
                 'is_customer' => $client->is_customer,
+                'sell_value' => Number::currency($client->getTotalSell->sum('grand_total'), in: 'IDR', locale: 'id'),
+                'purchase_value' => Number::currency($client->getTotalPurchase->sum('grand_total'), in: 'IDR', locale: 'id'),
             ];
         });
 
@@ -207,15 +211,15 @@ class ClientController extends Controller
             'contact_person' => 'nullable|string|max:255',
             'contact_person_phone_number' => 'nullable|string|max:20',
             'mst_client_type_id' => 'required|exists:mst_client_type,id',
-            'is_customer' => 'required|boolean',
+            'is_customer' => 'required|in:1,0',
         ]);
 
         // Validate address-related fields
         $validatedAddress = $request->validate([
-            'address.address' => 'required|max:255',
-            'address.city_name' => 'required|max:255',
-            'address.state_name' => 'required|max:255',
-            'address.country_name' => 'required|max:255',
+            'address.address' => 'nullable|max:255',
+            'address.city_name' => 'nullable|max:255',
+            'address.state_name' => 'nullable|max:255',
+            'address.country_name' => 'nullable|max:255',
         ]);
 
         // Fetch client model

@@ -25,6 +25,12 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+// create URL to run Artisan command to create storage link
+Route::get('/storage-link', function () {
+    Artisan::call('storage:link');
+    return 'Storage link created';
+});
+
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),

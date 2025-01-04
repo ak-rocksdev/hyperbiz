@@ -89,8 +89,8 @@
     <Head title="Register" />
 
     <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg">
-        <div class="card max-w-[370px] w-full">
-            <form @submit.prevent="submit" class="card-body flex flex-col gap-5 p-10" id="sign_up_form">
+        <div class="card sm:max-w-[300px] md:max-w-[700px] w-full">
+            <form @submit.prevent="submit" class="card-body grid sm:grid-cols-1 md:grid-cols-2 gap-5 p-10" id="sign_up_form">
                 <div class="flex items-center gap-2">
                     <span class="border-t border-gray-200 w-full"></span>
                     <img alt="or" class="size-20 shrink-0" src="/assets/media/app/bkpi_square_logo.png"/>
@@ -104,9 +104,9 @@
                         <span class="text-2sm text-gray-700 me-1.5">
                             Already have an Account ?
                         </span>
-                        <a class="text-2sm link" :href="route('login')">
+                        <Link class="text-2sm link" :href="route('login')">
                             Sign In
-                        </a>
+                        </Link>
                     </div>
                 </div>
                 <!-- <div class="grid grid-cols-2 gap-2.5">
@@ -184,14 +184,19 @@
                     <input class="checkbox checkbox-sm" name="check" type="checkbox" />
                     <span class="checkbox-label">
                         I accept
-                        <a class="text-2sm link" href="#">
+                        <Link class="text-2sm link" :href="'/terms-of-service'">
                             Terms & Conditions
-                        </a>
+                        </Link>
                     </span>
                 </label>
                 <button class="btn btn-primary flex justify-center grow" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                     Sign up
                 </button>
+                <div class="flex justify-center mt-4">
+                    <Link href="/privacy-policy" class="text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
+                        Read Privacy Policy
+                    </Link>
+                </div>
             </form>
         </div>
     </div>

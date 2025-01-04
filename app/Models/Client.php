@@ -65,5 +65,28 @@ class Client extends Model
     {
         return $this->hasMany(Product::class, 'mst_client_id');
     }
+
+    /**
+     * Get transaction total value where 'transaction_type' is purchase or sell
+     */
+    public function getTotalSell()
+    {
+        return $this->hasMany(Transaction::class, 'mst_client_id')
+            ->where('transaction_type', 'sell');
+    }
+
+    public function getTotalPurchase()
+    {
+        return $this->hasMany(Transaction::class, 'mst_client_id')
+            ->where('transaction_type', 'purchase');
+    }
+
+    /**
+     * Relationship with Transaction
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'mst_client_id');
+    }
 }
 

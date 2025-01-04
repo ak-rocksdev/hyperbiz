@@ -204,7 +204,10 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="user.id"/>
                                             </td>
                                             <td class="flex items-center gap-4">
-                                                <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
+                                                <div v-if="user.profile_photo_path" class="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border border-teal-400 shrink-0">
+                                                    <img :src="'/storage/' + user.profile_photo_path" :alt="user.name" class="w-full h-full object-cover">
+                                                </div>
+                                                <div v-else class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
                                                     <!-- Display initials -->
                                                     {{ user.name.split(' ').length > 1 
                                                         ? user.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 

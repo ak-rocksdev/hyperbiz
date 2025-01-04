@@ -1,9 +1,18 @@
 <script setup>
     import { Head, Link, router } from '@inertiajs/vue3';
+    import { usePage } from '@inertiajs/vue3';
+    import { ref } from 'vue';
 
     const logout = () => {
         router.post('/logout');
     };
+
+    // get page props
+    const { props } = usePage();
+
+    // get user from page props
+    const page = ref(props);
+    console.log(page.value);
 </script>
 
 <template>
@@ -1788,21 +1797,20 @@
                 data-menu-item-placement="bottom-end" data-menu-item-placement-rtl="bottom-start"
                 data-menu-item-toggle="dropdown" data-menu-item-trigger="click|lg:click">
                 <div class="menu-toggle btn btn-icon rounded-full">
-                    <img alt="" class="size-9 rounded-full border-2 border-success shrink-0"
-                        src="/assets/media/avatars/300-2.png">
-                    </img>
+                    <img alt="" class="size-9 rounded-full border-2 border-success shrink-0 object-cover"
+                        :src="page.auth.user.profile_photo_url">
                 </div>
                 <div class="menu-dropdown menu-default light:border-gray-300 w-screen max-w-[350px]">
                     <div class="flex items-center justify-between px-5 py-1.5 gap-1.5">
                         <div class="flex items-center gap-2">
-                            <img alt="" class="size-9 rounded-full border-2 border-success"
-                                src="/assets/media/avatars/300-2.png">
+                            <img alt="" class="size-9 rounded-full border-2 border-success object-cover"
+                                :src="page.auth.user.profile_photo_url">
                             <div class="flex flex-col gap-1.5">
                                 <span class="text-sm text-gray-800 font-semibold leading-none">
-                                    {{ $page.props.auth.user.name }}
+                                    {{ page.auth.user.name }}
                                 </span>
-                                <a :href="$page.props.company.website" target="_blank" class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
-                                    {{ $page.props.company.name }}
+                                <a :href="page.company.website" target="_blank" class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
+                                    {{ page.company.name }}
                                 </a>
                             </div>
                             </img>
@@ -1826,7 +1834,7 @@
                             </a>
                         </div> -->
                         <div class="menu-item">
-                            <a class="menu-link" href="#">
+                            <Link class="menu-link" :href="'/user/profile'">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-profile-circle">
                                     </i>
@@ -1834,7 +1842,7 @@
                                 <span class="menu-title">
                                     My Profile
                                 </span>
-                            </a>
+                            </Link>
                         </div>
                         <div class="menu-item">
                             <Link class="menu-link" :href="route('company.detail', { id: 1 })">

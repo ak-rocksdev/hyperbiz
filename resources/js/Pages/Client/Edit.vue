@@ -1,14 +1,16 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Inertia } from '@inertiajs/inertia';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const { props } = usePage();
 const client = ref({ ...props.client });
 const clientTypes = ref({ ...props.clientTypes });
+watch(() => client.value.is_customer, (newValue) => {
+    console.log('Is Customer:', newValue);
+});
 
 const updateClient = () => {
     axios.put(`/client/api/update/${client.value.id}`, client.value)
@@ -119,12 +121,11 @@ const updateClient = () => {
                                 <div class="mb-4">
                                     <label class="form-label max-w-60 mb-4">
                                         Is a Customer
-                                        <span class="ms-1 text-danger">
-                                            *
-                                        </span>
+                                        <span class="ms-1 text-danger">*</span>
                                     </label>
                                     <label class="switch switch-lg">
-                                        <input class="order-2" v-model="client.is_customer" :checked="client.is_customer" type="checkbox" />
+                                        <input class="order-2" type="checkbox" v-model="client.is_customer"
+                                            :true-value="1" :false-value="0" />
                                     </label>
                                 </div>
                             </div>

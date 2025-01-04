@@ -323,7 +323,13 @@
                                             </td>
                                             <!-- Price -->
                                             <td class="py-2 px-4 text-right w-[150px]">
-                                                <span>{{ formatCurrency(product.price) }}</span>
+                                                <input
+                                                    class="input text-center"
+                                                    type="number"
+                                                    v-model="product.price"
+                                                    placeholder="Price"
+                                                    min="1"
+                                                />
                                             </td>
                                             <!-- Line Total -->
                                             <td class="py-2 px-4 text-right w-[150px]">
