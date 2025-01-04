@@ -7,6 +7,9 @@ use Laravel\Fortify\Contracts\LogoutResponse;
 use App\Actions\Fortify\CustomLogoutResponse;
 use Inertia\Inertia;
 use App\Models\Company;
+use App\Traits\LogsSystemChanges;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        foreach (glob(app_path('Models') . '/*.php') as $modelFile) {
+            $modelName = 'App\\Models\\' . basename($modelFile, '.php');
+
+            if (class_exists($modelName) && !is_a($modelName, SystemLog::class, true)) {
+                $modelName::booting(function ($model) {
+                    $model->useTrait(LogsSystemChanges::class);
+                });
+            }
+        }
+
         Inertia::share([
             // Auth data
             'auth' => function () {

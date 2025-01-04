@@ -10,6 +10,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\LogController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -93,4 +94,6 @@ Route::middleware([
         Route::get('/api/detail/{id}',  [ProductCategoryController::class, 'detailApi']);
         Route::post('/api/store',       [ProductCategoryController::class, 'store']);
     });
+
+    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
 });

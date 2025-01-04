@@ -12,7 +12,6 @@
 
     // get user from page props
     const page = ref(props);
-    console.log(page.value);
 </script>
 
 <template>

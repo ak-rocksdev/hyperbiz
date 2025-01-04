@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Auth;
+use App\Traits\LogsSystemChanges;
 
 class Product extends Model
 {
+    use LogsSystemChanges;
+
     protected static function boot()
     {
         parent::boot();

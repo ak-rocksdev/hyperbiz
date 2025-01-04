@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsSystemChanges;
 
 class TransactionLog extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsSystemChanges;
 
     /**
      * The table associated with the model.

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsSystemChanges;
 
 class ProductCategory extends Model
 {
+    use LogsSystemChanges;
 
     protected static function boot()
     {

@@ -10,10 +10,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
+use App\Traits\LogsSystemChanges;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, LogsSystemChanges;
 
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
