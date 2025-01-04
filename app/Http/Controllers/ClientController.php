@@ -16,6 +16,7 @@ class ClientController extends Controller
 {
     public function list(Request $request)
     {
+        // return dd($request->all());
         $search = $request->get('search', null);
         $perPage = $request->get('per_page', 5); // Default to 5 items per page
 
@@ -40,7 +41,6 @@ class ClientController extends Controller
         $totalSearchResults = $clientsQuery->count();
 
         $clients = $clientsQuery->paginate($perPage);
-        
 
         // Map paginated data for the frontend
         $data = $clients->map(function ($client) {

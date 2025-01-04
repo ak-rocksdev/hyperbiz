@@ -13,25 +13,28 @@ class LogController extends Controller
      */
     public function index(Request $request)
     {
+        $search = $request->get('search', null);
+        // return dd($search);
+        $perPage = $request->get('per_page', 5);
         // Query the SystemLog with relationships
         $logsQuery = SystemLog::with('user')->orderByDesc('created_at');
 
         // Apply search filter
-        if ($request->has('search') && !empty($request->search)) {
-            $logsQuery->where(function ($query) use ($request) {
-                $query->where('action', 'like', '%' . $request->search . '%')
-                    ->orWhere('model_type', 'like', '%' . $request->search . '%')
-                    ->orWhereHas('user', function ($subQuery) use ($request) {
-                        $subQuery->where('name', 'like', '%' . $request->search . '%');
+        if ($search) {
+            $logsQuery->where(function ($query) use ($search) {
+                $query->where('action', 'like', '%' . $search . '%')
+                    ->orWhere('model_type', 'like', '%' . $search . '%')
+                    ->orWhereHas('user', function ($subQuery) use ($search) {
+                        $subQuery->where('name', 'like', '%' . $search . '%');
                     });
             });
         }
 
         // Paginate logs with the requested per-page value or default to 10
-        $logs = $logsQuery->paginate($request->get('per_page', 10));
+        $logs = $logsQuery->paginate($perPage);
 
         // map the logs, and format the created_at date using readable format
-        $logs->getCollection()->transform(function ($log) {
+        $data = $logs->map(function ($log) {
             return [
                 'id' => $log->id,
                 'user' => $log->user,
@@ -45,7 +48,7 @@ class LogController extends Controller
 
         // Share pagination and search data with the front-end
         return Inertia::render('Logs/Index', [
-            'logs' => $logs->items(), // Send paginated items
+            'logs' => $data, // Send paginated items
             'pagination' => [
                 'total' => $logs->total(),
                 'per_page' => $logs->perPage(),

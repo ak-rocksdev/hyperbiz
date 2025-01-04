@@ -1,17 +1,31 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { ref, watch } from 'vue';
-import { usePage, router } from '@inertiajs/vue3';
-import Pagination from '@/Components/Pagination.vue';
+import { ref, watch, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
 
-const { props } = usePage();
+const props = defineProps({
+    pagination: {
+        current_page: 1,
+        last_page: 1,
+        per_page: 5,
+        total: 0,
+    },
+    logs: {
+        type: Array,
+        required: true,
+    },
+});
 
-const logs = ref(props.logs || []);
-const pagination = ref(props.pagination || {});
 
-const currentPage = ref(pagination.value.current_page || 1);
-const perPageOptions = ref([10, 25, 50, 100]);
-const selectedPerPage = ref(pagination.value.per_page || 10);
+
+const currentPage       = ref(props.pagination.current_page || 1);
+const perPageOptions    = ref([5, 10, 25, 50, 100]);
+const lastPage          = ref(props.pagination.last_page || 1);
+const totalResults      = ref(props.pagination.total || 0);
+const perPage           = ref(props.pagination.per_page || 5);
+const logs              = ref(props.logs || []);
+
+console.log('Props:', props.pagination.per_page);
 
 const searchQuery = ref('');
 
@@ -24,20 +38,99 @@ function formatJSON(jsonString) {
     }
 }
 
-// Fetch logs
-const fetchLogs = () => {
-    router.get(
-        route('logs.index'),
-        {
-            ...(currentPage.value ? { page: currentPage.value } : {}),
-            ...(searchQuery.value ? { search: searchQuery.value } : {}),
-        },
-        { preserveState: true, replace: true }
-    );
+const clearSearch = () => {
+    searchQuery.value = '';
+    fetchLogs();
 };
 
-// Watchers
-watch([currentPage, selectedPerPage], fetchLogs);
+const goToPage = (page) => {
+    if (typeof page === 'number' && page !== currentPage.value) {
+        currentPage.value = page;
+    }
+};
+
+const changePerPage = (event) => {
+    const newPerPage = Number(event.target.value);
+    if (newPerPage !== perPage.value) {
+        perPage.value = newPerPage;
+        currentPage.value = 1; // Reset to first page when perPage changes
+    }
+};
+
+// Fetch logs
+const fetchLogs = () => {
+    const queryParams = {
+        per_page: perPage.value,
+        ...(searchQuery.value ? { search: searchQuery.value } : { page: currentPage.value }),
+    };
+
+    router.get(route('logs.index'), queryParams, {
+        preserveState: true,
+        replace: true
+    });
+};
+
+watch([currentPage, perPage], () => {
+    fetchLogs();
+});
+
+watch(
+    () => props.pagination,
+    (newPagination) => {
+        currentPage.value = newPagination.current_page || 1;
+        lastPage.value = newPagination.last_page || 1;
+        totalResults.value = newPagination.total || 0;
+        perPage.value = newPagination.per_page || 5;
+    }, {
+        immediate: true
+    }
+);
+
+watch(
+    () => props.logs,
+    (newLogs) => {
+        logs.value = newLogs || [];
+    }, {
+        immediate: true
+    }
+);
+
+const visiblePages = computed(() => {
+    const maxVisible = 5;
+    const pages = [];
+
+    if (lastPage.value <= maxVisible) {
+        for (let i = 1; i <= lastPage.value; i++) {
+            pages.push(i);
+        }
+    } else {
+        if (currentPage.value <= 3) {
+            pages.push(1, 2, 3, 4, '...', lastPage.value);
+        } else if (currentPage.value > lastPage.value - 3) {
+            pages.push(
+                1,
+                '...',
+                lastPage.value - 3,
+                lastPage.value - 2,
+                lastPage.value - 1,
+                lastPage.value
+            );
+        } else {
+            pages.push(
+                1,
+                '...',
+                currentPage.value - 1,
+                currentPage.value,
+                currentPage.value + 1,
+                '...',
+                lastPage.value
+            );
+        }
+    }
+
+    return pages;
+});
+
 </script>
 
 <template>
@@ -120,14 +213,40 @@ watch([currentPage, selectedPerPage], fetchLogs);
                                 </div>
                                 
                                 <!-- Pagination -->
-                                <Pagination :currentPage="currentPage" 
-                                    :lastPage="pagination.last_page"
-                                    :totalResults="pagination.total" 
-                                    :perPageOptions="perPageOptions"
-                                    :perPage="selectedPerPage" 
-                                    @update:page="(page) => (currentPage = page)"
-                                    @update:perPage="(perPage) => (selectedPerPage = perPage)"
-                                />
+                                <div class="card-footer flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium w-full justify-between items-center">
+                                    <div class="flex justify-between items-center gap-2">
+                                        Show
+                                        <select class="select select-sm w-16" :value="perPage" @change="changePerPage">
+                                            <option v-for="option in perPageOptions" :key="option" :value="option">
+                                                {{ option }}
+                                            </option>
+                                        </select>
+                                        per page
+                                    </div>
+                                    <span v-if="totalResults > 0" class="text-slate-500 text-sm ms-4">
+                                        Total: {{ totalResults }} Result{{ totalResults === 1 ? '' : 's' }}
+                                    </span>
+                                    <div class="pagination flex items-center gap-2">
+                                        <!-- Previous button -->
+                                        <button class="btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
+                                            <i class="ki-outline ki-black-left"></i>
+                                        </button>
+
+                                        <!-- Page buttons -->
+                                        <span v-for="(page, index) in visiblePages"
+                                            :key="index"
+                                            class="btn"
+                                            :class="{ 'active': page === currentPage }"
+                                            @click="goToPage(page)">
+                                            {{ page }}
+                                        </span>
+
+                                        <!-- Next button -->
+                                        <button class="btn" :disabled="currentPage >= lastPage" @click="goToPage(currentPage + 1)">
+                                            <i class="ki-outline ki-black-right"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
