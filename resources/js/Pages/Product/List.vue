@@ -1,11 +1,12 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Link } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
     import { ref } from 'vue';
     import Swal from 'sweetalert2';
 
     const form = ref({});
+    const errors = ref({});
     const selectedProduct = ref(null);
 
     const props = defineProps({
@@ -35,6 +36,8 @@
     };
 
     const createProduct = async (formData) => {
+        errors.value = {};
+
         try {
             await axios.post('/products/api/store', formData)
                 .then(response => {
@@ -48,7 +51,34 @@
                         text: response.data.message
                     });
 
-                    window.location.reload();
+                    KTModal.init();
+
+                    const modalEl = document.querySelector('#modal_create_product');
+                    const modal = KTModal.getInstance(modalEl);
+
+                    modal.hide();
+                    
+                    if (document.querySelector('.modal-backdrop')) {
+                        document.querySelector('.modal-backdrop').remove();
+                    }
+
+                    router.get(route('product.list'));
+                }).catch(error => {
+                    // Swal toast
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: error.response.data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                    });
+                    if (error.response && error.response.status === 422) {
+                        errors.value = error.response.data.errors;
+                    } else {
+                        console.error('An unexpected error occurred:', error);
+                    }
                 });
         } catch (error) {
             console.error("Error creating product:", error);
@@ -307,6 +337,15 @@
                         </button>
                     </div>
                     <div class="modal-body p-10">
+                        <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
+                            <p class="font-bold mb-3">Error!</p>
+                            <ul class="list-disc pl-5 text-sm">
+                                <li v-for="(messages, field) in errors" :key="field">
+                                    <span v-for="(message, index) in messages" :key="index">{{ message }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
                         <!-- Category -->
                         <div class="mb-4">
                             <label class="form-label mb-1">Category <span class="text-red-500 ms-1">*</span></label>
@@ -344,8 +383,7 @@
                             <label class="form-label mb-1">Client <span class="text-red-500 ms-1">*</span></label>
                             <select 
                                 class="select" 
-                                v-model="form.mst_client_id" 
-                                required>
+                                v-model="form.mst_client_id">
                                 <option value="" disabled>Select Client</option>
                                 <option 
                                     v-for="(client_name, id) in clients" 
@@ -364,7 +402,7 @@
                                 v-model="form.name" 
                                 type="text" 
                                 placeholder="Enter product name" 
-                                required />
+                            />
                         </div>
 
                         <!-- Product Description -->
@@ -421,7 +459,7 @@
                                         type="number" 
                                         step="0.01" 
                                         placeholder="Enter product cost price" 
-                                        required />
+                                    />
                                 </div>
                             </div>
 
@@ -438,19 +476,19 @@
                                         type="number" 
                                         step="0.01" 
                                         placeholder="Enter product price" 
-                                        required />
+                                    />
                                 </div>
                             </div>
 
                             <!-- Stock -->
                             <div class="mb-4">
-                                <label class="form-label mb-1">Stock <span class="text-red-500 ms-1">*</span></label>
+                                <label class="form-label mb-1">Stock</label>
                                 <input 
                                     class="input" 
                                     v-model="form.stock_quantity" 
                                     type="number" 
                                     placeholder="Enter available stock" 
-                                    required />
+                                />
                             </div>
 
                             <!-- Weight -->
@@ -474,8 +512,7 @@
                                 <label class="form-label mb-1">Status</label>
                                 <select 
                                     class="select" 
-                                    v-model="form.is_active" 
-                                    required>
+                                    v-model="form.is_active">
                                     <option value="1">Active</option>
                                     <option value="0">Inactive</option>
                                 </select>

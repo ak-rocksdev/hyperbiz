@@ -180,27 +180,28 @@ const visiblePages = computed(() => {
                                         <thead>
                                             <tr class="bg-gray-100">
                                                 <th class="p-2">Date</th>
-                                                <th class="p-2">User</th>
-                                                <th class="p-2">Model</th>
                                                 <th class="p-2 max-w-[200px]">Changes</th>
-                                                <th class="p-2">Agent</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr v-for="log in logs" :key="log.id">
                                                 <td class="p-2 min-w-[200px]">
-                                                    {{ log.created_at }}
+                                                    <div class="flex flex-col">
+                                                        <span class="mb-1">{{ log.created_at }}</span>
+                                                        <span>{{ log.user?.name || 'System' }}</span>
+                                                    </div>
                                                 </td>
-                                                <td class="p-2 min-w-[200px]">
-                                                    {{ log.user?.name || 'System' }}
-                                                </td>
-                                                <td class="p-2">{{ log.model_type }}</td>
-                                                <td class="p-2 max-w-[300px]">
-                                                    <p class="bg-gray-100 p-2 rounded">{{ formatJSON(log.changed_fields) }}</p>
-                                                </td>
-                                                <!-- agent -->
                                                 <td class="p-2">
-                                                    <p class="bg-gray-100 p-2 rounded">{{ log.user_agent }}</p>
+                                                    <div class="flex flex-col">
+                                                        <span class="p-2 rounded mb-3">
+                                                            <div class="badge badge-secondary mb-2 me-3">Changes</div><span>{{ log.model_type }}</span>
+                                                            <div>{{ formatJSON(log.changed_fields) }}</div>
+                                                        </span>
+                                                        <span class=" p-2 rounded">
+                                                            <div class="badge badge-secondary mb-2">Agent :</div>
+                                                            <div>{{ log.user_agent }}</div>
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <tr v-if="logs.length === 0">

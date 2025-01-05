@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Number;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -101,25 +102,42 @@ class ProductController extends Controller
             'sku' => 'nullable|string|max:100|unique:mst_products,sku',
             'barcode' => 'nullable|string|max:100',
             'price' => 'required|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'required|numeric|min:0',
             'currency' => 'nullable|string|max:3',
-            'stock_quantity' => 'required|integer|min:0',
+            'stock_quantity' => 'nullable|integer|min:0',
             'min_stock_level' => 'nullable|integer|min:0',
             'mst_product_category_id' => 'nullable|exists:mst_product_categories,id',
             'mst_brand_id' => 'nullable|exists:mst_brands,id',
             'mst_client_id' => 'required|exists:mst_client,id',
-            'weight' => 'nullable|numeric|min:0',
+            'weight' => 'required|numeric|min:0',
             'dimensions' => 'nullable|string',
             'image_url' => 'nullable|string',
-            'is_active' => 'nullable|boolean',
+            'is_active' => 'required|boolean',
         ]);
 
-        Product::create($validatedData);
+        DB::beginTransaction();
+        try {
+            if (!isset($validatedData['stock_quantity'])) {
+                $validatedData['stock_quantity'] = 0;
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product created successfully.',
-        ], 201);
+            Product::create($validatedData);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product created successfully.',
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create product.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

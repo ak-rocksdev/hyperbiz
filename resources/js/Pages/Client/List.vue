@@ -124,6 +124,10 @@
 
                     modal.hide();
 
+                    if (document.querySelector('.modal-backdrop')) {
+                        document.querySelector('.modal-backdrop').remove();
+                    }
+
                     // Refresh the clients list
                     router.visit(route('client.list'), { search: '', page: '' }, { preserveState: true });
                 })

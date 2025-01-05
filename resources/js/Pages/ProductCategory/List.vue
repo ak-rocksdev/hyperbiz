@@ -1,8 +1,10 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
-    import { ref } from 'vue';
-    import { Link } from '@inertiajs/vue3';
+    import { ref, onMounted } from 'vue';
+    import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
+    import Swal from 'sweetalert2';
+    import { KTModal } from '../../../metronic/core/components/modal';
 
     // Data and Props
     const props = defineProps({
@@ -11,8 +13,9 @@
     });
 
     // State
-    const form = ref({}); // Used for creating/updating categories
-    const selectedProductCategory = ref(null); // Used for viewing/editing a specific category
+    const form = ref({});
+    const errors = ref({});
+    const selectedProductCategory = ref(null);
 
     // Methods
     const viewProductCategoryDetail = async (id) => {
@@ -26,15 +29,125 @@
     };
 
     const submitForm = () => {
+        errors.value = {};
+
         try {
             axios.post('/product-category/api/store', form.value)
                 .then((response) => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message
+                    });
+
                     form.value = {}; // Reset the form
                     document.querySelector('#modal_create_new_category').dispatchEvent(new Event('modal-dismiss')); // Close modal
-                    window.location.reload(); // Refresh the category list
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
+                    
+                    KTModal.init();
+
+                    const modalEl = document.querySelector('#modal_create_new_category');
+                    const modal = KTModal.getInstance(modalEl);
+
+                    modal.hide();
+                    
+                    if (document.querySelector('.modal-backdrop')) {
+                        document.querySelector('.modal-backdrop').remove();
+                    }
+
+                    router.get(route('product-category.list'));
+                }).catch(error => {
+                    // Swal toast
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: error.response.data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                    });
+                    if (error.response && error.response.status === 422) {
+                        errors.value = error.response.data.errors;
+                    } else {
+                        console.error('An unexpected error occurred:', error);
+                    }
+                });
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const resetForm = () => {
+        form.value = {};
+    };
+
+    onMounted(() => {
+        const modalElement = document.getElementById('modal_edit_product_category');
+        
+        if (modalElement) {
+            const modalInstance = KTModal.getInstance(modalElement);
+
+            if (modalInstance) {
+                modalElement.addEventListener('hide', () => {
+                    resetForm();
+                });
+            }
+        }
+
+        KTModal.init();
+    });
+
+    const updateForm = () => {
+        errors.value = {};
+
+        try {
+            axios.put(`/product-category/api/update/${form.value.id}`, form.value)
+                .then((response) => {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message
+                    });
+
+                    form.value = {}; // Reset the form
+                    document.querySelector('#modal_edit_product_category').dispatchEvent(new Event('modal-dismiss')); // Close modal
+                    
+                    KTModal.init();
+
+                    const modalEl = document.querySelector('#modal_edit_product_category');
+                    const modal = KTModal.getInstance(modalEl);
+
+                    modal.hide();
+                    
+                    if (document.querySelector('.modal-backdrop')) {
+                        document.querySelector('.modal-backdrop').remove();
+                    }
+
+                    router.get(route('product-category.list'));
+                }).catch(error => {
+                    // Swal toast
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: error.response.data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                    });
+                    if (error.response && error.response.status === 422) {
+                        errors.value = error.response.data.errors;
+                    } else {
+                        console.error('An unexpected error occurred:', error);
+                    }
                 });
         } catch (error) {
             console.error('Error:', error);
@@ -193,7 +306,7 @@
                                                             <div class="menu-separator">
                                                             </div>
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/category/edit/' + category.id">
+                                                                <span class="menu-link" data-modal-toggle="#modal_edit_product_category" @click="form = category">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-pencil">
                                                                         </i>
@@ -201,7 +314,7 @@
                                                                     <span class="menu-title">
                                                                         Edit
                                                                     </span>
-                                                                </Link>
+                                                                </span>
                                                             </div>
                                                             <div class="menu-separator">
                                                             </div>
@@ -245,7 +358,7 @@
             </div>
 
             <!-- Create New Product Category Modal -->
-            <div id="modal_create_new_category" data-modal="true" class="modal" aria-hidden="true">
+            <div id="modal_create_new_category" data-modal="true" class="modal">
                 <div class="modal-dialog">
                     <div class="modal-content max-w-[600px] top-[10%]">
                         <div class="modal-header">
@@ -256,7 +369,7 @@
                             <form @submit.prevent="submitForm">
                                 <div class="mb-4">
                                     <label for="category_name" class="block text-sm font-medium text-gray-700">Name</label>
-                                    <input type="text" id="category_name" v-model="form.name" class="input input-bordered w-full mt-1" required />
+                                    <input type="text" id="category_name" v-model="form.name" class="input input-bordered w-full mt-1" />
                                 </div>
                                 
                                 <!-- Parent Category -->
@@ -272,6 +385,43 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-modal-dismiss="modal_create_new_category">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Create</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- create Edit Product Category Modal -->
+            <div id="modal_edit_product_category" data-modal="true" class="modal">
+                <div class="modal-dialog">
+                    <div class="modal-content max-w-[600px] top-[10%]">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Product Category</h5>
+                            <button type="button" class="btn-close" data-modal-dismiss="modal_create_new_category" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form @submit.prevent="updateForm">
+                                <div class="mb-4">
+                                    <label for="category_name" class="block text-sm font-medium text-gray-700">Name</label>
+                                    <input type="text" id="category_name" v-model="form.name" class="input input-bordered w-full mt-1" />
+                                </div>
+
+                                <input type="hidden" v-model="form.id" />
+                                
+                                <!-- Parent Category -->
+                                <div class="mb-4">
+                                    <label for="category_parent" class="block text-sm font-medium text-gray-700">Parent Category</label>
+                                    <select id="category_parent" v-model="form.parent_id" class="select select-bordered w-full mt-1">
+                                        <option value="">Select Parent Category</option>
+                                        <option v-for="category in productCategories" :key="category.id" :value="category.id">{{ category.name }}</option>
+                                    </select>
+                                </div>
+
+                                <!-- Additional form fields as needed -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-modal-dismiss="modal_create_new_category">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Update</button>
                                 </div>
                             </form>
                         </div>

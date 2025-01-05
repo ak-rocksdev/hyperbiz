@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ProductCategory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ProductCategoryController extends Controller
 {
@@ -54,11 +55,55 @@ class ProductCategoryController extends Controller
             'parent_id' => 'nullable|exists:mst_product_categories,id',
         ]);
 
-        $productCategory = ProductCategory::create($validatedData);
+        DB::beginTransaction();
+        try {
+            $productCategory = ProductCategory::create($validatedData);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'ProductCategory created successfully.',
-        ], 201);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product Category created successfully.',
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create product category',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $productCategory = ProductCategory::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'id' => 'required|exists:mst_product_categories,id',
+            'name' => 'required|string|max:255|unique:mst_product_categories,name,' . $productCategory->id,
+            'parent_id' => 'nullable|exists:mst_product_categories,id|different:id',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $productCategory->update($validatedData);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product Category updated successfully.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product category',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

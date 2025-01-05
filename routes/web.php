@@ -93,6 +93,7 @@ Route::middleware([
         Route::get('/list',             [ProductCategoryController::class, 'list'])->name('product-category.list');
         Route::get('/api/detail/{id}',  [ProductCategoryController::class, 'detailApi']);
         Route::post('/api/store',       [ProductCategoryController::class, 'store']);
+        Route::put('/api/update/{id}',  [ProductCategoryController::class, 'update']);
     });
 
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');

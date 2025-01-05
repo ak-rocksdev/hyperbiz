@@ -1,8 +1,9 @@
 <script setup>
     import AppLayout from '@/Layouts/AppLayout.vue';
     import { ref } from 'vue';
-    import { Link, usePage } from '@inertiajs/vue3';
+    import { Link, router } from '@inertiajs/vue3';
     import axios from 'axios';
+    import Swal from 'sweetalert2';
 
     // Data and Props
     const props = defineProps({
@@ -31,7 +32,28 @@
                 .then((response) => {
                     form.value = {}; // Reset the form
                     document.querySelector('#modal_create_new_brand').dispatchEvent(new Event('modal-dismiss')); // Close modal
-                    window.location.reload(); // Refresh the brand list
+                    router.get(route('brand.list'));
+                    
+                    // close modal
+                    const modalEl = document.querySelector('#modal_create_new_brand');
+                    const modal = KTModal.getInstance(modalEl);
+
+                    modal.hide();
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message
+                    });
+
+                    // check if element with class "modal-backdrop" is exists, if available remove it
+                    if (document.querySelector('.modal-backdrop')) {
+                        document.querySelector('.modal-backdrop').remove();
+                    }
                 })
                 .catch((error) => {
                     console.error('Error:', error);
