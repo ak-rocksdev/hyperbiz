@@ -419,7 +419,6 @@
                                             :value="product.id"
                                             :checked="form.products.some(p => p.id === product.id)"
                                             @change="toggleProductSelection(product)"
-                                            :disabled="product.stock_quantity == 0"
                                             />
                                     </td>
                                     <td class="py-2 px-4">

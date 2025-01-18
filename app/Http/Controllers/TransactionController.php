@@ -28,7 +28,7 @@ class TransactionController extends Controller
         $search = $request->input('search');
         $perPage = $request->input('per_page', 5);
 
-        $transactionsQuery = Transaction::with(['client', 'details.product']);
+        $transactionsQuery = Transaction::with(['client', 'details.product'])->orderByDesc('created_at');
 
         if ($search) {
             $transactionsQuery->where(function ($query) use ($search) {
@@ -240,76 +240,85 @@ class TransactionController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'mst_client_id' => 'required|exists:mst_client,id',
-            'transaction_type' => 'required|in:sell,purchase',
-            'products' => 'required|array|min:1',
-            'products.*.id' => 'required|exists:mst_products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-            'products.*.price' => 'required|numeric|min:1',
-            'transaction_date' => 'required|date',
-            'expedition_fee' => 'nullable|numeric|min:0',
-            'grand_total' => 'numeric',
-        ], [], [
-            'products.*.quantity' => 'product quantity',
-            'products.*.id' => 'product ID',
-            'products.*.price' => 'product price',
-        ]);
+        // Validate request data
+        $validatedData = $request->validate(
+            [
+                'mst_client_id' => 'required|exists:mst_client,id',
+                'transaction_type' => 'required|in:sell,purchase',
+                'products' => 'required|array|min:1',
+                'products.*.id' => 'required|exists:mst_products,id',
+                'products.*.quantity' => 'required|integer|min:1',
+                'products.*.price' => 'required|numeric|min:1',
+                'transaction_date' => 'required|date',
+                'expedition_fee' => 'nullable|numeric|min:0',
+                'grand_total' => 'numeric',
+            ],
+            [],
+            [
+                'products.*.quantity' => 'product quantity',
+                'products.*.id' => 'product ID',
+                'products.*.price' => 'product price',
+            ]
+        );
 
-        // check foreach product if stock is enough
+        // Fetch all products at once
+        $productIds = collect($validatedData['products'])->pluck('id');
+        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+        // Check stock sufficiency and active status
         foreach ($validatedData['products'] as $product) {
-            $productModel = Product::findOrFail($product['id']);
+            $productModel = $products[$product['id']];
 
-            if ($productModel->stock_quantity < $product['quantity']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Insufficient stock for product: {$productModel->name}",
-                    'errors' => [
-                        "Not enough stock for product: {$productModel->name}",
-                    ],
-                ], 442);
-            }
-        }
-
-        // check for product is_active
-        foreach ($validatedData['products'] as $product) {
-            $productModel = Product::findOrFail($product['id']);
-
-            if ($productModel->is_active == 0) {
+            if (!$productModel->is_active) {
                 return response()->json([
                     'success' => false,
                     'message' => "Product is not active: {$productModel->name}",
-                    'errors' => [
-                        "Product is not active: {$productModel->name}",
-                    ],
-                ], 442);
+                    'errors' => ["Product is not active: {$productModel->name}"],
+                ], 422);
+            }
+
+            if (
+                $validatedData['transaction_type'] === 'sell' &&
+                $productModel->stock_quantity < $product['quantity']
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Insufficient stock for product: {$productModel->name}",
+                    'errors' => ["Not enough stock for product: {$productModel->name}"],
+                ], 422);
             }
         }
-    
-        // Save the transaction
-        $transaction = Transaction::create([
-            'transaction_code' => strtoupper(substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 6)),
-            'transaction_type' => $validatedData['transaction_type'],
-            'mst_client_id' => $validatedData['mst_client_id'],
-            'transaction_date' => $validatedData['transaction_date'] ?? now(),
-            'grand_total' => $validatedData['grand_total'],
-            'expedition_fee' => $validatedData['expedition_fee'] ?? 0,
-            'status' => 'pending'
-        ]);
-    
-        // Save transaction details
-        foreach ($validatedData['products'] as $product) {
-            TransactionDetail::create([
-                'transaction_id' => $transaction->id,
-                'mst_product_id' => $product['id'],
-                'quantity' => $product['quantity'],
-                'price' => $product['price'],
-            ]);
-    
-            // Decrease stock quantity
-            Product::where('id', $product['id'])->decrement('stock_quantity', $product['quantity']);
-        }
 
+        // Wrap database operations in a transaction
+        DB::transaction(function () use ($validatedData, $products) {
+            // Create the transaction
+            $transaction = Transaction::create([
+                'transaction_code' => strtoupper(substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 6)),
+                'transaction_type' => $validatedData['transaction_type'],
+                'mst_client_id' => $validatedData['mst_client_id'],
+                'transaction_date' => $validatedData['transaction_date'] ?? now(),
+                'grand_total' => $validatedData['grand_total'],
+                'expedition_fee' => $validatedData['expedition_fee'] ?? 0,
+                'status' => 'pending',
+            ]);
+
+            // Save transaction details and adjust stock
+            foreach ($validatedData['products'] as $product) {
+                $productModel = $products[$product['id']];
+
+                $transaction->details()->create([
+                    'mst_product_id' => $productModel->id,
+                    'quantity' => $product['quantity'],
+                    'price' => $product['price'],
+                ]);
+
+                // Adjust stock
+                $adjustment = $validatedData['transaction_type'] === 'sell' ? -$product['quantity'] : $product['quantity'];
+                $productModel->increment('stock_quantity', $adjustment);
+            }
+        });
+
+        // Return success response
         return response()->json([
             'success' => true,
             'message' => 'Transaction created successfully.',
@@ -323,16 +332,14 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::findOrFail($id);
 
-        // Validate the incoming data
         $validatedData = $request->validate([
-            'id' => 'required|exists:transactions,id',
             'transaction_code' => 'required|size:6',
             'transaction_type' => [
                 'required',
                 'in:sell,purchase',
                 function ($attribute, $value, $fail) use ($transaction) {
                     if ($value !== $transaction->transaction_type) {
-                        $fail('The Transaction Type cannot be changed, to revert use the "Remove" transaction.');
+                        $fail('The Transaction Type cannot be changed. Use the "Remove" transaction to revert.');
                     }
                 },
             ],
@@ -342,113 +349,62 @@ class TransactionController extends Controller
             'products' => 'required|array|min:1',
             'products.*.id' => 'required|exists:mst_products,id',
             'products.*.quantity' => 'required|integer|min:1',
-            'products.*.stock_quantity' => 'required|integer',
-            'products.*.total_price' => 'required|numeric|min:0',
+            'products.*.price' => 'required|numeric|min:0',
             'transaction_date' => 'required|date',
-            'status' => ['required', Rule::in(array_column(TransactionStatus::cases(), 'value'))],
-        ], [], [
-            'transaction_type' => 'Transaction Type',
-            'products.*.quantity' => 'Product Quantity',
-            'products.*.id' => 'Product ID',
-            'products.*.price' => 'Product Price',
+            'status' => 'required|in:pending,completed,canceled',
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Record the original data for comparison
-            $originalTransaction = $transaction->toArray();
-            $originalDetails = $transaction->details->map(function ($detail) {
-                return [
-                    'mst_product_id' => $detail->mst_product_id,
-                    'quantity' => $detail->quantity,
-                    'price' => $detail->price,
-                ];
-            })->toArray();
+            // Validate stock sufficiency for "sell"
+            if ($validatedData['transaction_type'] === 'sell') {
+                foreach ($validatedData['products'] as $product) {
+                    $productModel = Product::findOrFail($product['id']);
+                    $originalQuantity = $transaction->details->firstWhere('mst_product_id', $product['id'])->quantity ?? 0;
+                    $availableStock = $productModel->stock_quantity + $originalQuantity;
 
-            // Revert stock changes of the previous transaction
-            foreach ($transaction->details as $detail) {
-                $product = Product::findOrFail($detail->mst_product_id);
-                $product->increment('stock_quantity', $detail->quantity);
-            }
-
-            // Update stock for the new transaction
-            foreach ($validatedData['products'] as $product) {
-                $productModel = Product::findOrFail($product['id']);
-
-                // Check if sufficient stock exists after decrement
-                if ($productModel->stock_quantity < $product['quantity']) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Insufficient stock for product: {$productModel->name}",
-                        'errors' => [
-                            "Not enough stock for product: {$productModel->name}",
-                        ],
-                    ], 442);
-                }
-
-                // Decrement stock
-                $productModel->decrement('stock_quantity', $product['quantity']);
-            }
-
-            // Update the transaction
-            $transaction->update($validatedData);
-
-            // Update transaction details
-            $transaction->details()->delete(); // Remove old details
-            foreach ($validatedData['products'] as $product) {
-                $productModel = Product::findOrFail($product['id']);
-
-                $transaction->details()->create([
-                    'mst_product_id' => $product['id'],
-                    'quantity' => $product['quantity'],
-                    'price' => $productModel->price,
-                ]);
-            }
-
-            // Record the updated data for comparison
-            $updatedTransaction = $transaction->toArray();
-            $updatedDetails = $validatedData['products'];
-
-            // Prepare changes to log
-            $changedFields = [];
-            foreach ($originalTransaction as $key => $value) {
-                if (isset($updatedTransaction[$key]) && $updatedTransaction[$key] != $value) {
-                    $changedFields[$key] = ['old' => $value, 'new' => $updatedTransaction[$key]];
-                }
-            }
-
-            $detailChanges = [];
-            foreach ($originalDetails as $originalDetail) {
-                if (!isset($originalDetail['mst_product_id'])) {
-                    continue; // Skip if mst_product_id is not set
-                }
-
-                $updatedDetail = collect($updatedDetails)->firstWhere('id', $originalDetail['mst_product_id']);
-                if ($updatedDetail) {
-                    foreach ($originalDetail as $key => $value) {
-                        if (isset($updatedDetail[$key]) && $updatedDetail[$key] != $value) {
-                            $detailChanges[] = [
-                                'product_id' => $originalDetail['mst_product_id'],
-                                'field' => $key,
-                                'old' => $value,
-                                'new' => $updatedDetail[$key],
-                            ];
-                        }
+                    if ($availableStock < $product['quantity']) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Insufficient stock for product: {$productModel->name}",
+                            'errors' => ["Not enough stock for product: {$productModel->name}"],
+                        ], 422);
                     }
                 }
             }
 
-            // Log the changes
-            $this->logTransactionAction(
-                'update',
-                [
-                    'transaction_changes' => $changedFields,
-                    'detail_changes' => $detailChanges,
-                ],
-                $transaction->id,
-                'Transaction updated with changes logged.'
-            );
+            // Adjust stock levels
+            $this->adjustStock($transaction, $validatedData['products'], $validatedData['transaction_type']);
+
+            // Handle removed products
+            foreach ($transaction->details as $detail) {
+                if (!collect($validatedData['products'])->pluck('id')->contains($detail->mst_product_id)) {
+                    $product = Product::findOrFail($detail->mst_product_id);
+                    $product->increment('stock_quantity', $detail->quantity);
+                }
+            }
+
+            // Recalculate grand total
+            $grandTotal = collect($validatedData['products'])->sum(function ($product) {
+                return $product['price'] * $product['quantity'];
+            });
+
+            // Update transaction
+            $transaction->update([
+                ...$validatedData,
+                'grand_total' => $grandTotal,
+            ]);
+
+            // Update transaction details
+            $transaction->details()->delete();
+            foreach ($validatedData['products'] as $product) {
+                $transaction->details()->create([
+                    'mst_product_id' => $product['id'],
+                    'quantity' => $product['quantity'],
+                    'price' => $product['price'],
+                ]);
+            }
 
             DB::commit();
 
@@ -462,10 +418,61 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update the transaction.',
-                'errors' => [
-                    $e->getMessage(),
-                ],
+                'errors' => [$e->getMessage()],
             ], 500);
+        }
+    }
+
+
+    private function revertStock($transaction)
+    {
+        foreach ($transaction->details as $detail) {
+            $product = Product::findOrFail($detail->mst_product_id);
+
+            if ($transaction->transaction_type === 'sell') {
+                // Reverse the stock decrement for a sell transaction
+                $product->increment('stock_quantity', $detail->quantity);
+            } 
+            // For "purchase", no action is needed to revert stock
+        }
+    }
+
+    private function adjustStock(Transaction $transaction, array $products, string $transactionType)
+    {
+        foreach ($products as $product) {
+            $productModel = Product::findOrFail($product['id']);
+            
+            // Original quantity on the transaction detail (0 if not found)
+            $originalQuantity = $transaction->details
+                ->firstWhere('mst_product_id', $product['id'])
+                ->quantity ?? 0;
+            
+            // Compare the old quantity to the new one
+            // Positive $difference => increase in quantity
+            // Negative $difference => decrease in quantity
+            $difference = $product['quantity'] - $originalQuantity;
+            
+            // For a "sell" transaction, stock goes down; for a "purchase", stock goes up
+            // If $difference is positive for "sell", you're selling more, so stock must decrease by that difference
+            // If $difference is negative for "sell", you're selling fewer, so stock must increase by the absolute value of that difference
+            // The inverse applies for "purchase"
+            $adjustment = $transactionType === 'sell'
+                ? -$difference // Negative means decrement for "sell"
+                : $difference; // Positive means increment for "purchase"
+            
+            // Apply the adjustment to the stock
+            $productModel->increment('stock_quantity', $adjustment);
+        }
+    }
+
+    private function updateTransactionDetails($transaction, array $products)
+    {
+        foreach ($products as $product) {
+            $transaction->details()->create([
+                'mst_product_id' => $product['id'],
+                'quantity' => $product['quantity'],
+                'price' => $product['price'],
+            ]);
         }
     }
 

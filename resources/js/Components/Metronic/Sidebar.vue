@@ -155,7 +155,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/logs') ? 'active' : '']" :href="isActive('/logs') ? '#' : '/logs'">
+                    <Link :class="['menu-item', isActive('/logs*') ? 'active' : '']" :href="isActive('/logs') ? '#' : '/logs'">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
