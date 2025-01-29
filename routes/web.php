@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\TransactionController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\LogController;
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -41,8 +44,14 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
+    Route::resource('roles', RoleController::class);
+
     Route::prefix('user')->group(function () {
         Route::get('/list',                     [UserController::class, 'index'])->name('user.list');
+        Route::get('/detail/{id}',              [UserController::class, 'detail'])->name('user.detail');
+        Route::get('/edit/{id}',                [UserController::class, 'edit'])->name('user.edit');
+        Route::post('/api/store',               [UserController::class, 'store']);
+        Route::post('/api/update/{id}',         [UserController::class, 'update']);
     });
 
     Route::prefix('company')->group(function () {

@@ -32,6 +32,21 @@
         const logo = page.props.company?.logo;
         return logo ? `/storage/${logo}` : null;
     });
+
+    // Check for user required permissions
+    // const requiredPermissions = ['role-list', 'user-list'];
+    const hasRolePermissions = page.props.user?.permissions?.includes('role-list');
+    const hasUserPermissions = page.props.user?.permissions?.includes('user-list');
+    const hasTransactionPermissions = page.props.user?.permissions?.includes('transaction-list');
+    const hasClientPermissions = page.props.user?.permissions?.includes('client-list');
+    const hasProductPermissions = page.props.user?.permissions?.includes('product-list');
+    const hasBrandPermissions = page.props.user?.permissions?.includes('brand-list');
+    const hasLogPermissions = page.props.user?.permissions?.includes('log-list');
+
+    // const hasRequiredPermissions = computed(() => {
+    //     return requiredPermissions.some(permission => page.props.user?.permissions?.includes(permission));
+    // });
+
 </script>
 <template>
     <!-- Sidebar -->
@@ -82,7 +97,21 @@
                             Menu
                         </span>
                     </div>
-                    <Link :class="['menu-item', isActive('/user*') ? 'active' : '']" :href="isActive('/user/list') ? '#' : route('user.list')">
+                    <!--User & Role Management-->
+                    <Link v-if="hasRolePermissions" :class="['menu-item', isActive('/roles*') ? 'active' : '']" :href="isActive('/roles/index') ? '#' : route('roles.index')">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-profile-circle text-lg">
+                                </i>
+                            </span>
+                            <span
+                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Role Management
+                            </span>
+                        </div>
+                    </Link>
+                    <Link v-if="hasUserPermissions" :class="['menu-item', isActive('/user*') ? 'active' : '']" :href="isActive('/user/list') ? '#' : route('user.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -96,7 +125,7 @@
                         </div>
                     </Link>
                     <!-- Client -->
-                    <Link :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client/list') ? '#' : route('client.list')">
+                    <Link v-if="hasClientPermissions" :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client/list') ? '#' : route('client.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -109,7 +138,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction/list') ? '#' : route('transaction.list')">
+                    <Link v-if="hasTransactionPermissions" :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction/list') ? '#' : route('transaction.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -120,7 +149,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand/list') ? '#' : route('brand.list')">
+                    <Link v-if="hasBrandPermissions" :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand/list') ? '#' : route('brand.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -132,7 +161,7 @@
                         </div>
                     </Link>
                     
-                    <Link :class="['menu-item', isActive('/products*') ? 'active' : '']" :href="isActive('/products/list') ? '#' : route('product.list')">
+                    <Link v-if="hasProductPermissions" :class="['menu-item', isActive('/products*') ? 'active' : '']" :href="isActive('/products/list') ? '#' : route('product.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -144,7 +173,7 @@
                         </div>
                     </Link>
                     
-                    <Link :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category/list') ? '#' : route('product-category.list')">
+                    <Link v-if="hasProductPermissions" :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category/list') ? '#' : route('product-category.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -155,7 +184,7 @@
                             </span>
                         </div>
                     </Link>
-                    <Link :class="['menu-item', isActive('/logs*') ? 'active' : '']" :href="isActive('/logs') ? '#' : '/logs'">
+                    <Link v-if="hasLogPermissions" :class="['menu-item', isActive('/logs*') ? 'active' : '']" :href="isActive('/logs') ? '#' : '/logs'">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">

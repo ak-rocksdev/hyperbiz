@@ -7,25 +7,25 @@
 
     // Define props using defineProps
     const props = defineProps({
+        permissions: Object,
         roles: Object,
-        users: Object,
         filters: Object,
         
     });
 
     // Reactive variable to store dynamic user data (if needed)
-    const dynamicUsers = ref([]);
+    const dynamicRoles = ref([]);
 
     const form = ref({});
     const errors = ref({});
 
-    // Fetch users dynamically via API if needed
-    const fetchUsers = async () => {
+    // Fetch roles dynamically via API if needed
+    const fetchRoles = async () => {
         try {
-            const response = await axios.get('/api/users');
-            dynamicUsers.value = response.data.data; // Use response.data if no pagination
+            const response = await axios.get('/api/roles');
+            dynamicRoles.value = response.data.data; // Use response.data if no pagination
         } catch (error) {
-            console.error('Error fetching users:', error);
+            console.error('Error fetching roles:', error);
         }
     };
 
@@ -42,8 +42,8 @@
 
     // Initialize the table with data
     const loadTable = () => {
-        const apiUrl = 'http://localhost:8000/api/users';
-        const element = document.querySelector('#users_table');
+        const apiUrl = 'http://localhost:8000/api/roles';   
+        const element = document.querySelector('#roles_table');
 
         if (!element) {
             console.error('Table element not found!');
@@ -72,18 +72,10 @@
                     title: 'Name',
                     render: (item) => item,
                 },
-                email: {
-                    title: 'Email',
-                    render: (_, data) => data.email,
-                },
-                created_at: {
-                    title: 'Registered At',
-                    render: (item) => item,
-                },
                 action: {
                     title: 'Action',
                     render: (_, data) => `
-                        <a class="btn btn-primary btn-sm" href="/user/${data.id}">
+                        <a class="btn btn-primary btn-sm" href="/role/${data.id}">
                             View Detail
                         </a>
                     `,
@@ -105,29 +97,18 @@
         new KTDataTable(element, dataTableOptions);
     };
 
-    const selectedRoles = ref([]);
-    onMounted(() => {
-        const modalCreateUser = document.querySelector('#modal_create_new_user');
-        if (modalCreateUser) {
-            const modalNewUserForm = KTModal.init(modalCreateUser);
-        } 
-    })
+    const selectedPermissions = ref([]);
     const submitForm = () => {
-        // if (photoInput.value.files && photoInput.value.files.length > 0) {
-        //     form.photo = photoInput.value.files[0];
-        // }
-
+        // form.permissions = selectedPermissions.value;
         try {
             errors.value = {};
-
+            // console.log("selected :", form.value);
             const formData = {
                 name: form.value.name,
-                email: form.value.email,
-                password: form.value.password,
-                roles: selectedRoles.value,
+                permissions: selectedPermissions.value,
             }
-
-            axios.post('/user/api/store', formData)
+            
+            axios.post('/roles', formData)
                 .then(response => {
                     console.log(response.data);
                     Swal.fire({
@@ -140,7 +121,7 @@
                         text: response.data.message
                     });
                     // Close the modal
-                    document.querySelector('#modal_create_new_user').dispatchEvent(new Event('modal-dismiss'));
+                    document.querySelector('#modal_create_new_role').dispatchEvent(new Event('modal-dismiss'));
 
                     // continue action after success using best practice
                     window.location.reload();
@@ -168,49 +149,22 @@
                 timer: 3000,
                 icon: 'error',
                 title: 'Error',
-                text: 'Failed to create new user'
+                text: 'Failed to create new role'
             });
         }
 
         // Perform form submission logic here           
         // console.log('Form submitted with data:', form);
     }
-    // On component mount, load scripts and initialize table
-    // onMounted(async () => {
-    //     try {
-    //         // Load required external script
-    //         await loadScript('/assets/js/core.bundle.js');
-
-    //         // Wait for the document to be ready
-    //         KTDom.ready(() => {
-    //             // loadTable();
-    //             KTDataTable.init()
-
-    //             // Initialzie pending datatables
-    //             KTDataTable.createInstances();
-
-    //             // const datatableEl = document.querySelector('#users_table');
-    //             // const options = {
-    //             //     pageSize: 5,
-    //             // };
-    //             // setTimeout(() => {
-    //             //     const datatable = new KTDataTable(datatableEl, options);
-    //             //     console.log('datatable', datatable);
-                    
-    //             // }, 1000);
-    //         });
-    //     } catch (err) {
-    //         console.error('Failed to load script:', err);
-    //     }
-    // });
+    
 </script>
 
 
 <template>
-    <AppLayout title="User">
+    <AppLayout title="Role">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                User
+                Roles
             </h2>
         </template>
 
@@ -220,7 +174,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header gap-5">
                         <h3 class="card-title">
-                            Users
+                            Roles
                         </h3>
                         <div class="card-toolbar">
                             <div class="flex gap-6">
@@ -228,16 +182,16 @@
                                     <i
                                         class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
                                     </i>
-                                    <input data-datatable-search="#users_table" class="input input-sm ps-8" placeholder="Search Users" value="" />
+                                    <input data-datatable-search="#roles_table" class="input input-sm ps-8" placeholder="Search Roles" value="" />
                                 </div>
-                                <a v-if="$page.props.user?.permissions?.includes('user-create')" class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_user">
-                                    Create User
+                                <a v-if="$page.props.user?.permissions?.includes('role-create')" class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_role">
+                                    Create Role
                                 </a>
                             </div>
                         </div>
                     </div>
                     <div class="card-body">
-                        <div data-datatable="true" data-datatable-state-save="true" id="users_table">
+                        <div data-datatable="true" data-datatable-state-save="true" id="roles_table">
                             <div class="scrollable-x-auto">
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
@@ -248,7 +202,7 @@
                                             <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
                                                 <span class="sort">
                                                     <span class="sort-label">
-                                                        Name
+                                                        Role Name
                                                     </span>
                                                     <span class="sort-icon">
                                                     </span>
@@ -257,7 +211,7 @@
                                             <th class="min-w-[180px] w-[200px] text-center">
                                                 <span class="sort">
                                                     <span class="sort-label">
-                                                        Registered At
+                                                        Permissions
                                                     </span>
                                                     <span class="sort-icon">
                                                     </span>
@@ -275,33 +229,25 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="user in users" :key="user.id">
+                                        <tr v-for="role in roles" :key="role.id">
                                             <td class="text-center">
-                                                <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="user.id"/>
+                                                <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="role.id"/>
                                             </td>
-                                            <td class="flex items-center gap-4">
-                                                <div v-if="user.profile_photo_path" class="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border border-teal-400 shrink-0">
-                                                    <img :src="'/storage/' + user.profile_photo_path" :alt="user.name" class="w-full h-full object-cover">
-                                                </div>
-                                                <div v-else class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-100 text-teal-700 font-bold border border-teal-400 shrink-0">
-                                                    <!-- Display initials -->
-                                                    {{ user.name.split(' ').length > 1 
-                                                        ? user.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('') 
-                                                        : user.name[0].toUpperCase() 
-                                                    }}
-                                                </div>
-                                                <div class="flex flex-col">
+                                            <td class="text-justify">
+                                                <div class="">
                                                     <span
                                                         class="text-md font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer">
-                                                        {{ user.name }}
-                                                    </span>
-                                                    <span class="text-sm text-gray-600">
-                                                        {{ user.email }}
+                                                        {{ role.name }}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td class="text-center">
-                                                {{ user.created_at }}
+                                            <td class="align-center">
+                                                <div class="flex flex-wrap gap-1">
+                                                    <span v-for="permission in role.permissions" :key="permission"
+                                                    class="badge badge-sm badge-pill badge-primary">
+                                                        {{ permission }}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td class="text-center">
                                                 <div class="menu flex-inline justify-center" data-menu="true">
@@ -318,7 +264,7 @@
                                                         <div class="menu-dropdown menu-default w-full max-w-[175px]"
                                                             data-menu-dismiss="true">
                                                             <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/user/' + user.id">
+                                                                <Link class="menu-link" :href="'/role/' + role.id" data-modal-toggle="#modal_view_role">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-search-list">
                                                                         </i>
@@ -330,8 +276,8 @@
                                                             </div>
                                                             <div class="menu-separator">
                                                             </div>
-                                                            <div v-if="$page.props.user?.permissions?.includes('user-edit')" class="menu-item">
-                                                                <a class="menu-link" href="/user/profile">
+                                                            <div v-if="$page.props.user?.permissions?.includes('role-edit')" class="menu-item">
+                                                                <a class="menu-link" data-modal-toggle="#modal_edit_role">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-pencil">
                                                                         </i>
@@ -341,8 +287,8 @@
                                                                     </span>
                                                                 </a>
                                                             </div>
-                                                            <div v-if="$page.props.user?.permissions?.includes('user-create')" class="menu-item">
-                                                                <a class="menu-link" href="#">
+                                                            <div v-if="$page.props.user?.permissions?.includes('role-create')" class="menu-item">
+                                                                <a class="menu-link" href="#" data-modal-toggle="#modal_copy_role">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-copy">
                                                                         </i>
@@ -354,7 +300,7 @@
                                                             </div>
                                                             <div class="menu-separator">
                                                             </div>
-                                                            <div v-if="$page.props.user?.permissions?.includes('user-delete')" class="menu-item">
+                                                            <div v-if="$page.props.user?.permissions?.includes('role-delete')" class="menu-item">
                                                                 <a class="menu-link" href="#">
                                                                     <span class="menu-icon">
                                                                         <i class="ki-filled ki-trash">
@@ -395,18 +341,18 @@
         </div>
         <!-- End of Container -->
     </AppLayout>
-
-    <div class="modal" data-modal="true" id="modal_create_new_user">
+    <!-- Modal Create New Role -->
+    <div class="modal" data-modal="true" id="modal_create_new_role">
         <div class="modal-content max-w-[600px] top-[10%]">
             <form @submit.prevent="submitForm">
                 <div class="modal-header">
                     <h3 class="modal-title">
-                        Add User
+                        Add Role
                     </h3>
-                    <a class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                    <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
                         <i class="ki-outline ki-cross">
                         </i>
-                    </a>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
@@ -418,7 +364,7 @@
                         </ul>
                     </div>
                     <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
-                        <!-- User Name -->
+                        <!-- Role Name -->
                         <div class="mb-4">
                             <label class="form-label max-w-60 mb-2">
                                 Name
@@ -429,71 +375,35 @@
                             <input
                                 class="input"
                                 name="name"
-                                placeholder="Enter User Name"
+                                placeholder="Enter Role Name"
                                 type="text"
                                 v-model="form.name"
                             />
                         </div>
 
-                        <!-- Email -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Email</label>
-                            <input
-                                class="input"
-                                name="email"
-                                placeholder="Enter User Email"
-                                type="email"
-                                v-model="form.email"
-                            />
-                        </div>
-
-                        <!-- Password -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Password</label>
-                            <input
-                                class="input"
-                                name="password"
-                                placeholder="Enter Password"
-                                type="password"
-                                v-model="form.password"
-                            />
-                        </div>
-
-                        <!-- Confirm Password -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Confirm Password</label>
-                            <input
-                                class="input"
-                                name="password_confirmation"
-                                placeholder="Re-enter Password"
-                                type="password"
-                                v-model="form.password_confirmation"
-                            />
-                        </div>
-
-                        <!-- User Roles -->
+                        <!-- Permissions -->
                         <div class="mb-4">
                             <label class="form-label max-w-60 mb-2">
-                                User Roles
+                                Permissions
                                 <span class="ms-1 text-danger">
                                     *
                                 </span>
                             </label>
                             <div class="flex flex-wrap gap-4">
-                                <div v-for="role in roles" :key="role.id" class="flex items-center gap-2">
+                                <div v-for="permission in permissions" :key="permission.id" class="flex items-center gap-2">
                                     <input
-                                        id="`role-${role.id}`"
+                                        id="`permission-${permission.id}`"
                                         type="checkbox"
                                         class="form-check-input h-5 w-5 text-primary rounded border-gray-300 focus:ring focus:ring-primary focus:ring-opacity-50"
-                                        :name="`roles[${role.name}]`"
-                                        :value="role.name"
-                                        v-model="selectedRoles"
+                                        :name="`permissions[${permission.name}]`"
+                                        :value="permission.name"
+                                        v-model="selectedPermissions"
                                     />
                                     <label
-                                        :for="`role-${role.id}`"
+                                        :for="`permission-${permission.id}`"
                                         class="text-sm font-medium text-gray-700 dark:text-gray-300"
                                     >
-                                    {{ role.name }}
+                                    {{ permission.name }}
                                     </label>
                                 </div>
                             </div>
@@ -505,7 +415,7 @@
                         <a class="btn btn-light" data-modal-dismiss="true">
                             Cancel
                         </a>
-                        <button class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary">
                             Submit
                         </button>
                     </div>
@@ -513,4 +423,89 @@
             </form>
         </div>
     </div>
+    <!-- End of Modal Create New Role -->
+    
+    <!-- Modal Edit Role -->
+    <div class="modal" data-modal="true" id="modal_edit_role">
+        <div class="modal-content max-w-[600px] top-[10%]">
+            <form @submit.prevent="submitForm">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        Edit Role
+                    </h3>
+                    <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                        <i class="ki-outline ki-cross">
+                        </i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
+                        <p class="font-bold mb-3">Error!</p>
+                        <ul class="list-disc pl-5 text-sm">
+                            <li v-for="(messages, field) in errors" :key="field">
+                                <span v-for="(message, index) in messages" :key="index">{{ message }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
+                        <!-- Role Name -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Name
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <input
+                                class="input"
+                                name="name"
+                                placeholder="Enter Role Name"
+                                type="text"
+                                v-model="form.name"
+                            />
+                        </div>
+
+                        <!-- Permissions -->
+                        <div class="mb-4">
+                            <label class="form-label max-w-60 mb-2">
+                                Permissions
+                                <span class="ms-1 text-danger">
+                                    *
+                                </span>
+                            </label>
+                            <div class="flex flex-wrap gap-4">
+                                <div v-for="permission in permissions" :key="permission.id" class="flex items-center gap-2">
+                                    <input
+                                        id="`permission-${permission.id}`"
+                                        type="checkbox"
+                                        class="form-check-input h-5 w-5 text-primary rounded border-gray-300 focus:ring focus:ring-primary focus:ring-opacity-50"
+                                        :name="`permissions[${permission.name}]`"
+                                        :value="permission.name"
+                                        v-model="selectedPermissions"
+                                    />
+                                    <label
+                                        :for="`permission-${permission.id}`"
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    >
+                                    {{ permission.name }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-end">
+                    <div class="flex gap-4">
+                        <a class="btn btn-light" data-modal-dismiss="true">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End of Modal Edit Role --> 
 </template>

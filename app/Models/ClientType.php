@@ -20,7 +20,7 @@ class ClientType extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $model->created_by = auth()->id();
+            $model->created_by = auth()->id() ?? "Seeder";
         });
 
         static::updating(function ($model) {

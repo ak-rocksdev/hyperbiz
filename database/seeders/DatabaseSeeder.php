@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        User::factory(50)->create();
         // Predefined client types
         $clientTypes = [
             'Importir',
@@ -52,7 +53,7 @@ class DatabaseSeeder extends Seeder
         // Log the seeded data
         $this->command->info("Seeded {$clients->count()} clients, each with unique addresses and diversified client types.");
 
-        User::factory(50)->create();
+        
         // User::factory()->withPersonalTeam()->create([
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
