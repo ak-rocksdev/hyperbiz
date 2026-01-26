@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\TransactionController;
@@ -41,11 +42,82 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
+        // Get greeting based on server time
+        $hour = now()->hour;
+        if ($hour < 12) {
+            $greeting = 'Good Morning';
+        } elseif ($hour < 17) {
+            $greeting = 'Good Afternoon';
+        } else {
+            $greeting = 'Good Evening';
+        }
+
+        $stats = [
+            'greeting' => $greeting,
+            'total_users' => \App\Models\User::count(),
+            'active_users' => \App\Models\User::where('is_active', true)->count(),
+            'total_customers' => \App\Models\Customer::count(),
+            'total_transactions' => \App\Models\Transaction::count(),
+            'total_products' => \App\Models\Product::count(),
+            'total_brands' => \App\Models\Brand::count(),
+            'total_categories' => \App\Models\ProductCategory::count(),
+            'recent_transactions' => \App\Models\Transaction::with('customer')
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get()
+                ->map(fn($t) => [
+                    'id' => $t->id,
+                    'transaction_code' => $t->transaction_code,
+                    'transaction_type' => $t->transaction_type,
+                    'customer_name' => $t->customer?->client_name ?? 'N/A',
+                    'grand_total' => $t->grand_total ?? 0,
+                    'status' => $t->status,
+                    'transaction_date' => $t->transaction_date ? \Carbon\Carbon::parse($t->transaction_date)->format('d M Y') : '-',
+                ]),
+        ];
+
+        return Inertia::render('Dashboard', [
+            'stats' => $stats,
+        ]);
     })->name('dashboard');
 
-    Route::resource('roles', RoleController::class);
+    // Access Management (Users, Roles, Permissions)
+    Route::prefix('access-management')->group(function () {
+        // Main page - accessible if user has either users.view or roles.view
+        Route::get('/', [RoleController::class, 'index'])->name('access-management.index');
 
+        // Roles API with permission middleware
+        Route::middleware('permission:roles.view')->group(function () {
+            Route::get('/roles/{id}', [RoleController::class, 'show']);
+        });
+        Route::middleware('permission:roles.create')->group(function () {
+            Route::post('/roles', [RoleController::class, 'store']);
+            Route::post('/roles/{id}/duplicate', [RoleController::class, 'duplicate']);
+        });
+        Route::middleware('permission:roles.edit')->group(function () {
+            Route::put('/roles/{id}', [RoleController::class, 'update']);
+        });
+        Route::middleware('permission:roles.delete')->group(function () {
+            Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
+            Route::post('/roles/bulk-delete', [RoleController::class, 'bulkDestroy']);
+        });
+
+        // Permissions API with permission middleware
+        Route::middleware('permission:roles.view')->group(function () {
+            Route::get('/permissions', [PermissionController::class, 'index']);
+        });
+        Route::middleware('permission:roles.create')->group(function () {
+            Route::post('/permissions', [PermissionController::class, 'store']);
+        });
+        Route::middleware('permission:roles.edit')->group(function () {
+            Route::put('/permissions/{id}', [PermissionController::class, 'update']);
+        });
+        Route::middleware('permission:roles.delete')->group(function () {
+            Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
+        });
+    });
+
+    // User API routes (for UsersTab in Access Management)
     Route::prefix('user')->group(function () {
         Route::get('/list',                     [UserController::class, 'index'])->name('user.list');
         Route::get('/detail/{id}',              [UserController::class, 'show'])->name('user.detail');

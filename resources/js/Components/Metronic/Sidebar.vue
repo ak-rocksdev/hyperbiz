@@ -42,6 +42,7 @@
 
     const hasRolePermissions = computed(() => hasPermission('roles.view'));
     const hasUserPermissions = computed(() => hasPermission('users.view'));
+    const hasAccessManagementPermissions = computed(() => hasPermission('users.view') || hasPermission('roles.view'));
     const hasTransactionPermissions = computed(() => hasPermission('transactions.view'));
     const hasCustomerPermissions = computed(() => hasPermission('customers.view'));
     const hasProductPermissions = computed(() => hasPermission('products.view'));
@@ -99,30 +100,15 @@
                             Menu
                         </span>
                     </div>
-                    <!--User & Role Management-->
-                    <Link v-if="hasRolePermissions" :class="['menu-item', isActive('/roles*') ? 'active' : '']" :href="isActive('/roles/index') ? '#' : route('roles.index')">
+                    <!--User & Access Management (consolidated)-->
+                    <Link v-if="hasAccessManagementPermissions" :class="['menu-item', isActive('/access-management*') ? 'active' : '']" :href="isActive('/access-management') ? '#' : route('access-management.index')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
-                                <i class="ki-filled ki-profile-circle text-lg">
-                                </i>
+                                <i class="ki-filled ki-setting-2 text-lg"></i>
                             </span>
-                            <span
-                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Role Management
-                            </span>
-                        </div>
-                    </Link>
-                    <Link v-if="hasUserPermissions" :class="['menu-item', isActive('/user*') ? 'active' : '']" :href="isActive('/user/list') ? '#' : route('user.list')">
-                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
-                            tabindex="0">
-                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
-                                <i class="ki-filled ki-profile-circle text-lg">
-                                </i>
-                            </span>
-                            <span
-                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                User Management
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Access Management
                             </span>
                         </div>
                     </Link>
