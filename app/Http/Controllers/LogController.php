@@ -15,7 +15,7 @@ class LogController extends Controller
     {
         $search = $request->get('search', null);
         // return dd($search);
-        $perPage = $request->get('per_page', 5);
+        $perPage = $request->get('per_page', 10);
         // Query the SystemLog with relationships
         $logsQuery = SystemLog::with('user')->orderByDesc('created_at');
 
@@ -39,10 +39,13 @@ class LogController extends Controller
                 'id' => $log->id,
                 'user' => $log->user,
                 'model_type' => $log->model_type,
+                'model_id' => $log->model_id,
+                'action' => $log->action,
                 'changed_fields' => $log->changed_fields,
+                'ip_address' => $log->ip_address,
                 'user_agent' => $log->user_agent,
                 'human_readable_time' => $log->created_at->diffForHumans(),
-                'created_at' => $log->created_at->format('d M Y - H:i'),
+                'created_at' => $log->created_at->format('d M Y H:i:s'),
             ];
         });
 

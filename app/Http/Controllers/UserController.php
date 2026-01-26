@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-// use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -17,139 +17,303 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:user-list|user-create|user-edit|user-delete'],['only' => ['index', 'show']]);
-        $this->middleware(['permission:user-create'],['only' => ['create', 'store']]);
-        $this->middleware(['permission:user-edit'],['only' => ['edit', 'update']]);
-        $this->middleware(['permission:user-delete'],['only' => ['destroy']]);
-    }
-    public function indexData(Request $request)
-    {
-        $validated = $request->validate([
-            'size' => 'nullable|integer|min:1',
-            'sortField' => 'nullable|string',
-            'sortOrder' => 'nullable|string|in:asc,desc',
-            'search' => 'nullable|string',
-        ]);
-
-        // Set defaults and extract validated parameters
-        $sortField = $validated['sortField'] != "null" && $validated['sortField'] != null ? $validated['sortField'] : 'created_at'; 
-        $pageSize = $validated['size'] ?? 10;
-        $sortOrder = $validated['sortOrder'] ?? 'desc';
-        $search = $validated['search'] ?? null;
-
-        $query = User::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        // Apply sorting and pagination
-        $users = $query->orderBy($sortField, $sortOrder)->paginate($pageSize);
-
-        // Transform data to match the required structure
-        $data = $users->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'email' => $user->email,
-                'name' => $user->name,
-                'created_at' => Carbon::parse($user->created_at)->format('d M Y - H:i'),
-            ];
-        });
-
-        // Return the response
-        return response()->json([
-            'page' => $users->currentPage(),
-            'pageCount' => $users->lastPage(),
-            'sortField' => $sortField,
-            'sortOrder' => $sortOrder,
-            'totalCount' => $users->total(),
-            'data' => $data,
-        ]);
+        $this->middleware(['permission:users.view'], ['only' => ['index', 'show', 'detailApi']]);
+        $this->middleware(['permission:users.create'], ['only' => ['create', 'store']]);
+        $this->middleware(['permission:users.edit'], ['only' => ['edit', 'update', 'toggleStatus']]);
+        $this->middleware(['permission:users.delete'], ['only' => ['destroy']]);
     }
 
+    /**
+     * Display a listing of users with pagination.
+     */
     public function index(Request $request)
     {
-        $search = null;
+        $search = $request->get('search', null);
+        $perPage = $request->get('per_page', 10);
+        $roleFilter = $request->get('role', null);
+        $statusFilter = $request->get('status', null);
 
         // Build the query
-        $query = User::query();
+        $query = User::with('roles');
 
+        // Apply search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        // Apply sorting
+        // Apply role filter
+        if ($roleFilter) {
+            $query->whereHas('roles', function ($q) use ($roleFilter) {
+                $q->where('name', $roleFilter);
+            });
+        }
 
-        // Fetch all users
-        $roles = Role::all();
-        $users = $query->get();
+        // Apply status filter
+        if ($statusFilter !== null && $statusFilter !== '') {
+            $query->where('is_active', $statusFilter === 'active' ? 1 : 0);
+        }
 
-        // Transform data to match the required structure
+        // Order by latest first
+        $query->orderByDesc('created_at');
+
+        // Paginate
+        $users = $query->paginate($perPage);
+
+        // Get all roles for filter dropdown
+        $roles = Role::orderBy('name')->get();
+
+        // Transform data
         $data = $users->map(function ($user) {
             return [
                 'id' => $user->id,
-                'email' => $user->email,
                 'name' => $user->name,
+                'email' => $user->email,
                 'profile_photo_path' => $user->profile_photo_path,
                 'profile_photo_url' => $user->profile_photo_url,
-                'created_at' => Carbon::parse($user->created_at)->format('d M Y - H:i'),
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'is_active' => $user->is_active ?? true,
+                'created_at' => Carbon::parse($user->created_at)->format('d M Y H:i'),
+                'human_readable_time' => $user->created_at->diffForHumans(),
             ];
         });
 
-        // Return all data for Inertia rendering
         return Inertia::render('User/Index', [
-            'roles' => $roles,
             'users' => $data,
+            'roles' => $roles,
+            'pagination' => [
+                'total' => $users->total(),
+                'per_page' => $users->perPage(),
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+            ],
             'filters' => [
                 'search' => $search,
+                'role' => $roleFilter,
+                'status' => $statusFilter,
             ],
         ]);
     }
 
-    public function store(Request $request, User $user)
+    /**
+     * Get user details via API.
+     */
+    public function detailApi($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo_path' => $user->profile_photo_path,
+                'profile_photo_url' => $user->profile_photo_url,
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'is_active' => $user->is_active ?? true,
+                'created_at' => Carbon::parse($user->created_at)->format('d M Y H:i'),
+                'updated_at' => Carbon::parse($user->updated_at)->format('d M Y H:i'),
+            ],
+        ]);
+    }
+
+    /**
+     * Show user detail page.
+     */
+    public function show($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+
+        return Inertia::render('User/Detail', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo_path' => $user->profile_photo_path,
+                'profile_photo_url' => $user->profile_photo_url,
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'is_active' => $user->is_active ?? true,
+                'created_at' => Carbon::parse($user->created_at)->format('d M Y H:i'),
+                'updated_at' => Carbon::parse($user->updated_at)->format('d M Y H:i'),
+            ],
+        ]);
+    }
+
+    /**
+     * Store a newly created user.
+     */
+    public function store(Request $request)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'password' => 'required|string|max:255',
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,name',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => ['required', 'confirmed', Password::min(8)],
+            'role' => 'required|string|exists:roles,name',
         ], [
             'name.required' => 'The user name is required.',
             'email.required' => 'A valid email address is required.',
-            'password.required' => 'The user password is required.',
+            'email.unique' => 'This email is already registered.',
+            'password.required' => 'The password is required.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'role.required' => 'Please select a role.',
         ]);
 
         DB::beginTransaction();
         try {
-            $validatedData['created_by'] = auth()->id();
+            $user = User::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+                'password' => Hash::make($validatedData['password']),
+                'is_active' => true,
+                'created_by' => auth()->id(),
+            ]);
 
-            $user = User::create($validatedData);
-
-            $roles = array_values($validatedData['roles']);
-
-            $user->syncRoles($roles);
+            $user->syncRoles([$validatedData['role']]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully.',
-            ], 200);
+                'user' => $user,
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create user.',
-                'error' => [$e->getMessage()],
+                'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Show edit user page.
+     */
+    public function edit($id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+        $roles = Role::orderBy('name')->get();
+
+        return Inertia::render('User/Edit', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'profile_photo_path' => $user->profile_photo_path,
+                'roles' => $user->roles->pluck('name')->toArray(),
+                'is_active' => $user->is_active ?? true,
+            ],
+            'roles' => $roles,
+        ]);
+    }
+
+    /**
+     * Update user via API.
+     */
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $id,
+            'password' => ['nullable', 'confirmed', Password::min(8)],
+            'role' => 'required|string|exists:roles,name',
+        ], [
+            'name.required' => 'The user name is required.',
+            'email.required' => 'A valid email address is required.',
+            'email.unique' => 'This email is already registered.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'role.required' => 'Please select a role.',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $user->name = $validatedData['name'];
+            $user->email = $validatedData['email'];
+            $user->updated_by = auth()->id();
+
+            if (!empty($validatedData['password'])) {
+                $user->password = Hash::make($validatedData['password']);
+            }
+
+            $user->save();
+            $user->syncRoles([$validatedData['role']]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User updated successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update user.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle user active status.
+     */
+    public function toggleStatus($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deactivating yourself
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot deactivate your own account.',
+            ], 403);
+        }
+
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $user->is_active ? 'User activated successfully.' : 'User deactivated successfully.',
+            'is_active' => $user->is_active,
+        ]);
+    }
+
+    /**
+     * Delete a user.
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        // Prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot delete your own account.',
+            ], 403);
+        }
+
+        // Prevent deleting superadmin
+        if ($user->hasRole('superadmin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete superadmin account.',
+            ], 403);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User deleted successfully.',
+        ]);
     }
 }

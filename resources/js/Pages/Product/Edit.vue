@@ -7,7 +7,7 @@
 
     const { props } = usePage();
     const product = ref({ ...props.product });
-    const clients = ref({ ...props.clients });
+    const customers = ref({ ...props.customers });
     const brands = ref({ ...props.brands });
     const productCategories = ref({ ...props.productCategories });
 
@@ -108,17 +108,17 @@
                                     </select>
                                 </div>
                                 
-                                <!-- Client -->
+                                <!-- Customer -->
                                 <div>
-                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Client</label>
+                                    <label class="form-label mb-2 !font-extrabold text-md !text-blue-500">Customer</label>
                                     <select
                                         class="select"
                                         v-model="product.mst_client_id"
                                         required
                                     >
-                                        <option value="" disabled>Select Client</option>
-                                        <option v-for="(client_name, id) in clients" :key="id" :value="id">
-                                            {{ client_name }}
+                                        <option value="" disabled>Select Customer</option>
+                                        <option v-for="(customer_name, id) in customers" :key="id" :value="id">
+                                            {{ customer_name }}
                                         </option>
                                     </select>
                                 </div>

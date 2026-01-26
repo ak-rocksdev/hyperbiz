@@ -60,8 +60,8 @@ class Product extends Model
         return $this->belongsTo(Brand::class, 'mst_brand_id');
     }
 
-    public function client()
+    public function customer()
     {
-        return $this->belongsTo(Client::class, 'mst_client_id');
+        return $this->belongsTo(Customer::class, 'mst_client_id');
     }
 }

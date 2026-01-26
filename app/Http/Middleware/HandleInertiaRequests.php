@@ -30,14 +30,28 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Get user permissions - superadmin gets all permissions
+        $permissions = [];
+        if ($user) {
+            if ($user->hasRole('superadmin')) {
+                // Superadmin gets all permissions
+                $permissions = \Spatie\Permission\Models\Permission::pluck('name')->toArray();
+            } else {
+                // Get permissions via roles + direct permissions
+                $permissions = $user->getAllPermissions()->pluck('name')->toArray();
+            }
+        }
+
         return [
             ...parent::share($request),
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
-            'user.roles' => $request->user() ? $request->user()->roles->pluck('name') : [],
-            'user.permissions' => $request->user() ? $request->user()->getPermissionsViaRoles()->pluck('name') : [],
+            'user.roles' => $user ? $user->roles->pluck('name') : [],
+            'user.permissions' => $permissions,
         ];
     }
 }

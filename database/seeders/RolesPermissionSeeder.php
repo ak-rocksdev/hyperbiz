@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -19,38 +18,111 @@ class RolesPermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-
+        // Define all permissions using dot notation: {module}.{action}
         $permissions = [
-            "role-list",
-            "role-create",
-            "role-edit",
-            "role-delete",
-            "user-list",
-            "user-create",
-            "user-edit",
-            "user-delete",
+            // Roles management
+            'roles.view',
+            'roles.create',
+            'roles.edit',
+            'roles.delete',
+
+            // Users management
+            'users.view',
+            'users.create',
+            'users.edit',
+            'users.delete',
+
+            // Customers management
+            'customers.view',
+            'customers.create',
+            'customers.edit',
+            'customers.delete',
+
+            // Transactions management
+            'transactions.view',
+            'transactions.create',
+            'transactions.edit',
+            'transactions.delete',
+
+            // Products management
+            'products.view',
+            'products.create',
+            'products.edit',
+            'products.delete',
+
+            // Brands management
+            'brands.view',
+            'brands.create',
+            'brands.edit',
+            'brands.delete',
+
+            // Product Categories management
+            'product-categories.view',
+            'product-categories.create',
+            'product-categories.edit',
+            'product-categories.delete',
+
+            // Company management
+            'company.view',
+            'company.edit',
+
+            // System Logs
+            'logs.view',
         ];
 
-        $permissions_admin_package_1 = [
-            "user-list",
-            "user-edit",
-        ];
-
-        foreach ($permissions as $key => $permission) {
-            Permission::create(['name' => $permission]);
+        // Create all permissions
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        $role_superadmin = Role::create(['name' => 'superadmin']);
-        $role_superadmin->syncPermissions($permissions);
+        // Create superadmin role (will bypass all permissions via Gate::before)
+        $roleSuperadmin = Role::firstOrCreate(['name' => 'superadmin']);
 
-        $role_admin_package_1 = Role::create(['name' => 'admin']);
-        $role_admin_package_1->syncPermissions($permissions_admin_package_1);
+        // Create admin role with specific permissions
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
+        $roleAdmin->syncPermissions([
+            'users.view',
+            'users.create',
+            'users.edit',
+            'customers.view',
+            'customers.create',
+            'customers.edit',
+            'transactions.view',
+            'transactions.create',
+            'transactions.edit',
+            'products.view',
+            'products.create',
+            'products.edit',
+            'brands.view',
+            'brands.create',
+            'brands.edit',
+            'product-categories.view',
+            'product-categories.create',
+            'product-categories.edit',
+            'company.view',
+        ]);
 
-        // It Should be move UserSeeder for first setup
-        $create_user_role_1 = User::findOrFail(1);
-        $create_user_role_1->assignRole($role_superadmin);
+        // Create staff role with limited permissions
+        $roleStaff = Role::firstOrCreate(['name' => 'staff']);
+        $roleStaff->syncPermissions([
+            'customers.view',
+            'transactions.view',
+            'transactions.create',
+            'products.view',
+            'brands.view',
+            'product-categories.view',
+        ]);
 
-        $create_user_role_2 = User::findOrFail(2);
-        $create_user_role_2->assignRole($role_admin_package_1);
+        // Assign superadmin role to user ID 1 (if exists)
+        $user1 = User::find(1);
+        if ($user1) {
+            $user1->assignRole($roleSuperadmin);
+        }
+
+        // Assign admin role to user ID 2 (if exists)
+        $user2 = User::find(2);
+        if ($user2) {
+            $user2->assignRole($roleAdmin);
+        }
     }
 }

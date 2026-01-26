@@ -41,10 +41,32 @@ trait LogsSystemChanges
         }
 
         $changes = [];
-        foreach ($updatedValues as $field => $newValue) {
-            $changes[$field] = [
-                'original' => $originalValues[$field] ?? null,
-                'updated' => $newValue,
+
+        if ($action === 'created') {
+            // For created: show all new values
+            $changes = [
+                'old' => null,
+                'new' => $this->getAttributes(),
+            ];
+        } elseif ($action === 'deleted') {
+            // For deleted: show all values that were deleted
+            $changes = [
+                'old' => $this->getAttributes(),
+                'new' => null,
+            ];
+        } else {
+            // For updated: show old vs new for changed fields only
+            $oldValues = [];
+            $newValues = [];
+
+            foreach ($updatedValues as $field => $newValue) {
+                $oldValues[$field] = $originalValues[$field] ?? null;
+                $newValues[$field] = $newValue;
+            }
+
+            $changes = [
+                'old' => $oldValues,
+                'new' => $newValues,
             ];
         }
 
@@ -61,7 +83,7 @@ trait LogsSystemChanges
             'model_id' => $this->id,
             'user_id' => Auth::id(),
             'action' => $action,
-            'changed_fields' => json_encode($changes),
+            'changed_fields' => $changes, // Pass array directly, model cast handles JSON encoding
             'ip_address' => request()->ip() ?? 'CLI',
             'user_agent' => request()->header('User-Agent') ?? 'CLI',
         ]);

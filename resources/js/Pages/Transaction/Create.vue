@@ -6,7 +6,7 @@
 
     const form = ref({
         id: [],
-        mst_client_id: '',
+        mst_customer_id: '',
         products: [],
         transaction_date: '',
         grand_total: 0,
@@ -20,7 +20,7 @@
             required: false,
             default: () => ({}),
         },
-        clients: {
+        customers: {
             type: Array,
             required: true,
         },
@@ -66,16 +66,16 @@
         { deep: true }
     );
 
-    // Update available products based on client selection
-    watch(() => form.value.mst_client_id, (newClientId) => {
-        form.value.products = []; // Clear selected products when client changes
-        const selectedClient = props.clients.find(client => client.id === newClientId);
+    // Update available products based on customer selection
+    watch(() => form.value.mst_customer_id, (newCustomerId) => {
+        form.value.products = []; // Clear selected products when customer changes
+        const selectedCustomer = props.customers.find(customer => customer.id === newCustomerId);
 
-        if (selectedClient?.products) {
+        if (selectedCustomer?.products) {
             // Convert the products object to an array
-            availableProducts.value = Array.isArray(selectedClient.products)
-                ? selectedClient.products
-                : Object.values(selectedClient.products); // Convert object to array
+            availableProducts.value = Array.isArray(selectedCustomer.products)
+                ? selectedCustomer.products
+                : Object.values(selectedCustomer.products); // Convert object to array
         } else {
             availableProducts.value = [];
         }
@@ -83,23 +83,23 @@
 
     // Filter products by search query
     watch(searchQuery, (newQuery) => {
-        // Get the selected client
-        const selectedClient = props.clients.find(client => client.id === form.value.mst_client_id);
+        // Get the selected customer
+        const selectedCustomer = props.customers.find(customer => customer.id === form.value.mst_customer_id);
 
         // Convert products to an array
-        const clientProducts = Array.isArray(selectedClient?.products)
-            ? selectedClient.products
-            : Object.values(selectedClient?.products || {});
+        const customerProducts = Array.isArray(selectedCustomer?.products)
+            ? selectedCustomer.products
+            : Object.values(selectedCustomer?.products || {});
 
         // Filter products based on the search query
-        availableProducts.value = clientProducts.filter(product => {
+        availableProducts.value = customerProducts.filter(product => {
             const productName = product.name || ''; // Default to empty string if undefined
             return productName.toLowerCase().includes(newQuery.toLowerCase());
         });
 
         // Reset to full list if search query is empty
         if (!newQuery.trim()) {
-            availableProducts.value = clientProducts;
+            availableProducts.value = customerProducts;
         }
     });
 
@@ -243,13 +243,13 @@
                             </select>
                         </div>
 
-                        <!-- Client Dropdown -->
+                        <!-- Customer Dropdown -->
                         <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
-                            <select class="select" v-model="form.mst_client_id">
-                                <option value="" disabled selected>Select Client</option>
-                                <option v-for="client in props.clients" :key="client.id" :value="client.id">
-                                    {{ client.client_name }}
+                            <label class="form-label max-w-60 mb-2">Customer <span class="ms-1 text-danger">*</span></label>
+                            <select class="select" v-model="form.mst_customer_id">
+                                <option value="" disabled selected>Select Customer</option>
+                                <option v-for="customer in props.customers" :key="customer.id" :value="customer.id">
+                                    {{ customer.customer_name }}
                                 </option>
                             </select>
                         </div>
@@ -261,8 +261,8 @@
                         </div>
                     </div>
                     <div class="border-t pb-5"></div>
-                    <div v-if="form.mst_client_id && form.transaction_type" class="flex flex-col gap-3">
-                        <div v-if="form.mst_client_id" class="overflow-x-auto">
+                    <div v-if="form.mst_customer_id && form.transaction_type" class="flex flex-col gap-3">
+                        <div v-if="form.mst_customer_id" class="overflow-x-auto">
                             <label v-if="form.products.length == 0" class="block text-sm font-medium text-gray-700 mb-2">
                                 Add products to this order
                             </label>

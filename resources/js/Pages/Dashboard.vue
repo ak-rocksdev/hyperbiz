@@ -80,11 +80,11 @@
                             </div>
                             <div class="flex flex-col gap-3">
                                 <Link class="text-base font-medium leading-none text-gray-900 hover:text-primary-active"
-                                    :href="route('client.list')">
-                                    Clients
+                                    :href="route('customer.list')">
+                                    Customers
                                 </Link>
                                 <span class="text-2sm text-gray-700 leading-5">
-                                    Client management and information.
+                                    Customer management and information.
                                 </span>
                             </div>
                         </div>

@@ -64,8 +64,8 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4 w-full">
                         <div class="mb-3">
-                            <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Client</label>
-                            <p class="!text-gray-500">{{ selectedTransaction.client_name }}</p>
+                            <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Customer</label>
+                            <p class="!text-gray-500">{{ selectedTransaction.customer_name }}</p>
                         </div>
                         <div class="w-full">
                             <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Date</label>

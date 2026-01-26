@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsSystemChanges;
 
-class Client extends Model
+class Customer extends Model
 {
     use HasFactory, LogsSystemChanges;
 
     protected static function newFactory()
     {
-        return \Database\Factories\ClientFactory::new();
+        return \Database\Factories\CustomerFactory::new();
     }
 
     protected static function boot()
@@ -52,11 +52,11 @@ class Client extends Model
     }
 
     /**
-     * Relationship with ClientType
+     * Relationship with CustomerType
      */
-    public function clientType()
+    public function customerType()
     {
-        return $this->belongsTo(ClientType::class, 'mst_client_type_id');
+        return $this->belongsTo(CustomerType::class, 'mst_client_type_id');
     }
 
     /**
@@ -89,5 +89,20 @@ class Client extends Model
     {
         return $this->hasMany(Transaction::class, 'mst_client_id');
     }
-}
 
+    /**
+     * Accessor for customer name (maps to client_name column)
+     */
+    public function getNameAttribute()
+    {
+        return $this->client_name;
+    }
+
+    /**
+     * Accessor for phone number (maps to client_phone_number column)
+     */
+    public function getPhoneNumberAttribute()
+    {
+        return $this->client_phone_number;
+    }
+}

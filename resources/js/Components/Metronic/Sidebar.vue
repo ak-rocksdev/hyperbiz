@@ -33,19 +33,21 @@
         return logo ? `/storage/${logo}` : null;
     });
 
-    // Check for user required permissions
-    // const requiredPermissions = ['role-list', 'user-list'];
-    const hasRolePermissions = page.props.user?.permissions?.includes('role-list');
-    const hasUserPermissions = page.props.user?.permissions?.includes('user-list');
-    const hasTransactionPermissions = page.props.user?.permissions?.includes('transaction-list');
-    const hasClientPermissions = page.props.user?.permissions?.includes('client-list');
-    const hasProductPermissions = page.props.user?.permissions?.includes('product-list');
-    const hasBrandPermissions = page.props.user?.permissions?.includes('brand-list');
-    const hasLogPermissions = page.props.user?.permissions?.includes('log-list');
+    // Check for user required permissions (using dot notation)
+    const userPermissions = computed(() => page.props.user?.permissions || []);
 
-    // const hasRequiredPermissions = computed(() => {
-    //     return requiredPermissions.some(permission => page.props.user?.permissions?.includes(permission));
-    // });
+    const hasPermission = (permission) => {
+        return userPermissions.value.includes(permission);
+    };
+
+    const hasRolePermissions = computed(() => hasPermission('roles.view'));
+    const hasUserPermissions = computed(() => hasPermission('users.view'));
+    const hasTransactionPermissions = computed(() => hasPermission('transactions.view'));
+    const hasCustomerPermissions = computed(() => hasPermission('customers.view'));
+    const hasProductPermissions = computed(() => hasPermission('products.view'));
+    const hasBrandPermissions = computed(() => hasPermission('brands.view'));
+    const hasLogPermissions = computed(() => hasPermission('logs.view'));
+    const hasProductCategoryPermissions = computed(() => hasPermission('product-categories.view'));
 
 </script>
 <template>
@@ -124,8 +126,8 @@
                             </span>
                         </div>
                     </Link>
-                    <!-- Client -->
-                    <Link v-if="hasClientPermissions" :class="['menu-item', isActive('/client*') ? 'active' : '']" :href="isActive('/client/list') ? '#' : route('client.list')">
+                    <!-- Customer -->
+                    <Link v-if="hasCustomerPermissions" :class="['menu-item', isActive('/customer*') ? 'active' : '']" :href="isActive('/customer/list') ? '#' : route('customer.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -134,7 +136,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Client
+                                Customers
                             </span>
                         </div>
                     </Link>
@@ -173,7 +175,7 @@
                         </div>
                     </Link>
                     
-                    <Link v-if="hasProductPermissions" :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category/list') ? '#' : route('product-category.list')">
+                    <Link v-if="hasProductCategoryPermissions" :class="['menu-item', isActive('/product-category*') ? 'active' : '']" :href="isActive('/product-category/list') ? '#' : route('product-category.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">

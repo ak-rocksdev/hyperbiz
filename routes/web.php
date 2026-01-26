@@ -6,7 +6,7 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
@@ -48,10 +48,13 @@ Route::middleware([
 
     Route::prefix('user')->group(function () {
         Route::get('/list',                     [UserController::class, 'index'])->name('user.list');
-        Route::get('/detail/{id}',              [UserController::class, 'detail'])->name('user.detail');
+        Route::get('/detail/{id}',              [UserController::class, 'show'])->name('user.detail');
+        Route::get('/api/detail/{id}',          [UserController::class, 'detailApi']);
         Route::get('/edit/{id}',                [UserController::class, 'edit'])->name('user.edit');
         Route::post('/api/store',               [UserController::class, 'store']);
-        Route::post('/api/update/{id}',         [UserController::class, 'update']);
+        Route::put('/api/update/{id}',          [UserController::class, 'update']);
+        Route::patch('/api/toggle-status/{id}', [UserController::class, 'toggleStatus']);
+        Route::delete('/api/delete/{id}',       [UserController::class, 'destroy']);
     });
 
     Route::prefix('company')->group(function () {
@@ -60,14 +63,13 @@ Route::middleware([
         Route::get('/detail/{id}',              [CompanyController::class, 'detail'])->name('company.detail');
     });
 
-    Route::prefix('client')->group(function () {
-        Route::get('/list',                     [ClientController::class, 'list'])->name('client.list');
-        Route::get('/detail/{id}',              [ClientController::class, 'detail'])->name('client.detail');
-        Route::get('/edit/{id}',                [ClientController::class, 'edit'])->name('client.edit');
-        Route::get('/api/detail/{id}',          [ClientController::class, 'detailApi']);
-        Route::post('/api/store',               [ClientController::class, 'store']);
-        Route::put('/api/update/{id}',          [ClientController::class, 'update']);
-        Route::get('/api/get/products/{id}',    [ClientController::class, 'getProducts']);
+    Route::prefix('customer')->group(function () {
+        Route::get('/list',                     [CustomerController::class, 'list'])->name('customer.list');
+        Route::get('/detail/{id}',              [CustomerController::class, 'detail'])->name('customer.detail');
+        Route::get('/edit/{id}',                [CustomerController::class, 'edit'])->name('customer.edit');
+        Route::get('/api/detail/{id}',          [CustomerController::class, 'detailApi']);
+        Route::post('/api/store',               [CustomerController::class, 'store']);
+        Route::put('/api/update/{id}',          [CustomerController::class, 'update']);
     });
 
     Route::prefix('transaction')->group(function () {

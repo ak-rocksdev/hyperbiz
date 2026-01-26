@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Models\Company;
 use App\Traits\LogsSystemChanges;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Superadmin bypasses all permission checks
+        Gate::before(function ($user, $ability) {
+            return $user->hasRole('superadmin') ? true : null;
+        });
+
         foreach (glob(app_path('Models') . '/*.php') as $modelFile) {
             $modelName = 'App\\Models\\' . basename($modelFile, '.php');
 

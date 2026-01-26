@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Brand;
-use App\Models\Client;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -19,7 +19,7 @@ class ProductController extends Controller
      */
     public function list()
     {
-        $products = Product::with('category', 'brand', 'client')->orderByDesc('created_at')->get();
+        $products = Product::with('category', 'brand', 'customer')->orderByDesc('created_at')->get();
 
         $data = $products->map(function ($product) {
             return [
@@ -35,7 +35,7 @@ class ProductController extends Controller
                 'min_stock_level' => $product->min_stock_level,
                 'category' => $product->category->name ?? 'N/A',
                 'brand' => $product->brand->name ?? 'N/A',
-                'client' => $product->client->client_name ?? 'N/A',
+                'customer' => $product->customer->client_name ?? 'N/A',
                 'weight' => $product->weight,
                 'dimensions' => $product->dimensions,
                 'image_url' => $product->image_url,
@@ -49,11 +49,11 @@ class ProductController extends Controller
 
         $categories = ProductCategory::pluck('name', 'id');
         $brands = Brand::pluck('name', 'id');
-        $clients = Client::pluck('client_name', 'id');
+        $customers = Customer::pluck('client_name', 'id');
 
         return Inertia::render('Product/List', [
             'products' => $data,
-            'clients' => $clients,
+            'customers' => $customers,
             'categories' => $categories,
             'brands' => $brands,
             'totalProducts' => $totalProducts,
@@ -66,7 +66,7 @@ class ProductController extends Controller
      */
     public function detailApi($id)
     {
-        $product = Product::with('category', 'brand')->findOrFail($id);
+        $product = Product::with('category', 'brand', 'customer')->findOrFail($id);
 
         return response()->json([
             'product' => [
@@ -81,7 +81,7 @@ class ProductController extends Controller
                 'min_stock_level' => $product->min_stock_level,
                 'category' => $product->category->name ?? 'N/A',
                 'brand' => $product->brand->name ?? 'N/A',
-                'client' => $product->client->client_name ?? 'N/A',
+                'customer' => $product->customer->client_name ?? 'N/A',
                 'weight' => $product->weight ?? 'N/A',
                 'dimensions' => $product->dimensions ?? 'N/A',
                 'image_url' => $product->image_url,
@@ -205,13 +205,13 @@ class ProductController extends Controller
 
         $brands = Brand::pluck('name', 'id');
 
-        $clients = Client::pluck('client_name', 'id');
+        $customers = Customer::pluck('client_name', 'id');
 
         return Inertia::render('Product/Edit', [
             'product' => $data,
             'productCategories' => $productCategories,
             'brands' => $brands,
-            'clients' => $clients,
+            'customers' => $customers,
         ]);
     }
 }

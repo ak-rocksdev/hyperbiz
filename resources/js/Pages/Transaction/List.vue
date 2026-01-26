@@ -15,7 +15,7 @@
     });
 
     const form = ref({
-        mst_client_id: '',
+        mst_customer_id: '',
         products: [],
         transaction_date: '',
     });
@@ -26,7 +26,7 @@
             type: Object,
             required: true,
         },
-        clients: Object,
+        customers: Object,
         totalTransactions: Number,
         totalPurchaseValue: Number,
         totalSellValue: Number,
@@ -98,11 +98,11 @@
         if (page !== '...') currentPage.value = page;
     };
 
-    watch(() => form.value.mst_client_id, (newClientId) => {
+    watch(() => form.value.mst_customer_id, (newCustomerId) => {
         form.value.products = [];
-        if (newClientId) {
-            const selectedClient = props.clients.find(client => client.id === newClientId);
-            availableProducts.value = selectedClient?.products || [];
+        if (newCustomerId) {
+            const selectedCustomer = props.customers.find(customer => customer.id === newCustomerId);
+            availableProducts.value = selectedCustomer?.products || [];
         } else {
             availableProducts.value = [];
         }
@@ -157,7 +157,7 @@
                 .then(response => {
                     // Reset the form
                     form.value = {
-                        mst_client_id: '',
+                        mst_customer_id: '',
                         products: [],
                         transaction_date: '',
                     };
@@ -210,7 +210,7 @@
                                 'totalPurchaseValue', 
                                 'totalSellValue',
                                 'products',
-                                'clients',
+                                'customers',
                             ],
                             preserveScroll: true,
                         });
@@ -395,10 +395,10 @@
                                         <tr v-for="transaction in transactions" :key="transaction.id" class="hover:bg-slate-100" v-if="transactions.length > 0">
                                             <td>
                                                 <div class="flex flex-col gap-2 group">
-                                                    <!-- Client Name -->
+                                                    <!-- Customer Name -->
                                                     <span class="font-bold text-blue-500 group-hover:text-blue-700 flex cursor-pointer items-center" 
                                                         @click="viewTransactionDetail(transaction.id)" data-modal-toggle="#modal_view_transaction">
-                                                        {{ transaction.client_name }}
+                                                        {{ transaction.customer_name }}
                                                         <!-- Magnifier Icon -->
                                                         <i class="ki-filled ki-magnifier ms-2 hidden group-hover:inline text-gray-600"></i>
                                                     </span>
@@ -561,13 +561,13 @@
                 <div class="modal-body">
                     <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
                         <div class="grid grid-cols-2 gap-4">
-                            <!-- Client Dropdown -->
+                            <!-- Customer Dropdown -->
                             <div class="mb-4">
-                                <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
-                                <select class="select" v-model="form.mst_client_id">
-                                    <option value="" disabled selected>Select Client</option>
-                                    <option v-for="client in props.clients" :key="client.id" :value="client.id">
-                                        {{ client.client_name }}
+                                <label class="form-label max-w-60 mb-2">Customer <span class="ms-1 text-danger">*</span></label>
+                                <select class="select" v-model="form.mst_customer_id">
+                                    <option value="" disabled selected>Select Customer</option>
+                                    <option v-for="customer in props.customers" :key="customer.id" :value="customer.id">
+                                        {{ customer.customer_name }}
                                     </option>
                                 </select>
                             </div>
@@ -693,8 +693,8 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4 w-full">
                                 <div class="mb-3">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Client</label>
-                                    <p class="dark:text-gray-100 text-gray-700">{{ selectedTransaction.client_name }}</p>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Customer</label>
+                                    <p class="dark:text-gray-100 text-gray-700">{{ selectedTransaction.customer_name }}</p>
                                 </div>
                                 <div class="w-full">
                                     <label class="form-label mb-1 !font-extrabold text-md !text-cyan-900">Transaction Date</label>

@@ -10,7 +10,7 @@
             type: Object,
             required: true,
         },
-        clients: {
+        customers: {
             type: Array,
             required: true,
         },
@@ -25,8 +25,8 @@
         id                  : props.transaction ? props.transaction.id : '',
         transaction_code    : props.transaction ? props.transaction.transaction_code : '',
         transaction_type    : props.transaction ? props.transaction.transaction_type : '',
-        client              : props.transaction ? props.transaction.client : '',
-        mst_client_id       : props.transaction ? props.transaction.mst_client_id : '',
+        customer            : props.transaction ? props.transaction.customer : '',
+        mst_customer_id     : props.transaction ? props.transaction.mst_customer_id : '',
         products            : props.transaction ? props.transaction.products : [],
         transaction_date    : props.transaction ? props.transaction.transaction_date : '',
         grand_total         : props.transaction ? props.transaction.grand_total : 0,
@@ -51,24 +51,24 @@
         { immediate: true } // Ensures this logic runs when the component is mounted
     );
 
-    // Available products for the selected client
+    // Available products for the selected customer
     const availableProducts = ref([]);
     const searchQuery = ref('');
     const errors = ref({});
 
     // Populate the form with transaction data on load
     onMounted(() => {
-        if (props.transaction && props.clients.length) {
-            // Fetch available products based on the selected client
-            const selectedClient = props.clients.find(client => client.id === props.transaction.mst_client_id);
-            if (selectedClient) {
-                availableProducts.value = selectedClient.products || [];
+        if (props.transaction && props.customers.length) {
+            // Fetch available products based on the selected customer
+            const selectedCustomer = props.customers.find(customer => customer.id === props.transaction.mst_customer_id);
+            if (selectedCustomer) {
+                availableProducts.value = selectedCustomer.products || [];
             }
 
             // Sync stock quantities for products in the transaction
             syncProductStock();
         } else {
-            console.error('Transaction or client data is missing or invalid:', props.transaction, props.clients);
+            console.error('Transaction or customer data is missing or invalid:', props.transaction, props.customers);
         }
     });
 
@@ -124,17 +124,17 @@
         { deep: true }
     );
 
-    // Update available products when client changes
-    watch(() => props.transaction.mst_client_id, (newClientId) => {
-        const selectedClient = props.clients.find(client => client.id === newClientId);
-        availableProducts.value = selectedClient?.products || [];
+    // Update available products when customer changes
+    watch(() => props.transaction.mst_customer_id, (newCustomerId) => {
+        const selectedCustomer = props.customers.find(customer => customer.id === newCustomerId);
+        availableProducts.value = selectedCustomer?.products || [];
         form.value.products = []; // Reset products
     });
 
     // Filter products by search query
     watch(searchQuery, (newQuery) => {
-        const clientProducts = props.clients.find(client => client.id === form.value.mst_client_id)?.products || [];
-        availableProducts.value = clientProducts.filter(product =>
+        const customerProducts = props.customers.find(customer => customer.id === form.value.mst_customer_id)?.products || [];
+        availableProducts.value = customerProducts.filter(product =>
             product.name.toLowerCase().includes(newQuery.toLowerCase())
         );
     });
@@ -297,13 +297,13 @@
                             </select>
                         </div>
 
-                        <!-- Client Dropdown -->
+                        <!-- Customer Dropdown -->
                         <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Client <span class="ms-1 text-danger">*</span></label>
-                            <select class="select" v-model="form.mst_client_id">
-                                <option value="" disabled selected>Select Client</option>
-                                <option v-for="client in props.clients" :key="client.id" :value="client.id">
-                                    {{ client.client_name }}
+                            <label class="form-label max-w-60 mb-2">Customer <span class="ms-1 text-danger">*</span></label>
+                            <select class="select" v-model="form.mst_customer_id">
+                                <option value="" disabled selected>Select Customer</option>
+                                <option v-for="customer in props.customers" :key="customer.id" :value="customer.id">
+                                    {{ customer.customer_name }}
                                 </option>
                             </select>
                         </div>

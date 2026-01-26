@@ -13,7 +13,7 @@
         products: Array,
         categories: Object,
         brands: Object,
-        clients: Object,
+        customers: Object,
         totalCategoriesCount: Number,
         totalProducts: Number,
     });
@@ -21,7 +21,7 @@
     const products = ref(props.products ?? []);
     const categories = ref(props.categories ?? {});
     const brands = ref(props.brands ?? {});
-    const clients = ref(props.clients ?? {});
+    const customers = ref(props.customers ?? {});
     const totalCategoriesCount = ref(props.totalCategoriesCount ?? 0);
     const totalProducts = ref(props.totalProducts ?? 0);
 
@@ -164,7 +164,7 @@
                                             </th>
                                             <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
                                                 <span class="sort">
-                                                    <span class="sort-label">Client</span>
+                                                    <span class="sort-label">Customer</span>
                                                     <span class="sort-icon"></span>
                                                 </span>
                                             </th>
@@ -228,7 +228,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                {{ product.client }}
+                                                {{ product.customer }}
                                             </td>
                                             <td>
                                                 {{ product.category }}
@@ -378,18 +378,18 @@
                             </select>
                         </div>
 
-                        <!-- clients -->
+                        <!-- customers -->
                         <div class="mb-4">
-                            <label class="form-label mb-1">Client <span class="text-red-500 ms-1">*</span></label>
-                            <select 
-                                class="select" 
+                            <label class="form-label mb-1">Customer <span class="text-red-500 ms-1">*</span></label>
+                            <select
+                                class="select"
                                 v-model="form.mst_client_id">
-                                <option value="" disabled>Select Client</option>
-                                <option 
-                                    v-for="(client_name, id) in clients" 
-                                    :key="id" 
+                                <option value="" disabled>Select Customer</option>
+                                <option
+                                    v-for="(customer_name, id) in customers"
+                                    :key="id"
                                     :value="id">
-                                    {{ client_name }}
+                                    {{ customer_name }}
                                 </option>
                             </select>
                         </div>
@@ -572,8 +572,8 @@
                             </div>
                             <div class="flex gap-3 justify-between">
                                 <div>
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Supplier (Client)</label>
-                                    <p class="!text-gray-500">{{ selectedProduct.client }}</p>
+                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Supplier (Customer)</label>
+                                    <p class="!text-gray-500">{{ selectedProduct.customer }}</p>
                                 </div>
                                 <div>
                                     <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Category</label>

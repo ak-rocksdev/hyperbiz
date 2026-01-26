@@ -6,7 +6,7 @@ use App\Enums\TransactionStatus;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\Product;
-use App\Models\Client;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -28,12 +28,12 @@ class TransactionController extends Controller
         $search = $request->input('search');
         $perPage = $request->input('per_page', 5);
 
-        $transactionsQuery = Transaction::with(['client', 'details.product'])->orderByDesc('created_at');
+        $transactionsQuery = Transaction::with(['customer', 'details.product'])->orderByDesc('created_at');
 
         if ($search) {
             $transactionsQuery->where(function ($query) use ($search) {
-                $query->whereHas('client', function ($clientQuery) use ($search) {
-                    $clientQuery->where('client_name', 'like', '%' . $search . '%');
+                $query->whereHas('customer', function ($customerQuery) use ($search) {
+                    $customerQuery->where('client_name', 'like', '%' . $search . '%');
                 })
                 ->orWhere('transaction_code', 'like', '%' . $search . '%')
                 ->orWhere('transaction_type', 'like', '%' . $search . '%')
@@ -51,7 +51,7 @@ class TransactionController extends Controller
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code ?? 'N/A',
                 'transaction_type' => $transaction->transaction_type,
-                'client_name' => $transaction->client->client_name ?? 'N/A',
+                'customer_name' => $transaction->customer->client_name ?? 'N/A',
                 'quantity' => $transaction->quantity,
                 'grand_total' => $transaction->grand_total,
                 'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
@@ -67,13 +67,13 @@ class TransactionController extends Controller
         $totalPurchaseValue = (float) Transaction::where('transaction_type', 'purchase')->sum('grand_total');
         $totalSellValue = (float) Transaction::where('transaction_type', 'sell')->sum('grand_total');
 
-        // Products and clients
+        // Products and customers
         $products = Product::pluck('name', 'id');
-        $clients = Client::all()->map(function ($client) {
+        $customers = Customer::all()->map(function ($customer) {
             return [
-                'id' => $client->id,
-                'client_name' => $client->client_name,
-                'products' => $client->products,
+                'id' => $customer->id,
+                'customer_name' => $customer->client_name,
+                'products' => $customer->products,
             ];
         });
 
@@ -102,7 +102,7 @@ class TransactionController extends Controller
                 'last_page' => $transactions->lastPage(),
             ],
             'products' => $products,
-            'clients' => $clients,
+            'customers' => $customers,
             'statuses' => $statuses,
             'resultCount' => $data->count(),
             'allTransactionsCount' => Transaction::count(),
@@ -118,14 +118,14 @@ class TransactionController extends Controller
      */
     public function detailApi($id)
     {
-        $transaction = Transaction::with('details', 'client')->findOrFail($id);
+        $transaction = Transaction::with('details', 'customer')->findOrFail($id);
 
         return response()->json([
             'transaction' => [
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code,
                 'transaction_type' => $transaction->transaction_type,
-                'client_name' => $transaction->client->client_name ?? 'N/A',
+                'customer_name' => $transaction->customer->client_name ?? 'N/A',
                 'grand_total' => Number::currency($transaction->grand_total, in: 'IDR', locale: 'id'),
                 'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
                 'status' => $transaction->status,
@@ -154,8 +154,8 @@ class TransactionController extends Controller
             'id' => $transaction->id,
             'transaction_code' => $transaction->transaction_code,
             'transaction_type' => $transaction->transaction_type,
-            'mst_client_id' => $transaction->mst_client_id,
-            'client' => $transaction->client,
+            'mst_customer_id' => $transaction->mst_client_id,
+            'customer' => $transaction->customer,
             'products' => $transaction->details->map(function ($detail) {
                 return [
                     'id' => $detail->product->id,
@@ -189,7 +189,7 @@ class TransactionController extends Controller
 
         return Inertia::render('Transaction/Edit', [
             'transaction' => $data,
-            'clients' => Client::with('products')->get(),
+            'customers' => Customer::with('products')->get(),
             'statuses' => $statuses,
         ]);
     }
@@ -197,11 +197,11 @@ class TransactionController extends Controller
     public function create()
     {
         $products = Product::where('is_active', 1)->pluck('name', 'id');
-        $clients = Client::all()->map(function ($client) {
+        $customers = Customer::all()->map(function ($customer) {
             return [
-                'id' => $client->id,
-                'client_name' => $client->client_name,
-                'products' => $client->products->filter(function ($product) {
+                'id' => $customer->id,
+                'customer_name' => $customer->client_name,
+                'products' => $customer->products->filter(function ($product) {
                     return $product->is_active == 1; // Ensure only active products are included
                 })->map(function ($product) {
                     return [
@@ -230,7 +230,7 @@ class TransactionController extends Controller
 
         return Inertia::render('Transaction/Create', [
             'products' => $products,
-            'clients' => $clients,
+            'customers' => $customers,
             'statuses' => $statuses,
         ]);
     }
@@ -243,7 +243,7 @@ class TransactionController extends Controller
         // Validate request data
         $validatedData = $request->validate(
             [
-                'mst_client_id' => 'required|exists:mst_client,id',
+                'mst_customer_id' => 'required|exists:mst_client,id',
                 'transaction_type' => 'required|in:sell,purchase',
                 'products' => 'required|array|min:1',
                 'products.*.id' => 'required|exists:mst_products,id',
@@ -295,7 +295,7 @@ class TransactionController extends Controller
             $transaction = Transaction::create([
                 'transaction_code' => strtoupper(substr(str_shuffle('0123456789abcdefghijklmnopqrstuvwxyz'), 0, 6)),
                 'transaction_type' => $validatedData['transaction_type'],
-                'mst_client_id' => $validatedData['mst_client_id'],
+                'mst_client_id' => $validatedData['mst_customer_id'],
                 'transaction_date' => $validatedData['transaction_date'] ?? now(),
                 'grand_total' => $validatedData['grand_total'],
                 'expedition_fee' => $validatedData['expedition_fee'] ?? 0,
@@ -343,7 +343,7 @@ class TransactionController extends Controller
                     }
                 },
             ],
-            'mst_client_id' => 'required|exists:mst_client,id',
+            'mst_customer_id' => 'required|exists:mst_client,id',
             'grand_total' => 'required|numeric|min:0',
             'expedition_fee' => 'required|numeric|min:0',
             'products' => 'required|array|min:1',
@@ -540,13 +540,13 @@ class TransactionController extends Controller
 
     public function previewPdf($id)
     {
-        $transaction = Transaction::with('details', 'client')->findOrFail($id);
+        $transaction = Transaction::with('details', 'customer')->findOrFail($id);
 
         $data = [
                 'id' => $transaction->id,
                 'transaction_code' => $transaction->transaction_code,
                 'transaction_type' => $transaction->transaction_type,
-                'client_name' => $transaction->client->client_name ?? 'N/A',
+                'customer_name' => $transaction->customer->client_name ?? 'N/A',
                 'grand_total' => Number::currency($transaction->grand_total, in: 'IDR', locale: 'id'),
                 'transaction_date' => Carbon::parse($transaction->transaction_date)->format('d M Y'),
                 'status' => $transaction->status,
