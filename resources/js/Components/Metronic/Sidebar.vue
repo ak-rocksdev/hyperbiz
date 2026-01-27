@@ -126,7 +126,9 @@
                             </span>
                         </div>
                     </Link>
-                    <Link v-if="hasTransactionPermissions" :class="['menu-item', isActive('/transaction*') ? 'active' : '']" :href="isActive('/transaction/list') ? '#' : route('transaction.list')">
+                    <!-- Transactions (Expandable) -->
+                    <div v-if="hasTransactionPermissions" class="menu-item" :class="{ 'here show': isActive('/purchase-orders*') || isActive('/sales-orders*') || isActive('/payments*') || isActive('/inventory*') }"
+                        data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -135,8 +137,54 @@
                             <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
                                 Transactions
                             </span>
+                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
+                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"></i>
+                            </span>
                         </div>
-                    </Link>
+                        <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+                            <Link :class="['menu-item', isActive('/purchase-orders*') ? 'active' : '']" :href="route('purchase-orders.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-entrance-left text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Purchase Orders
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/sales-orders*') ? 'active' : '']" :href="route('sales-orders.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-exit-left text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Sales Orders
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/payments*') ? 'active' : '']" :href="route('payments.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-wallet text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Payments
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/inventory*') ? 'active' : '']" :href="route('inventory.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-parcel text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Inventory
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
                     <Link v-if="hasBrandPermissions" :class="['menu-item', isActive('/brand*') ? 'active' : '']" :href="isActive('/brand/list') ? '#' : route('brand.list')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">

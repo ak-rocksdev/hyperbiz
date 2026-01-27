@@ -224,21 +224,18 @@ onUnmounted(() => {
                                 : 'hover:bg-gray-50 text-gray-700'
                         ]"
                     >
-                        <!-- Sublabel (like country code) -->
-                        <span
-                            v-if="option.sublabel"
-                            class="text-xs font-medium text-gray-400 uppercase w-8 flex-shrink-0"
-                        >
-                            {{ option.sublabel }}
-                        </span>
-
-                        <!-- Label -->
-                        <span class="flex-1 truncate">{{ option.label }}</span>
+                        <!-- Label & Sublabel -->
+                        <div class="flex-1 min-w-0">
+                            <div class="truncate">{{ option.label }}</div>
+                            <div v-if="option.sublabel" class="text-xs text-gray-400 truncate">
+                                {{ option.sublabel }}
+                            </div>
+                        </div>
 
                         <!-- Check Icon -->
                         <i
                             v-if="option.value === modelValue"
-                            class="ki-filled ki-check text-primary text-sm"
+                            class="ki-filled ki-check text-primary text-sm flex-shrink-0"
                         ></i>
                     </div>
                 </div>

@@ -25,4 +25,9 @@ class Brand extends Model
     protected $table = 'mst_brands';
 
     protected $fillable = ['name', 'created_by', 'updated_by'];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'mst_brand_id');
+    }
 }

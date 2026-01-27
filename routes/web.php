@@ -14,6 +14,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\InventoryController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -165,6 +169,7 @@ Route::middleware([
 
     Route::prefix('products')->group(function () {
         Route::get('/list',             [ProductController::class, 'list'])->name('product.list');
+        Route::get('/detail/{id}',      [ProductController::class, 'show'])->name('product.detail');
         Route::get('/api/detail/{id}',  [ProductController::class, 'detailApi']);
         Route::post('/api/store',       [ProductController::class, 'store']);
         Route::get('/edit/{id}',        [ProductController::class, 'edit'])->name('product.edit');
@@ -180,4 +185,59 @@ Route::middleware([
     });
 
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+
+    // Purchase Orders
+    Route::prefix('purchase-orders')->group(function () {
+        Route::get('/list',                         [PurchaseOrderController::class, 'list'])->name('purchase-orders.list');
+        Route::get('/create',                       [PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
+        Route::get('/{id}',                         [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+        Route::get('/edit/{id}',                    [PurchaseOrderController::class, 'edit'])->name('purchase-orders.edit');
+        Route::post('/api/store',                   [PurchaseOrderController::class, 'store']);
+        Route::put('/api/update/{id}',              [PurchaseOrderController::class, 'update']);
+        Route::post('/api/confirm/{id}',            [PurchaseOrderController::class, 'confirm']);
+        Route::post('/api/cancel/{id}',             [PurchaseOrderController::class, 'cancel']);
+        Route::delete('/api/delete/{id}',           [PurchaseOrderController::class, 'delete']);
+        Route::post('/api/receive/{id}',            [PurchaseOrderController::class, 'receive']);
+        Route::post('/api/receive-all/{id}',        [PurchaseOrderController::class, 'receiveAll']);
+        Route::get('/api/items/{id}',               [PurchaseOrderController::class, 'getItems']);
+    });
+
+    // Sales Orders
+    Route::prefix('sales-orders')->group(function () {
+        Route::get('/list',                         [SalesOrderController::class, 'list'])->name('sales-orders.list');
+        Route::get('/create',                       [SalesOrderController::class, 'create'])->name('sales-orders.create');
+        Route::get('/{id}',                         [SalesOrderController::class, 'show'])->name('sales-orders.show');
+        Route::get('/edit/{id}',                    [SalesOrderController::class, 'edit'])->name('sales-orders.edit');
+        Route::post('/api/store',                   [SalesOrderController::class, 'store']);
+        Route::put('/api/update/{id}',              [SalesOrderController::class, 'update']);
+        Route::post('/api/confirm/{id}',            [SalesOrderController::class, 'confirm']);
+        Route::post('/api/cancel/{id}',             [SalesOrderController::class, 'cancel']);
+        Route::delete('/api/delete/{id}',           [SalesOrderController::class, 'delete']);
+        Route::post('/api/mark-shipped/{id}',       [SalesOrderController::class, 'markAsShipped']);
+        Route::post('/api/mark-delivered/{id}',     [SalesOrderController::class, 'markAsDelivered']);
+        Route::get('/api/items/{id}',               [SalesOrderController::class, 'getItems']);
+    });
+
+    // Payments
+    Route::prefix('payments')->group(function () {
+        Route::get('/list',                                 [PaymentController::class, 'list'])->name('payments.list');
+        Route::get('/{id}',                                 [PaymentController::class, 'show'])->name('payments.show');
+        Route::post('/api/cancel/{id}',                     [PaymentController::class, 'cancel']);
+        Route::post('/api/purchase-order/{poId}',           [PaymentController::class, 'storeForPurchaseOrder']);
+        Route::post('/api/sales-order/{soId}',              [PaymentController::class, 'storeForSalesOrder']);
+        Route::get('/api/purchase-order/{poId}',            [PaymentController::class, 'getForPurchaseOrder']);
+        Route::get('/api/sales-order/{soId}',               [PaymentController::class, 'getForSalesOrder']);
+    });
+
+    // Inventory
+    Route::prefix('inventory')->group(function () {
+        Route::get('/list',                         [InventoryController::class, 'list'])->name('inventory.list');
+        Route::get('/movements',                    [InventoryController::class, 'movements'])->name('inventory.movements');
+        Route::get('/product/{id}',                 [InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('/low-stock',                    [InventoryController::class, 'lowStockReport'])->name('inventory.low-stock');
+        Route::get('/valuation',                    [InventoryController::class, 'valuationReport'])->name('inventory.valuation');
+        Route::post('/api/adjust/{id}',             [InventoryController::class, 'adjust']);
+        Route::post('/api/reorder-level/{id}',      [InventoryController::class, 'updateReorderLevel']);
+        Route::get('/api/movements/{id}',           [InventoryController::class, 'getMovements']);
+    });
 });

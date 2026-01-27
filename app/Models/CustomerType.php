@@ -32,8 +32,16 @@ class CustomerType extends Model
 
     protected $fillable = [
         'client_type',
+        'can_purchase',
+        'can_sell',
+        'description',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'can_purchase' => 'boolean',
+        'can_sell' => 'boolean',
     ];
 
     /**
@@ -50,5 +58,21 @@ class CustomerType extends Model
     public function getNameAttribute()
     {
         return $this->client_type;
+    }
+
+    /**
+     * Scope for types that can be used for purchasing.
+     */
+    public function scopeCanPurchase($query)
+    {
+        return $query->where('can_purchase', true);
+    }
+
+    /**
+     * Scope for types that can be used for selling.
+     */
+    public function scopeCanSell($query)
+    {
+        return $query->where('can_sell', true);
     }
 }
