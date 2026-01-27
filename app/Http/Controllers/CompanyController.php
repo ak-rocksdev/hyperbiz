@@ -57,7 +57,7 @@ class CompanyController extends Controller
 
     public function detail($id)
     {
-        $company = Company::find($id);
+        $company = Company::findOrFail($id);
 
         $data = [
             'id' => $company->id,
@@ -67,7 +67,10 @@ class CompanyController extends Controller
             'phone' => $company->phone,
             'website' => $company->website,
             'logo' => $company->logo,
-            'created_at' => Carbon::parse($company->created_at)->format('d M Y - H:i')
+            'created_at' => Carbon::parse($company->created_at)->format('d M Y'),
+            'created_at_time' => Carbon::parse($company->created_at)->format('H:i'),
+            'updated_at' => Carbon::parse($company->updated_at)->format('d M Y'),
+            'updated_at_time' => Carbon::parse($company->updated_at)->format('H:i'),
         ];
 
         return Inertia::render('Company/Detail', [
@@ -137,7 +140,7 @@ class CompanyController extends Controller
 
     public function edit($id)
     {
-        $company = Company::findOrFail(1);
+        $company = Company::findOrFail($id);
 
         $data = [
             'id' => $company->id,
@@ -158,47 +161,78 @@ class CompanyController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email',
+            'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'website' => 'nullable|string|max:255',
-            'logo' => [
-                'nullable',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->hasFile('logo') && !in_array($request->file('logo')->getClientOriginalExtension(), ['jpeg', 'png', 'jpg'])) {
-                        $fail('The ' . $attribute . ' must be a file of type: jpeg, png, jpg.');
-                    }
-                },
-                'max:2048',
-            ],
+            'address' => 'required|string|max:500',
+            'website' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'remove_logo' => 'nullable|boolean',
+        ], [
+            'name.required' => 'Company name is required.',
+            'name.max' => 'Company name cannot exceed 255 characters.',
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.max' => 'Email cannot exceed 255 characters.',
+            'phone.required' => 'Phone number is required.',
+            'phone.max' => 'Phone number cannot exceed 20 characters.',
+            'address.required' => 'Address is required.',
+            'address.max' => 'Address cannot exceed 500 characters.',
+            'website.url' => 'Please enter a valid website URL.',
+            'website.max' => 'Website URL cannot exceed 255 characters.',
+            'logo.image' => 'Logo must be an image file.',
+            'logo.mimes' => 'Logo must be a JPEG, PNG, or JPG file.',
+            'logo.max' => 'Logo file size cannot exceed 2MB.',
         ]);
 
-        $company = Company::findOrFail($id);
+        DB::beginTransaction();
+        try {
+            $company = Company::findOrFail($id);
 
-        if ($request->hasFile('logo')) {
-            // Delete old logo if exists
-            if ($company->logo) {
+            // Handle logo removal
+            if ($request->boolean('remove_logo') && $company->logo) {
                 Storage::disk('public')->delete($company->logo);
+                $validatedData['logo'] = null;
             }
-            $logoPath = $request->file('logo')->store('company', 'public');
-            $validatedData['logo'] = $logoPath;
-        }
+            // Handle new logo upload
+            elseif ($request->hasFile('logo')) {
+                // Delete old logo if exists
+                if ($company->logo) {
+                    Storage::disk('public')->delete($company->logo);
+                }
+                $logoPath = $request->file('logo')->store('company', 'public');
+                $validatedData['logo'] = $logoPath;
+            }
 
-        $companyDirty = $company->fill($validatedData)->isDirty();
-        if ($companyDirty) {
-            $company->save();
-        }
+            // Remove remove_logo from validated data as it's not a column
+            unset($validatedData['remove_logo']);
 
-        if (!$companyDirty) {
+            $company->fill($validatedData);
+            $hasChanges = $company->isDirty();
+
+            if ($hasChanges) {
+                $company->save();
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Company updated successfully.',
+                ], 200);
+            }
+
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'message' => 'No changes were made.',
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'No changes detected.',
-            ], 201);
+                'message' => 'Failed to update company. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Company updated successfully.',
-        ], 200);
     }
 }
