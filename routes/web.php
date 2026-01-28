@@ -142,12 +142,30 @@ Route::middleware([
         Route::put('/api/update/{id}',  [ProductController::class, 'update']);
     });
 
-    // product category
+    // Product Categories
     Route::prefix('product-category')->group(function () {
-        Route::get('/list',             [ProductCategoryController::class, 'list'])->name('product-category.list');
-        Route::get('/api/detail/{id}',  [ProductCategoryController::class, 'detailApi']);
-        Route::post('/api/store',       [ProductCategoryController::class, 'store']);
-        Route::put('/api/update/{id}',  [ProductCategoryController::class, 'update']);
+        // View routes
+        Route::middleware('permission:product-categories.view')->group(function () {
+            Route::get('/list',             [ProductCategoryController::class, 'list'])->name('product-category.list');
+            Route::get('/detail/{id}',      [ProductCategoryController::class, 'show'])->name('product-category.detail');
+            Route::get('/api/detail/{id}',  [ProductCategoryController::class, 'detailApi']);
+        });
+
+        // Create routes
+        Route::middleware('permission:product-categories.create')->group(function () {
+            Route::post('/api/store',       [ProductCategoryController::class, 'store']);
+        });
+
+        // Edit routes
+        Route::middleware('permission:product-categories.edit')->group(function () {
+            Route::get('/edit/{id}',        [ProductCategoryController::class, 'edit'])->name('product-category.edit');
+            Route::put('/api/update/{id}',  [ProductCategoryController::class, 'update']);
+        });
+
+        // Delete routes
+        Route::middleware('permission:product-categories.delete')->group(function () {
+            Route::delete('/api/delete/{id}', [ProductCategoryController::class, 'destroy']);
+        });
     });
 
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
