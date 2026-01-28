@@ -18,6 +18,7 @@ use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -45,45 +46,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        // Get greeting based on server time
-        $hour = now()->hour;
-        if ($hour < 12) {
-            $greeting = 'Good Morning';
-        } elseif ($hour < 17) {
-            $greeting = 'Good Afternoon';
-        } else {
-            $greeting = 'Good Evening';
-        }
-
-        $stats = [
-            'greeting' => $greeting,
-            'total_users' => \App\Models\User::count(),
-            'active_users' => \App\Models\User::where('is_active', true)->count(),
-            'total_customers' => \App\Models\Customer::count(),
-            'total_transactions' => \App\Models\Transaction::count(),
-            'total_products' => \App\Models\Product::count(),
-            'total_brands' => \App\Models\Brand::count(),
-            'total_categories' => \App\Models\ProductCategory::count(),
-            'recent_transactions' => \App\Models\Transaction::with('customer')
-                ->orderByDesc('created_at')
-                ->limit(5)
-                ->get()
-                ->map(fn($t) => [
-                    'id' => $t->id,
-                    'transaction_code' => $t->transaction_code,
-                    'transaction_type' => $t->transaction_type,
-                    'customer_name' => $t->customer?->client_name ?? 'N/A',
-                    'grand_total' => $t->grand_total ?? 0,
-                    'status' => $t->status,
-                    'transaction_date' => $t->transaction_date ? \Carbon\Carbon::parse($t->transaction_date)->format('d M Y') : '-',
-                ]),
-        ];
-
-        return Inertia::render('Dashboard', [
-            'stats' => $stats,
-        ]);
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Access Management (Users, Roles, Permissions)
     Route::prefix('access-management')->group(function () {
@@ -163,8 +126,11 @@ Route::middleware([
 
     Route::prefix('brand')->group(function () {
         Route::get('/list',             [BrandController::class, 'list'])->name('brand.list');
+        Route::get('/detail/{id}',      [BrandController::class, 'show'])->name('brand.detail');
+        Route::get('/edit/{id}',        [BrandController::class, 'edit'])->name('brand.edit');
         Route::get('/api/detail/{id}',  [BrandController::class, 'detailApi']);
         Route::post('/api/store',       [BrandController::class, 'store']);
+        Route::put('/api/update/{id}',  [BrandController::class, 'update']);
     });
 
     Route::prefix('products')->group(function () {

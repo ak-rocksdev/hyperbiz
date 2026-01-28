@@ -345,7 +345,7 @@ const deleteSO = (id) => {
                                                                 <span class="menu-title">Confirm</span>
                                                             </button>
                                                         </div>
-                                                        <div class="menu-separator"></div>
+                                                        <div v-if="isDraft(so.status) || canCancel(so.status)" class="menu-separator"></div>
                                                         <div v-if="isDraft(so.status)" class="menu-item">
                                                             <button @click="deleteSO(so.id)" class="menu-link">
                                                                 <span class="menu-icon"><i class="ki-filled ki-trash"></i></span>
