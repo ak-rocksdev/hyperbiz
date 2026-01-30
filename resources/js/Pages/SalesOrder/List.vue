@@ -13,6 +13,7 @@ const props = defineProps({
     filters: Object,
     customers: Array,
     statuses: Array,
+    filteredCustomer: Object,
 });
 
 // Format statuses for SearchableSelect
@@ -190,6 +191,18 @@ const deleteSO = (id) => {
         }
     });
 };
+
+// Clear customer filter
+const clearCustomerFilter = () => {
+    selectedCustomer.value = '';
+    currentPage.value = 1;
+    router.get(route('sales-orders.list'), {
+        search: searchQuery.value,
+        status: selectedStatus.value,
+        per_page: selectedPerPage.value,
+        page: 1,
+    }, { preserveScroll: true });
+};
 </script>
 
 <template>
@@ -245,6 +258,23 @@ const deleteSO = (id) => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Customer Filter Banner -->
+            <div v-if="filteredCustomer" class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="ki-filled ki-filter text-blue-600 text-xl"></i>
+                    <div>
+                        <span class="text-blue-800 font-medium">Showing orders for: </span>
+                        <Link :href="`/customer/detail/${filteredCustomer.id}`" class="text-blue-600 font-semibold hover:underline">
+                            {{ filteredCustomer.name }}
+                        </Link>
+                    </div>
+                </div>
+                <button @click="clearCustomerFilter" class="btn btn-sm btn-light">
+                    <i class="ki-filled ki-cross me-1"></i>
+                    Clear Filter
+                </button>
             </div>
 
             <!-- Main Table Card -->

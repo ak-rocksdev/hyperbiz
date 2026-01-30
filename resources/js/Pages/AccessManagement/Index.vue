@@ -70,7 +70,7 @@ watch(() => props.activeTab, (newTab) => {
         <div class="container-fixed">
             <div class="py-5">
                 <!-- Summary Stats Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+                <div class="grid grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
                     <div class="card">
                         <div class="card-body p-5">
                             <div class="flex items-center gap-4">

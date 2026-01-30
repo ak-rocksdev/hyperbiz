@@ -27,10 +27,16 @@ class SalesOrderController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
         $paymentStatus = $request->input('payment_status');
+        $customerId = $request->input('customer_id');
         $perPage = $request->input('per_page', 10);
 
         $query = SalesOrder::with(['customer', 'items.product', 'createdBy'])
             ->orderByDesc('created_at');
+
+        // Filter by customer_id if provided
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -85,6 +91,18 @@ class SalesOrderController extends Controller
                 ->value('unpaid') ?? 0,
         ];
 
+        // Get customer info if filtering by customer_id
+        $filteredCustomer = null;
+        if ($customerId) {
+            $customer = Customer::find($customerId);
+            if ($customer) {
+                $filteredCustomer = [
+                    'id' => $customer->id,
+                    'name' => $customer->client_name,
+                ];
+            }
+        }
+
         return Inertia::render('SalesOrder/List', [
             'salesOrders' => $data,
             'pagination' => [
@@ -98,7 +116,9 @@ class SalesOrderController extends Controller
                 'search' => $search,
                 'status' => $status,
                 'payment_status' => $paymentStatus,
+                'customer_id' => $customerId,
             ],
+            'filteredCustomer' => $filteredCustomer,
             'statuses' => [
                 ['value' => 'draft', 'label' => 'Draft'],
                 ['value' => 'confirmed', 'label' => 'Confirmed'],
@@ -113,8 +133,11 @@ class SalesOrderController extends Controller
     /**
      * Show the create form.
      */
-    public function create()
+    public function create(Request $request)
     {
+        // Get pre-selected customer_id from URL if provided
+        $preselectedCustomerId = $request->input('customer_id');
+
         // Get customers (clients that can be used for selling)
         $customers = Customer::whereHas('customerType', function ($q) {
             $q->where('can_sell', true);
@@ -172,6 +195,7 @@ class SalesOrderController extends Controller
             'defaultTaxEnabled' => $defaultTaxEnabled,
             'defaultTaxName' => $defaultTaxName,
             'defaultTaxPercentage' => $defaultTaxPercentage,
+            'preselectedCustomerId' => $preselectedCustomerId ? (int) $preselectedCustomerId : null,
             'statuses' => [
                 ['value' => 'draft', 'label' => 'Draft'],
                 ['value' => 'confirmed', 'label' => 'Confirmed'],

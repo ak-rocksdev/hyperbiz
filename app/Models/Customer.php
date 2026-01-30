@@ -39,8 +39,14 @@ class Customer extends Model
         'contact_person_phone_number',
         'mst_client_type_id',
         'is_customer',
+        'is_active',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+        'is_customer' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -104,5 +110,37 @@ class Customer extends Model
     public function getPhoneNumberAttribute()
     {
         return $this->client_phone_number;
+    }
+
+    /**
+     * Scope to filter only active customers
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to filter only inactive customers
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Relationship with Sales Orders
+     */
+    public function salesOrders()
+    {
+        return $this->hasMany(SalesOrder::class, 'customer_id');
+    }
+
+    /**
+     * Relationship with Sales Returns
+     */
+    public function salesReturns()
+    {
+        return $this->hasMany(SalesReturn::class, 'customer_id');
     }
 }

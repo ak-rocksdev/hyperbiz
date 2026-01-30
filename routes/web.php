@@ -109,6 +109,7 @@ Route::middleware([
         Route::get('/api/detail/{id}',          [CustomerController::class, 'detailApi']);
         Route::post('/api/store',               [CustomerController::class, 'store']);
         Route::put('/api/update/{id}',          [CustomerController::class, 'update']);
+        Route::patch('/api/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
     });
 
     Route::prefix('transaction')->group(function () {

@@ -14,6 +14,7 @@ const props = defineProps({
     defaultTaxEnabled: Boolean,
     defaultTaxName: String,
     defaultTaxPercentage: Number,
+    preselectedCustomerId: Number,
 });
 
 // Format customers for SearchableSelect
@@ -35,7 +36,7 @@ const currencyOptions = computed(() => {
 });
 
 const form = ref({
-    customer_id: null,
+    customer_id: props.preselectedCustomerId || null,
     order_date: new Date().toISOString().split('T')[0],
     due_date: '',
     currency_code: props.defaultCurrency || 'IDR',
@@ -137,7 +138,7 @@ watch(() => form.value.customer_id, (newCustomerId) => {
     if (customer) {
         form.value.shipping_address = customer.address || '';
     }
-});
+}, { immediate: true });
 
 // Submit form
 const submitForm = (action = 'draft') => {

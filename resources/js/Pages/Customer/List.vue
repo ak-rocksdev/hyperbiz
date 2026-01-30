@@ -1,161 +1,218 @@
 <script setup>
-    import AppLayout from '@/Layouts/AppLayout.vue';
-    import { Link, router } from '@inertiajs/vue3';
-    import axios from 'axios';
-    import { ref, watch, computed } from 'vue';
-    import Swal from 'sweetalert2';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
+import { ref, watch, onMounted } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import { KTModal } from '../../../metronic/core/components/modal';
 
-    const form = ref({});
-    const errors = ref({});
-    const page = ref('');
-    const searchQuery = ref('');
+// Props from controller
+const props = defineProps({
+    customers: Array,
+    customerTypes: Array,
+    pagination: Object,
+    filters: Object,
+    stats: Object,
+});
 
-    const props = defineProps({
-        customers: Object,
-        pagination: {
-            type: Object,
-            required: true,
-        },
-        customerTypes: Object,
-        totalCustomers: Number,
-        customerCategoriesCount: Number,
-        totalSearchResults: Number,
+// Search and pagination state
+const searchQuery = ref(props.filters?.search || '');
+const currentPage = ref(props.pagination?.current_page || 1);
+const perPageOptions = [
+    { value: 10, label: '10' },
+    { value: 25, label: '25' },
+    { value: 50, label: '50' },
+    { value: 100, label: '100' },
+];
+const selectedPerPage = ref(props.pagination?.per_page || 10);
+const statusFilter = ref(props.filters?.status || 'all');
+const statusOptions = [
+    { value: 'all', label: 'All Status' },
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+];
+
+// Form state for create modal
+const form = ref({
+    customer_name: '',
+    email: '',
+    mst_customer_type_id: '',
+    customer_phone_number: '',
+    contact_person: '',
+    contact_person_phone_number: '',
+    is_customer: true,
+});
+const isLoading = ref(false);
+const errors = ref({});
+
+// Format helpers
+const formatNumber = (num) => {
+    return new Intl.NumberFormat('id-ID').format(num || 0);
+};
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(value || 0);
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
     });
+};
 
-    const currentPage = ref(props.pagination.current_page || 1);
-    const perPageOptions = ref([5, 10, 25, 50]);
-    const selectedPerPage = ref(props.pagination.per_page);
-
-    const searchCustomers = () => {
-        currentPage.value = 1;
-        router.get(
-            route('customer.list'),
-            { search: searchQuery.value },
-            { preserveState: true, preserveScroll: true }
-        );
-    };
-
-    watch(currentPage, (newPage) => {
-        router.get(route('customer.list'), { search: searchQuery.value, page: newPage }, { preserveState: true });
+// Fetch data with filters
+const fetchData = () => {
+    router.get(route('customer.list'), {
+        search: searchQuery.value || undefined,
+        status: statusFilter.value !== 'all' ? statusFilter.value : undefined,
+        per_page: selectedPerPage.value,
+        page: currentPage.value,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
     });
+};
 
-    const visiblePages = computed(() => {
-        const totalPages = props.pagination.last_page || 1;
-        const maxVisible = 5;
-        const pages = [];
+// Watch for pagination and filter changes
+watch([currentPage, selectedPerPage, statusFilter], () => {
+    fetchData();
+});
 
-        if (totalPages <= maxVisible) {
-            for (let i = 1; i <= totalPages; i++) {
-                pages.push(i);
-            }
-        } else {
-            if (currentPage.value <= 3) {
-                pages.push(1, 2, 3, 4, '...', totalPages);
-            } else if (currentPage.value > totalPages - 3) {
-                pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-            } else {
-                pages.push(
-                    1,
-                    '...',
-                    currentPage.value - 1,
-                    currentPage.value,
-                    currentPage.value + 1,
-                    '...',
-                    totalPages
-                );
-            }
+// Perform search
+const performSearch = () => {
+    currentPage.value = 1;
+    fetchData();
+};
+
+// Clear search
+const clearSearch = () => {
+    searchQuery.value = '';
+    currentPage.value = 1;
+    fetchData();
+};
+
+// Get initials for avatar
+const getInitials = (name) => {
+    if (!name) return 'C';
+    const words = name.split(' ');
+    if (words.length > 1) {
+        return words.slice(0, 2).map(w => w[0]?.toUpperCase()).join('');
+    }
+    return name[0]?.toUpperCase() || 'C';
+};
+
+// Create new customer
+const submitForm = () => {
+    isLoading.value = true;
+    errors.value = {};
+
+    axios.post('/customer/api/store', form.value)
+    .then((response) => {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            icon: 'success',
+            title: 'Success',
+            text: response.data.message
+        });
+
+        form.value = {
+            customer_name: '',
+            email: '',
+            mst_customer_type_id: '',
+            customer_phone_number: '',
+            contact_person: '',
+            contact_person_phone_number: '',
+            is_customer: true,
+        };
+        closeModal('modal_create_new_customer');
+        fetchData();
+    })
+    .catch(error => {
+        if (error.response?.status === 422) {
+            errors.value = error.response.data.errors || {};
         }
-
-        return pages;
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.response?.data?.message || 'An error occurred',
+        });
+    })
+    .finally(() => {
+        isLoading.value = false;
     });
+};
 
-    watch([currentPage, selectedPerPage], ([newPage, newPerPage]) => {
-        router.get(route('customer.list'), {
-            page: newPage,
-            per_page: newPerPage,
-            ...(searchQuery.value ? { search: searchQuery.value } : {}),
-        }, { preserveState: true, replace: true });
-    });
+// Toggle customer status (activate/deactivate)
+const toggleStatus = (customer) => {
+    const action = customer.is_active ? 'deactivate' : 'activate';
+    const title = customer.is_active ? 'Deactivate Customer?' : 'Activate Customer?';
+    const text = customer.is_active
+        ? `Are you sure you want to deactivate "${customer.name}"? They won't appear in dropdowns for new orders.`
+        : `Are you sure you want to activate "${customer.name}"?`;
 
-    const goToPage = (page) => {
-        if (page !== '...') {
-            currentPage.value = page;
-            router.get(route('customer.list'), { search: searchQuery.value, page }, { preserveState: true, replace: true });
-        }
-    };
-
-    const selectedCustomer = ref(null);
-
-    const viewCustomerDetail = async (id) => {
-        selectedCustomer.value = null;
-        try {
-            const response = await axios.get(`/customer/api/detail/${id}`);
-            selectedCustomer.value = response.data.customer;
-        } catch (error) {
-            console.error("Error fetching customer details:", error);
-        }
-    };
-
-    const submitForm = () => {
-        errors.value = {};
-
-        try {
-            axios.post('/customer/api/store', form.value)
+    Swal.fire({
+        title: title,
+        text: text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: customer.is_active ? '#F59E0B' : '#22C55E',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: customer.is_active ? 'Yes, deactivate' : 'Yes, activate'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            axios.patch(`/customer/api/toggle-status/${customer.id}`)
                 .then(response => {
-                    form.value = {};
-
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: response.data.message,
                         toast: true,
                         position: 'top-end',
                         showConfirmButton: false,
                         timer: 3000,
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.data.message
                     });
-
-                    KTModal.init();
-
-                    const modalEl = document.querySelector('#modal_create_new_customer');
-                    const modal = KTModal.getInstance(modalEl);
-
-                    modal.hide();
-
-                    if (document.querySelector('.modal-backdrop')) {
-                        document.querySelector('.modal-backdrop').remove();
-                    }
-
-                    router.visit(route('customer.list'), { search: '', page: '' }, { preserveState: true });
+                    fetchData();
                 })
                 .catch(error => {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error!',
-                        text: error.response.data.message,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000,
+                        title: 'Error',
+                        text: error.response?.data?.message || 'Failed to update customer status.'
                     });
-                    if (error.response && error.response.status === 422) {
-                        errors.value = error.response.data.errors;
-                    } else {
-                        console.error('An unexpected error occurred:', error);
-                    }
                 });
-        } catch (error) {
-            if (error.response && error.response.status === 422) {
-                errors.value = error.response.data.errors;
-            } else {
-                console.error('An unexpected error occurred:', error);
-            }
         }
-    };
+    });
+};
 
-    const clearSearch = () => {
-        searchQuery.value = '';
-        searchCustomers();
-    };
+// Close modal helper
+const closeModal = (modalId) => {
+    const modalEl = document.querySelector(`#${modalId}`);
+    if (modalEl) {
+        const modal = KTModal.getInstance(modalEl);
+        if (modal) {
+            modal.hide();
+        }
+    }
+    if (document.querySelector('.modal-backdrop')) {
+        document.querySelector('.modal-backdrop').remove();
+    }
+};
+
+onMounted(() => {
+    KTModal.init();
+});
 </script>
 
 <template>
@@ -168,531 +225,410 @@
 
         <!-- Container -->
         <div class="container-fixed">
+            <!-- Stats Summary Cards -->
             <div class="py-5">
-                <div class="grid grid-cols-2 gap-5 lg:gap-7.5 w-full items-stretch">
-                    <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
-                        <div class="flex flex-col gap-1 py-5 px-5">
-                            <span class="text-3xl font-semibold text-gray-900">
-                                {{ totalCustomers }}
-                            </span>
-                            <span class="text-2sm font-normal text-gray-700">
-                                Customers
-                            </span>
+                <div class="grid grid-cols-2 xl:grid-cols-4 gap-5">
+                    <!-- Total Customers -->
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary-light">
+                                    <i class="ki-filled ki-people text-primary text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatNumber(stats?.total_customers) }}</div>
+                                    <div class="text-xs text-gray-500">Total Customers</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card flex-col justify-between gap-6 h-full bg-cover rtl:bg-[left_top_-1.7rem] bg-[right_top_-1.7rem] bg-no-repeat channel-stats-bg">
-                        <div class="flex flex-col gap-1 py-5 px-5">
-                            <span class="text-3xl font-semibold text-gray-900">
-                                {{ customerCategoriesCount }}
-                            </span>
-                            <span class="text-2sm font-normal text-gray-700">
-                                Categories of Customers
-                            </span>
+
+                    <!-- Active Customers -->
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-success-light">
+                                    <i class="ki-filled ki-verify text-success text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="text-2xl font-bold text-gray-900">{{ formatNumber(stats?.active_customers) }}</div>
+                                    <div class="text-xs text-gray-500">Active Customers</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Revenue -->
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-info-light">
+                                    <i class="ki-filled ki-dollar text-info text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xl font-bold text-gray-900">{{ formatCurrency(stats?.total_revenue) }}</div>
+                                    <div class="text-xs text-gray-500">Total Revenue</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Outstanding -->
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-warning-light">
+                                    <i class="ki-filled ki-time text-warning text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="text-xl font-bold text-gray-900">{{ formatCurrency(stats?.total_outstanding) }}</div>
+                                    <div class="text-xs text-gray-500">Outstanding</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Main Data Card -->
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
-                    <div class="card-header gap-5">
-                        <h3 class="card-title">
-                            Customers
-                        </h3>
-                        <div class="card-toolbar">
-                            <div class="flex gap-6">
-                                <div class="relative">
-                                    <i
-                                        class="ki-filled ki-magnifier leading-none text-md text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3">
-                                    </i>
-                                    <input class="input input-sm ps-8" placeholder="Search Customer" v-model="searchQuery"
-                                        @input="searchCustomers" />
-                                    <button
-                                        v-if="searchQuery"
-                                        @click="clearSearch"
-                                        class="absolute right-2 flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200"
-                                        style="right: 10px; top: 50%; transform: translateY(-50%);"
-                                        aria-label="Clear Search">
-                                        <i class="ki-filled ki-cross-circle text-gray-500"></i>
-                                    </button>
-                                </div>
-                                <a class="btn btn-sm btn-primary min-w-[100px] justify-center" data-modal-toggle="#modal_create_new_customer">
-                                    Add New Customer
-                                </a>
+                    <div class="card-header flex-wrap gap-4">
+                        <h3 class="card-title">Customers</h3>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Status Filter -->
+                            <SearchableSelect
+                                v-model="statusFilter"
+                                :options="statusOptions"
+                                placeholder="All Status"
+                                class="w-[140px]"
+                                :clearable="false"
+                            />
+
+                            <!-- Search Input -->
+                            <div class="relative">
+                                <i class="ki-filled ki-magnifier text-gray-500 absolute top-1/2 left-3 -translate-y-1/2"></i>
+                                <input
+                                    type="text"
+                                    class="input input-sm pl-9 w-[200px]"
+                                    placeholder="Search customers..."
+                                    v-model="searchQuery"
+                                    @keyup.enter="performSearch"
+                                />
+                                <button
+                                    v-if="searchQuery"
+                                    @click="clearSearch"
+                                    class="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <i class="ki-filled ki-cross text-sm"></i>
+                                </button>
                             </div>
+
+                            <!-- Add New Button -->
+                            <button class="btn btn-sm btn-primary" data-modal-toggle="#modal_create_new_customer">
+                                <i class="ki-filled ki-plus-squared me-1"></i>
+                                New Customer
+                            </button>
                         </div>
                     </div>
+
                     <div class="card-body">
-                        <div id="data_container">
-                            <div class="scrollable-x-auto">
-                                <table class="table table-auto table-border" data-datatable-table="true">
-                                    <thead>
-                                        <tr>
-                                            <th class="w-[60px]">
-                                                <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox"/>
-                                            </th>
-                                            <th class="min-w-[200px] lg:w-[200px]" data-datatable-column="name">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Name
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                            <th class="w-[185px]">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Customer Type
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                            <th class="w-[185px]">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Location
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                            <th class="w-[185px] text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Total Sales Value
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                            <th class="min-w-[180px] w-[200px] text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Total Purchase Value
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                            <th class="w-[85px] text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label">
-                                                        Action
-                                                    </span>
-                                                    <span class="sort-icon">
-                                                    </span>
-                                                </span>
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="customer in customers" v-if="customers.length" :key="customer.id">
-                                            <td class="text-center">
-                                                <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" :value="customer.id"/>
-                                            </td>
-                                            <td>
-                                                <div class="flex items-center gap-2.5">
-                                                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100 text-purple-700 font-bold border border-purple-400 shrink-0">
-                                                        {{ customer.name.split(' ').length > 1
-                                                            ? customer.name.split(' ').map(word => word[0].toUpperCase()).slice(0, 2).join('')
-                                                            : customer.name[0].toUpperCase()
-                                                        }}
-                                                    </div>
-                                                    <div class="flex flex-col">
-                                                        <span @click="viewCustomerDetail(customer.id)" data-modal-toggle="#modal_view_customer" class="text-sm font-medium text-gray-900 hover:text-primary-active mb-px hover:cursor-pointer">
-                                                            {{ customer.name }}
-                                                        </span>
-                                                        <span class="text-2sm text-gray-700 font-normal">
-                                                            {{ customer.email }}
-                                                        </span>
-                                                        <span class="text-2sm text-gray-700 font-normal">
-                                                            {{ customer.phone_number }}
-                                                        </span>
-                                                    </div>
+                        <div class="scrollable-x-auto">
+                            <table class="table table-auto table-border">
+                                <thead>
+                                    <tr>
+                                        <th class="w-[50px] text-center">#</th>
+                                        <th class="min-w-[250px]">Customer</th>
+                                        <th class="w-[140px]">Type</th>
+                                        <th class="w-[180px]">Location</th>
+                                        <th class="w-[100px] text-center">Orders</th>
+                                        <th class="w-[140px] text-end">Total Sales</th>
+                                        <th class="w-[140px] text-end">Outstanding</th>
+                                        <th class="w-[100px] text-center">Status</th>
+                                        <th class="w-[80px] text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-if="!customers || customers.length === 0">
+                                        <td colspan="9">
+                                            <div class="flex flex-col items-center justify-center py-10">
+                                                <i class="ki-filled ki-people text-6xl text-gray-300 mb-3"></i>
+                                                <span class="text-gray-500">No customers found</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-else v-for="(customer, index) in customers" :key="customer.id" class="hover:bg-slate-50 dark:hover:bg-coal-600">
+                                        <td class="text-center text-gray-600">
+                                            {{ (pagination?.from || 0) + index }}
+                                        </td>
+                                        <td>
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-light text-primary font-bold text-sm shrink-0">
+                                                    {{ getInitials(customer.name) }}
                                                 </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <span class="badge badge-outline badge-success">
-                                                    {{ customer.customer_type }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span v-if="customer.address">
-                                                    {{ customer.address.country_name }} - {{ customer.address.state_name }}, {{ customer.address.city_name }}
-                                                </span>
-                                                <span v-else>
-                                                    N/A
-                                                </span>
-                                            </td>
-                                            <td class="text-center">
-                                                {{ customer.sell_value }}
-                                            </td>
-                                            <td class="text-center">
-                                                {{ customer.purchase_value }}
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="menu flex-inline justify-center" data-menu="true">
-                                                    <div class="menu-item" data-menu-item-offset="0, 10px"
-                                                        data-menu-item-placement="bottom-end"
-                                                        data-menu-item-placement-rtl="bottom-start"
-                                                        data-menu-item-toggle="dropdown"
-                                                        data-menu-item-trigger="click|lg:click">
-                                                        <button
-                                                            class="menu-toggle btn btn-sm btn-icon btn-light btn-clear">
-                                                            <i class="ki-filled ki-dots-vertical">
-                                                            </i>
-                                                        </button>
-                                                        <div class="menu-dropdown menu-default w-full max-w-[175px]"
-                                                            data-menu-dismiss="true">
-                                                            <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/customer/detail/' + customer.id">
-                                                                    <span class="menu-icon">
-                                                                        <i class="ki-filled ki-search-list">
-                                                                        </i>
-                                                                    </span>
-                                                                    <span class="menu-title">
-                                                                        View Detail
-                                                                    </span>
-                                                                </Link>
-                                                            </div>
-                                                            <div class="menu-separator">
-                                                            </div>
-                                                            <div class="menu-item">
-                                                                <Link class="menu-link" :href="'/customer/edit/' + customer.id">
-                                                                    <span class="menu-icon">
-                                                                        <i class="ki-filled ki-pencil">
-                                                                        </i>
-                                                                    </span>
-                                                                    <span class="menu-title">
-                                                                        Edit
-                                                                    </span>
-                                                                </Link>
-                                                            </div>
-                                                            <div class="menu-item">
-                                                                <a class="menu-link" href="#">
-                                                                    <span class="menu-icon">
-                                                                        <i class="ki-filled ki-copy">
-                                                                        </i>
-                                                                    </span>
-                                                                    <span class="menu-title">
-                                                                        Make a copy
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                            <div class="menu-item">
-                                                                <a class="menu-link" href="#">
-                                                                    <span class="menu-icon">
-                                                                        <i class="ki-filled ki-dollar"></i>
-                                                                    </span>
-                                                                    <span class="menu-title text-start">
-                                                                        Transactions
-                                                                    </span>
-                                                                </a>
-                                                            </div>
-                                                            <div class="menu-separator">
-                                                            </div>
-                                                            <div class="menu-item">
-                                                                <a class="menu-link" href="#">
-                                                                    <span class="menu-icon">
-                                                                        <i class="ki-filled ki-trash">
-                                                                        </i>
-                                                                    </span>
-                                                                    <span class="menu-title !text-red-500 hover:!text-red-600">
-                                                                        Remove
-                                                                    </span>
-                                                                </a>
-                                                            </div>
+                                                <div class="flex flex-col">
+                                                    <Link :href="`/customer/detail/${customer.id}`" class="text-sm font-medium text-gray-900 hover:text-primary">
+                                                        {{ customer.name }}
+                                                    </Link>
+                                                    <span class="text-xs text-gray-500">{{ customer.email || '-' }}</span>
+                                                    <span class="text-xs text-gray-500">{{ customer.phone_number || '-' }}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-sm badge-outline badge-secondary">
+                                                {{ customer.customer_type }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span v-if="customer.address" class="text-sm text-gray-600">
+                                                {{ customer.address.city_name }}, {{ customer.address.country_name }}
+                                            </span>
+                                            <span v-else class="text-gray-400">-</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-sm" :class="customer.orders_count > 0 ? 'badge-outline badge-primary' : 'badge-outline badge-secondary'">
+                                                {{ formatNumber(customer.orders_count) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end font-medium text-gray-900">
+                                            {{ formatCurrency(customer.total_sales) }}
+                                        </td>
+                                        <td class="text-end">
+                                            <span :class="customer.outstanding > 0 ? 'text-warning font-medium' : 'text-gray-600'">
+                                                {{ formatCurrency(customer.outstanding) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-sm" :class="customer.is_active ? 'badge-success' : 'badge-secondary'">
+                                                {{ customer.is_active ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="menu flex-inline justify-center" data-menu="true">
+                                                <div class="menu-item" data-menu-item-offset="0, 10px"
+                                                    data-menu-item-placement="bottom-end"
+                                                    data-menu-item-toggle="dropdown"
+                                                    data-menu-item-trigger="click|lg:click">
+                                                    <button class="menu-toggle btn btn-sm btn-icon btn-light btn-clear">
+                                                        <i class="ki-filled ki-dots-vertical"></i>
+                                                    </button>
+                                                    <div class="menu-dropdown menu-default w-full max-w-[200px]" data-menu-dismiss="true">
+                                                        <div class="menu-item">
+                                                            <Link class="menu-link" :href="`/customer/detail/${customer.id}`">
+                                                                <span class="menu-icon"><i class="ki-filled ki-eye"></i></span>
+                                                                <span class="menu-title">View Detail</span>
+                                                            </Link>
+                                                        </div>
+                                                        <div class="menu-item">
+                                                            <Link class="menu-link" :href="`/customer/edit/${customer.id}`">
+                                                                <span class="menu-icon"><i class="ki-filled ki-pencil"></i></span>
+                                                                <span class="menu-title">Edit</span>
+                                                            </Link>
+                                                        </div>
+                                                        <div class="menu-separator"></div>
+                                                        <div class="menu-item">
+                                                            <Link class="menu-link" :href="`/sales-orders/create?customer_id=${customer.id}`">
+                                                                <span class="menu-icon"><i class="ki-filled ki-plus-squared"></i></span>
+                                                                <span class="menu-title">Create Sales Order</span>
+                                                            </Link>
+                                                        </div>
+                                                        <div class="menu-item">
+                                                            <Link class="menu-link" :href="`/sales-orders/list?customer_id=${customer.id}`">
+                                                                <span class="menu-icon"><i class="ki-filled ki-document"></i></span>
+                                                                <span class="menu-title">View Orders</span>
+                                                            </Link>
+                                                        </div>
+                                                        <div class="menu-separator"></div>
+                                                        <div class="menu-item">
+                                                            <span class="menu-link cursor-pointer" @click="toggleStatus(customer)">
+                                                                <span class="menu-icon">
+                                                                    <i :class="customer.is_active ? 'ki-filled ki-lock' : 'ki-filled ki-check-circle'" class="text-warning"></i>
+                                                                </span>
+                                                                <span class="menu-title" :class="customer.is_active ? 'text-warning' : 'text-success'">
+                                                                    {{ customer.is_active ? 'Deactivate' : 'Activate' }}
+                                                                </span>
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        <tr v-else class="w-full">
-                                            <td colspan="100%">
-                                                <div class="flex items-center justify-center h-52">
-                                                    <div class="flex flex-col items-center">
-                                                        <i class="ki-filled ki-user-square text-8xl text-gray-300 mb-4"></i>
-                                                        <span class="text-gray-500 text-md">No Data Available!</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Footer -->
+                        <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
+                            <div class="flex items-center gap-2 order-2 md:order-1">
+                                Show
+                                <SearchableSelect
+                                    v-model="selectedPerPage"
+                                    :options="perPageOptions"
+                                    placeholder="10"
+                                    class="w-20"
+                                    :clearable="false"
+                                />
+                                per page
                             </div>
-                            <div class="card-footer flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
-                                <div class="flex items-center gap-2">
-                                    Show
-                                    <select v-model="selectedPerPage" class="select select-sm w-16">
-                                        <option v-for="option in perPageOptions" :key="option" :value="option">
-                                            {{ option }}
-                                        </option>
-                                    </select>
-                                    per page
-                                </div>
-                                <span v-if="totalSearchResults > 0" class="text-slate-500 text-sm ms-4">
-                                    Total: {{ totalSearchResults }} Result{{ totalSearchResults === 1 ? '' : 's' }}
+                            <div class="flex items-center gap-4 order-1 md:order-2">
+                                <span>
+                                    Showing {{ pagination?.from || 0 }} to {{ pagination?.to || 0 }} of {{ pagination?.total || 0 }} results
                                 </span>
-                                <div class="pagination flex items-center gap-2">
-                                    <button class="btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
-                                        <i class="ki-outline ki-black-left"></i>
+                                <div class="pagination flex items-center gap-1">
+                                    <button
+                                        class="btn btn-sm btn-icon btn-light"
+                                        :disabled="currentPage <= 1"
+                                        @click="currentPage--"
+                                    >
+                                        <i class="ki-filled ki-arrow-left"></i>
                                     </button>
-
-                                    <span v-for="(page, index) in visiblePages" :key="index" class="btn"
-                                        :class="{ 'active': page === currentPage }"
-                                        @click="goToPage(page)"
-                                        v-if="page !== '...'">
-                                        {{ page }}
-                                    </span>
-
-                                    <span v-else class="btn disabled">...</span>
-
-                                    <button class="btn" :disabled="currentPage >= props.pagination.last_page"
-                                        @click="goToPage(currentPage + 1)">
-                                        <i class="ki-outline ki-black-right"></i>
+                                    <template v-for="page in pagination?.last_page" :key="page">
+                                        <button
+                                            v-if="page === 1 || page === pagination?.last_page || (page >= currentPage - 1 && page <= currentPage + 1)"
+                                            class="btn btn-sm btn-icon"
+                                            :class="page === currentPage ? 'btn-primary' : 'btn-light'"
+                                            @click="currentPage = page"
+                                        >
+                                            {{ page }}
+                                        </button>
+                                        <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="text-gray-400">...</span>
+                                    </template>
+                                    <button
+                                        class="btn btn-sm btn-icon btn-light"
+                                        :disabled="currentPage >= pagination?.last_page"
+                                        @click="currentPage++"
+                                    >
+                                        <i class="ki-filled ki-arrow-right"></i>
                                     </button>
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- End of Container -->
 
+            <!-- Create New Customer Modal -->
+            <div id="modal_create_new_customer" data-modal="true" class="modal">
+                <div class="modal-dialog">
+                    <div class="modal-content max-w-[600px] top-[10%]">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Create New Customer</h5>
+                            <button type="button" class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                                <i class="ki-outline ki-cross"></i>
+                            </button>
+                        </div>
+                        <form @submit.prevent="submitForm">
+                            <div class="modal-body py-5">
+                                <!-- Error display -->
+                                <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5 rounded">
+                                    <p class="font-bold mb-2">Please fix the following errors:</p>
+                                    <ul class="list-disc pl-5 text-sm">
+                                        <li v-for="(messages, field) in errors" :key="field">
+                                            <span v-for="(message, idx) in messages" :key="idx">{{ message }}</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Customer Name -->
+                                <div class="mb-5">
+                                    <label class="form-label text-gray-700">
+                                        Customer Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        class="input w-full"
+                                        v-model="form.customer_name"
+                                        placeholder="Enter customer name"
+                                        required
+                                    />
+                                </div>
+
+                                <!-- Customer Type & Is Customer -->
+                                <div class="grid grid-cols-2 gap-5 mb-5">
+                                    <div>
+                                        <label class="form-label text-gray-700">
+                                            Customer Type <span class="text-danger">*</span>
+                                        </label>
+                                        <SearchableSelect
+                                            v-model="form.mst_customer_type_id"
+                                            :options="customerTypes"
+                                            placeholder="Select type"
+                                            :clearable="true"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-gray-700">
+                                            Is a Customer <span class="text-danger">*</span>
+                                        </label>
+                                        <label class="switch switch-lg mt-2">
+                                            <input type="checkbox" v-model="form.is_customer" />
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Email & Phone -->
+                                <div class="grid grid-cols-2 gap-5 mb-5">
+                                    <div>
+                                        <label class="form-label text-gray-700">
+                                            Email <span class="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            class="input w-full"
+                                            v-model="form.email"
+                                            placeholder="email@example.com"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-gray-700">
+                                            Phone Number <span class="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            class="input w-full"
+                                            v-model="form.customer_phone_number"
+                                            placeholder="+62..."
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <!-- Contact Person -->
+                                <div class="grid grid-cols-2 gap-5 mb-5">
+                                    <div>
+                                        <label class="form-label text-gray-700">Contact Person</label>
+                                        <input
+                                            type="text"
+                                            class="input w-full"
+                                            v-model="form.contact_person"
+                                            placeholder="Contact person name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-gray-700">Contact Person Phone</label>
+                                        <input
+                                            type="text"
+                                            class="input w-full"
+                                            v-model="form.contact_person_phone_number"
+                                            placeholder="Phone number"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-modal-dismiss="true">Cancel</button>
+                                <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                                    <span v-if="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+                                    {{ isLoading ? 'Creating...' : 'Create Customer' }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </AppLayout>
-    <div class="modal" data-modal="true" id="modal_create_new_customer">
-        <div class="modal-content max-w-[600px] top-[10%]">
-            <form @submit.prevent="submitForm">
-                <div class="modal-header">
-                    <h3 class="modal-title">
-                        Add Customer
-                    </h3>
-                    <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
-                        <i class="ki-outline ki-cross">
-                        </i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div v-if="Object.keys(errors).length" class="bg-red-100 border-l-4 border-red-300 text-red-700 p-4 mb-5" role="alert">
-                        <p class="font-bold mb-3">Error!</p>
-                        <ul class="list-disc pl-5 text-sm">
-                            <li v-for="(messages, field) in errors" :key="field">
-                                <span v-for="(message, index) in messages" :key="index">{{ message }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="flex flex-wrap lg:flex-nowrap gap-2.5 flex-col p-5">
-                        <!-- Customer Name -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">
-                                Name
-                                <span class="ms-1 text-danger">
-                                    *
-                                </span>
-                            </label>
-                            <input
-                                class="input"
-                                name="customer_name"
-                                placeholder="Enter Customer Name"
-                                type="text"
-                                v-model="form.customer_name"
-                            />
-                        </div>
-
-                        <!-- Customer Type -->
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="form-label max-w-60 mb-2">
-                                    Customer Type
-                                    <span class="ms-1 text-danger">
-                                        *
-                                    </span>
-                                </label>
-                                <select
-                                    class="select"
-                                    name="mst_customer_type_id"
-                                    v-model="form.mst_customer_type_id"
-                                >
-                                    <option value="" disabled selected>Select Customer Type</option>
-                                    <option v-for="(name, id) in customerTypes" :key="id" :value="id">
-                                        {{ name }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label max-w-60 mb-4">
-                                    Is a Customer
-                                    <span class="ms-1 text-danger">
-                                        *
-                                    </span>
-                                </label>
-                                <label class="switch switch-lg">
-                                    <input class="order-2" v-model="form.is_customer" type="checkbox" />
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Customer Phone Number -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">
-                                Customer Phone Number
-                                <span class="ms-1 text-danger">
-                                    *
-                                </span>
-                            </label>
-                            <input
-                                class="input"
-                                name="customer_phone_number"
-                                placeholder="Enter Customer Phone Number"
-                                type="text"
-                                v-model="form.customer_phone_number"
-                            />
-                        </div>
-
-                        <!-- Email -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Email</label>
-                            <input
-                                class="input"
-                                name="email"
-                                placeholder="Enter Customer Email"
-                                type="email"
-                                v-model="form.email"
-                            />
-                        </div>
-
-                        <!-- Contact Person -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">
-                                Contact Person Name
-                                <span class="ms-1 text-danger">
-                                    *
-                                </span>
-                            </label>
-                            <input
-                                class="input"
-                                name="contact_person"
-                                placeholder="Enter Name"
-                                type="text"
-                                v-model="form.contact_person"
-                            />
-                        </div>
-
-                        <!-- Contact Person Phone Number -->
-                        <div class="mb-4">
-                            <label class="form-label max-w-60 mb-2">Contact Person Phone</label>
-                            <input
-                                class="input"
-                                name="contact_person_phone_number"
-                                placeholder="Enter Phone Number"
-                                type="text"
-                                v-model="form.contact_person_phone_number"
-                            />
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer justify-end">
-                    <div class="flex gap-4">
-                        <button class="btn btn-light" data-modal-dismiss="true">
-                            Cancel
-                        </button>
-                        <button class="btn btn-primary">
-                            Submit
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal pb-10" data-modal="true" id="modal_view_customer">
-        <div class="modal-content max-w-[600px] top-[10%]">
-            <div class="modal-header">
-                <h3 class="modal-title">
-                    View Customer
-                </h3>
-                <button class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
-                    <i class="ki-outline ki-cross">
-                    </i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div v-if="selectedCustomer">
-                    <div class="p-5">
-                        <div class="d-flex gap-5">
-                            <div class="p-5">
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Customer Name</label>
-                                    <div class="flex items-center gap-2.5">
-                                        <span class="!text-gray-500">{{ selectedCustomer.name }}</span>
-                                        <span class="badge badge-outline badge-success">
-                                            {{ selectedCustomer.customer_type }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Email</label>
-                                    <p class="!text-gray-500">{{ selectedCustomer.email }}</p>
-                                </div>
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Company Phone</label>
-                                    <p class="!text-gray-500">{{ selectedCustomer.phone_number }}</p>
-                                </div>
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Contact Person</label>
-                                    <p v-if="selectedCustomer.contact_person"  class="!text-gray-500">{{ selectedCustomer.contact_person }}</p>
-                                </div>
-                                <div class="mb-5">
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Contact Person Phone Number</label>
-                                    <p v-if="selectedCustomer.contact_person_phone_number" class="!text-gray-500">{{ selectedCustomer.contact_person_phone_number }}</p>
-                                    <p v-else class="!text-gray-500">N/A</p>
-                                </div>
-                                <div>
-                                    <label class="form-label mb-1 !font-extrabold text-md !text-blue-500">Address</label>
-                                    <div v-if="selectedCustomer.address">
-                                        <p class="!text-gray-500">{{ selectedCustomer.address?.address }}</p>
-                                        <p class="!text-gray-500">{{ selectedCustomer.address?.city_name }}, {{ selectedCustomer.address?.state_name }}</p>
-                                        <p class="!text-gray-500">{{ selectedCustomer.address?.country_name }}</p>
-                                    </div>
-                                    <div v-else>
-                                        <p class="!text-gray-500">N/A</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-else class="h-[350px]">
-                    <div role="status" class="max-w-sm animate-pulse p-10">
-                        <div class="mb-10">
-                            <div class="h-5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px] mb-2.5"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 mb-2.5"></div>
-                        </div>
-                        <div class="mb-10">
-                            <div class="h-5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px] mb-2.5"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 mb-2.5"></div>
-                        </div>
-                        <div class="mb-10">
-                            <div class="h-5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 max-w-[360px] mb-2.5"></div>
-                            <div class="h-2 bg-gray-200 rounded-full dark:bg-gray-700 mb-2.5"></div>
-                        </div>
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer justify-end">
-                <div class="flex gap-4">
-                    <button class="btn btn-light" data-modal-dismiss="true">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 </template>
