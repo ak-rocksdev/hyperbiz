@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import PdfActionButtons from '@/Components/Pdf/PdfActionButtons.vue';
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -13,6 +14,10 @@ const po = computed(() => props.purchaseOrder);
 const showPaymentModal = ref(false);
 const showReceiveModal = ref(false);
 const isLoading = ref(false);
+
+// PDF URLs
+const pdfPreviewUrl = computed(() => `/purchase-orders/pdf/preview/${po.value?.id}`);
+const pdfDownloadUrl = computed(() => `/purchase-orders/pdf/download/${po.value?.id}`);
 
 // Payment form
 const paymentForm = ref({
@@ -301,6 +306,15 @@ const submitReceive = () => {
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
+                            <!-- PDF Actions -->
+                            <PdfActionButtons
+                                :preview-url="pdfPreviewUrl"
+                                :download-url="pdfDownloadUrl"
+                                document-title="Purchase Order"
+                                :document-number="po?.po_number"
+                                size="sm"
+                            />
+
                             <Link v-if="isDraft" :href="`/purchase-orders/edit/${po?.id}`"
                                 class="btn btn-sm btn-light">
                                 <i class="ki-filled ki-pencil me-1"></i> Edit

@@ -19,6 +19,8 @@ use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Pdf\SalesOrderPdfController;
+use App\Http\Controllers\Pdf\PurchaseOrderPdfController;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', function () {
@@ -185,6 +187,9 @@ Route::middleware([
         Route::post('/api/receive/{id}',            [PurchaseOrderController::class, 'receive']);
         Route::post('/api/receive-all/{id}',        [PurchaseOrderController::class, 'receiveAll']);
         Route::get('/api/items/{id}',               [PurchaseOrderController::class, 'getItems']);
+        // PDF Routes
+        Route::get('/pdf/preview/{purchaseOrder}',  [PurchaseOrderPdfController::class, 'preview'])->name('purchase-orders.pdf.preview');
+        Route::get('/pdf/download/{purchaseOrder}', [PurchaseOrderPdfController::class, 'download'])->name('purchase-orders.pdf.download');
     });
 
     // Sales Orders
@@ -201,6 +206,9 @@ Route::middleware([
         Route::post('/api/mark-shipped/{id}',       [SalesOrderController::class, 'markAsShipped']);
         Route::post('/api/mark-delivered/{id}',     [SalesOrderController::class, 'markAsDelivered']);
         Route::get('/api/items/{id}',               [SalesOrderController::class, 'getItems']);
+        // PDF Routes
+        Route::get('/pdf/preview/{salesOrder}',     [SalesOrderPdfController::class, 'preview'])->name('sales-orders.pdf.preview');
+        Route::get('/pdf/download/{salesOrder}',    [SalesOrderPdfController::class, 'download'])->name('sales-orders.pdf.download');
     });
 
     // Payments

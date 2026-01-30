@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import PdfActionButtons from '@/Components/Pdf/PdfActionButtons.vue';
 import { ref, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -14,6 +15,10 @@ const so = computed(() => props.salesOrder);
 const showPaymentModal = ref(false);
 const isLoading = ref(false);
 const showItemProfit = ref(false);
+
+// PDF URLs
+const pdfPreviewUrl = computed(() => `/sales-orders/pdf/preview/${so.value?.id}`);
+const pdfDownloadUrl = computed(() => `/sales-orders/pdf/download/${so.value?.id}`);
 
 // Payment form
 const paymentForm = ref({
@@ -283,6 +288,15 @@ const submitPayment = () => {
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
+                            <!-- PDF Actions -->
+                            <PdfActionButtons
+                                :preview-url="pdfPreviewUrl"
+                                :download-url="pdfDownloadUrl"
+                                document-title="Sales Order"
+                                :document-number="so?.so_number"
+                                size="sm"
+                            />
+
                             <Link v-if="isDraft" :href="`/sales-orders/edit/${so?.id}`"
                                 class="btn btn-sm btn-light">
                                 <i class="ki-filled ki-pencil me-1"></i> Edit
@@ -446,7 +460,7 @@ const submitPayment = () => {
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Shipping</span>
-                                    <span>{{ formatCurrency(so?.shipping_cost, so?.currency_code) }}</span>
+                                    <span>{{ formatCurrency(so?.shipping_fee, so?.currency_code) }}</span>
                                 </div>
                                 <div class="border-t pt-3 flex justify-between">
                                     <span class="font-semibold">Grand Total</span>
