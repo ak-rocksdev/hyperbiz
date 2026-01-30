@@ -7,7 +7,6 @@ import Swal from 'sweetalert2';
 
 const props = defineProps({
     salesOrder: Object,
-    payments: Array,
 });
 
 const so = computed(() => props.salesOrder);
@@ -399,7 +398,7 @@ const submitPayment = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="payment in payments" :key="payment.id">
+                                    <tr v-for="payment in so?.payments" :key="payment.id">
                                         <td>{{ payment.payment_number }}</td>
                                         <td class="text-center">{{ payment.payment_date }}</td>
                                         <td>{{ payment.payment_method }}</td>
@@ -410,7 +409,7 @@ const submitPayment = () => {
                                             </span>
                                         </td>
                                     </tr>
-                                    <tr v-if="!payments || payments.length === 0">
+                                    <tr v-if="!so?.payments || so?.payments.length === 0">
                                         <td colspan="5" class="text-center text-gray-500 py-6">No payments recorded yet</td>
                                     </tr>
                                 </tbody>

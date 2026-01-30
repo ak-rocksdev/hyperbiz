@@ -114,7 +114,7 @@ const formatProfitMargin = (value) => {
                     <Link :href="`/products/edit/${product?.id}`" class="btn btn-sm btn-light">
                         <i class="ki-filled ki-pencil me-1"></i> Edit Product
                     </Link>
-                    <Link :href="`/inventory/adjustments/create?product_id=${product?.id}`" class="btn btn-sm btn-primary">
+                    <Link :href="route('inventory.adjustments.create', { product_id: product?.id })" class="btn btn-sm btn-primary">
                         <i class="ki-filled ki-plus-squared me-1"></i> Adjust Stock
                     </Link>
                 </div>
@@ -147,7 +147,7 @@ const formatProfitMargin = (value) => {
                             <Link :href="`/products/edit/${product?.id}`" class="btn btn-sm btn-light">
                                 <i class="ki-filled ki-pencil me-1"></i> Edit Product
                             </Link>
-                            <Link :href="`/inventory/adjustments/create?product_id=${product?.id}`" class="btn btn-sm btn-primary">
+                            <Link :href="route('inventory.adjustments.create', { product_id: product?.id })" class="btn btn-sm btn-primary">
                                 <i class="ki-filled ki-plus-squared me-1"></i> Adjust Stock
                             </Link>
                         </div>
@@ -393,7 +393,7 @@ const formatProfitMargin = (value) => {
                                     <i class="ki-filled ki-pencil me-2"></i>
                                     Edit Product
                                 </Link>
-                                <Link :href="`/inventory/adjustments/create?product_id=${product?.id}`" class="btn btn-light w-full justify-start">
+                                <Link :href="route('inventory.adjustments.create', { product_id: product?.id })" class="btn btn-light w-full justify-start">
                                     <i class="ki-filled ki-plus-squared me-2"></i>
                                     Adjust Stock
                                 </Link>

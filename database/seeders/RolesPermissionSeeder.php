@@ -68,6 +68,10 @@ class RolesPermissionSeeder extends Seeder
 
             // System Logs
             'logs.view',
+
+            // Inventory Adjustments
+            'inventory.adjustments.view',
+            'inventory.adjustments.create',
         ];
 
         // Create all permissions
@@ -100,6 +104,8 @@ class RolesPermissionSeeder extends Seeder
             'product-categories.create',
             'product-categories.edit',
             'company.view',
+            'inventory.adjustments.view',
+            'inventory.adjustments.create',
         ]);
 
         // Create staff role with limited permissions
@@ -111,6 +117,7 @@ class RolesPermissionSeeder extends Seeder
             'products.view',
             'brands.view',
             'product-categories.view',
+            'inventory.adjustments.view',
         ]);
 
         // Assign superadmin role to user ID 1 (if exists)

@@ -224,5 +224,15 @@ Route::middleware([
         Route::post('/api/adjust/{id}',             [InventoryController::class, 'adjust']);
         Route::post('/api/reorder-level/{id}',      [InventoryController::class, 'updateReorderLevel']);
         Route::get('/api/movements/{id}',           [InventoryController::class, 'getMovements']);
+
+        // Stock Adjustments
+        Route::middleware('permission:inventory.adjustments.view')->group(function () {
+            Route::get('/adjustments',              [InventoryController::class, 'adjustmentList'])->name('inventory.adjustments');
+        });
+        Route::middleware('permission:inventory.adjustments.create')->group(function () {
+            Route::get('/adjustments/create',       [InventoryController::class, 'createAdjustment'])->name('inventory.adjustments.create');
+            Route::post('/api/adjustments/store',   [InventoryController::class, 'storeAdjustment']);
+            Route::post('/api/adjustments/bulk',    [InventoryController::class, 'storeBulkAdjustment']);
+        });
     });
 });

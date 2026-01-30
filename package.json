@@ -23,6 +23,7 @@
     "dependencies": {
         "@popperjs/core": "^2.11.8",
         "mini-svg-data-uri": "^1.4.4",
-        "sweetalert2": "^11.15.3"
+        "sweetalert2": "^11.15.3",
+        "vanilla-calendar-pro": "^3.1.0"
     }
 }

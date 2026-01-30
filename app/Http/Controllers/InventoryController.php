@@ -558,4 +558,391 @@ class InventoryController extends Controller
             'stats' => $stats,
         ]);
     }
+
+    /**
+     * Get predefined adjustment reasons.
+     */
+    public static function getAdjustmentReasons(): array
+    {
+        return [
+            ['code' => 'STOCK_OPNAME', 'name' => 'Stock Opname / Physical Count', 'type' => 'both', 'icon' => 'ki-filled ki-clipboard-check'],
+            ['code' => 'DAMAGED', 'name' => 'Damaged / Broken', 'type' => 'deduct', 'icon' => 'ki-filled ki-cross-circle'],
+            ['code' => 'EXPIRED', 'name' => 'Expired', 'type' => 'deduct', 'icon' => 'ki-filled ki-calendar-remove'],
+            ['code' => 'LOST', 'name' => 'Lost / Missing', 'type' => 'deduct', 'icon' => 'ki-filled ki-question-2'],
+            ['code' => 'THEFT', 'name' => 'Theft / Stolen', 'type' => 'deduct', 'icon' => 'ki-filled ki-shield-cross'],
+            ['code' => 'SAMPLE', 'name' => 'Sample / Giveaway', 'type' => 'deduct', 'icon' => 'ki-filled ki-gift'],
+            ['code' => 'FOUND', 'name' => 'Found Item', 'type' => 'add', 'icon' => 'ki-filled ki-magnifier'],
+            ['code' => 'RETURN_INTERNAL', 'name' => 'Internal Return', 'type' => 'add', 'icon' => 'ki-filled ki-arrow-circle-left'],
+            ['code' => 'DATA_CORRECTION', 'name' => 'Data Entry Correction', 'type' => 'both', 'icon' => 'ki-filled ki-pencil'],
+            ['code' => 'OTHER', 'name' => 'Other (specify in notes)', 'type' => 'both', 'icon' => 'ki-filled ki-dots-horizontal'],
+        ];
+    }
+
+    /**
+     * Display list of stock adjustments.
+     */
+    public function adjustmentList(Request $request)
+    {
+        $perPage = $request->input('per_page', 20);
+        $search = $request->input('search');
+        $adjustmentType = $request->input('adjustment_type');
+        $reasonCode = $request->input('reason_code');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        $query = InventoryMovement::with(['product', 'createdBy'])
+            ->whereIn('movement_type', [
+                InventoryMovement::TYPE_ADJUSTMENT_IN,
+                InventoryMovement::TYPE_ADJUSTMENT_OUT,
+            ])
+            ->orderByDesc('movement_date')
+            ->orderByDesc('id');
+
+        // Search by product name or SKU
+        if ($search) {
+            $query->whereHas('product', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by adjustment type
+        if ($adjustmentType === 'add') {
+            $query->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_IN);
+        } elseif ($adjustmentType === 'deduct') {
+            $query->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_OUT);
+        }
+
+        // Filter by reason code (stored in notes with format [REASON_CODE] ...)
+        if ($reasonCode) {
+            $query->where('notes', 'like', "[{$reasonCode}]%");
+        }
+
+        // Filter by date range
+        if ($dateFrom) {
+            $query->whereDate('movement_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('movement_date', '<=', $dateTo);
+        }
+
+        $movements = $query->paginate($perPage);
+
+        $data = $movements->getCollection()->map(function ($movement) {
+            // Extract reason code from notes
+            $reasonCode = null;
+            $notes = $movement->notes ?? '';
+            if (preg_match('/^\[([A-Z_]+)\]/', $notes, $matches)) {
+                $reasonCode = $matches[1];
+                $notes = trim(substr($notes, strlen($matches[0])));
+            }
+
+            return [
+                'id' => $movement->id,
+                'movement_date' => Carbon::parse($movement->movement_date)->format('d M Y H:i'),
+                'movement_date_raw' => $movement->movement_date->toDateString(),
+                'product_id' => $movement->product_id,
+                'product_name' => $movement->product->name ?? 'N/A',
+                'product_sku' => $movement->product->sku ?? '-',
+                'adjustment_type' => $movement->movement_type === InventoryMovement::TYPE_ADJUSTMENT_IN ? 'add' : 'deduct',
+                'quantity' => abs($movement->quantity),
+                'unit_cost' => $movement->unit_cost,
+                'quantity_before' => $movement->quantity_before,
+                'quantity_after' => $movement->quantity_after,
+                'reason_code' => $reasonCode,
+                'reason_name' => $this->getReasonName($reasonCode),
+                'notes' => $notes,
+                'created_by' => $movement->createdBy->name ?? 'System',
+                'created_at' => Carbon::parse($movement->created_at)->format('d M Y H:i'),
+            ];
+        });
+
+        // Summary stats
+        $statsQuery = InventoryMovement::whereIn('movement_type', [
+            InventoryMovement::TYPE_ADJUSTMENT_IN,
+            InventoryMovement::TYPE_ADJUSTMENT_OUT,
+        ]);
+
+        if ($dateFrom) {
+            $statsQuery->whereDate('movement_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $statsQuery->whereDate('movement_date', '<=', $dateTo);
+        }
+
+        $stats = [
+            'total_adjustments' => (clone $statsQuery)->count(),
+            'total_additions' => (clone $statsQuery)->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_IN)->count(),
+            'total_deductions' => (clone $statsQuery)->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_OUT)->count(),
+            'total_quantity_added' => (clone $statsQuery)->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_IN)->sum('quantity'),
+            'total_quantity_deducted' => abs((clone $statsQuery)->where('movement_type', InventoryMovement::TYPE_ADJUSTMENT_OUT)->sum('quantity')),
+        ];
+
+        return Inertia::render('Inventory/Adjustments/Index', [
+            'adjustments' => $data,
+            'pagination' => [
+                'total' => $movements->total(),
+                'per_page' => $movements->perPage(),
+                'current_page' => $movements->currentPage(),
+                'last_page' => $movements->lastPage(),
+                'from' => $movements->firstItem(),
+                'to' => $movements->lastItem(),
+            ],
+            'filters' => [
+                'search' => $search,
+                'adjustment_type' => $adjustmentType,
+                'reason_code' => $reasonCode,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+            ],
+            'reasons' => self::getAdjustmentReasons(),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Get reason name from code.
+     */
+    private function getReasonName(?string $code): ?string
+    {
+        if (!$code) return null;
+
+        $reasons = self::getAdjustmentReasons();
+        foreach ($reasons as $reason) {
+            if ($reason['code'] === $code) {
+                return $reason['name'];
+            }
+        }
+        return $code;
+    }
+
+    /**
+     * Show create adjustment form.
+     */
+    public function createAdjustment(Request $request)
+    {
+        $productId = $request->query('product_id');
+        $selectedProduct = null;
+
+        if ($productId) {
+            $product = Product::with(['uom', 'inventoryStock'])->find($productId);
+            if ($product) {
+                $stock = $product->inventoryStock;
+                $selectedProduct = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'uom' => $product->uom->name ?? 'PCS',
+                    'quantity_on_hand' => $stock->quantity_on_hand ?? 0,
+                    'quantity_available' => $stock->quantity_available ?? 0,
+                    'average_cost' => $stock->average_cost ?? $product->cost_price ?? 0,
+                ];
+            }
+        }
+
+        $products = Product::where('is_active', true)
+            ->with(['uom', 'inventoryStock'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($product) {
+                $stock = $product->inventoryStock;
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'uom' => $product->uom->name ?? 'PCS',
+                    'quantity_on_hand' => $stock->quantity_on_hand ?? 0,
+                    'quantity_available' => $stock->quantity_available ?? 0,
+                    'average_cost' => $stock->average_cost ?? $product->cost_price ?? 0,
+                ];
+            });
+
+        return Inertia::render('Inventory/Adjustments/Create', [
+            'selectedProduct' => $selectedProduct,
+            'products' => $products,
+            'reasons' => self::getAdjustmentReasons(),
+        ]);
+    }
+
+    /**
+     * Store single adjustment.
+     */
+    public function storeAdjustment(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|exists:mst_products,id',
+            'adjustment_type' => 'required|in:add,deduct',
+            'quantity' => 'required|numeric|min:0.001',
+            'unit_cost' => 'nullable|numeric|min:0',
+            'reason_code' => 'required|string|max:50',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $product = Product::findOrFail($validated['product_id']);
+            $stock = InventoryStock::getOrCreate($product->id);
+
+            $quantityBefore = $stock->quantity_on_hand;
+            $unitCost = $validated['unit_cost'] ?? $stock->average_cost;
+
+            // Check if deducting more than available
+            if ($validated['adjustment_type'] === 'deduct') {
+                if ($validated['quantity'] > $stock->quantity_available) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Cannot deduct {$validated['quantity']} units. Only {$stock->quantity_available} available.",
+                    ], 422);
+                }
+            }
+
+            // Perform adjustment
+            if ($validated['adjustment_type'] === 'add') {
+                $stock->addStock($validated['quantity'], $unitCost);
+                $movementType = InventoryMovement::TYPE_ADJUSTMENT_IN;
+                $quantityChange = $validated['quantity'];
+            } else {
+                $stock->deductStock($validated['quantity']);
+                $movementType = InventoryMovement::TYPE_ADJUSTMENT_OUT;
+                $quantityChange = -$validated['quantity'];
+            }
+
+            // Build notes with reason code prefix
+            $notes = "[{$validated['reason_code']}]";
+            if (!empty($validated['notes'])) {
+                $notes .= " {$validated['notes']}";
+            }
+
+            // Record the movement
+            InventoryMovement::create([
+                'movement_date' => now(),
+                'product_id' => $product->id,
+                'movement_type' => $movementType,
+                'reference_type' => 'adjustment',
+                'reference_id' => null,
+                'quantity' => $quantityChange,
+                'unit_cost' => $unitCost,
+                'quantity_before' => $quantityBefore,
+                'quantity_after' => $stock->quantity_on_hand,
+                'notes' => $notes,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock adjustment recorded successfully.',
+                'data' => [
+                    'product_name' => $product->name,
+                    'quantity_adjusted' => $validated['quantity'],
+                    'new_quantity' => $stock->quantity_on_hand,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record adjustment.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Store bulk adjustments.
+     */
+    public function storeBulkAdjustment(Request $request)
+    {
+        $validated = $request->validate([
+            'adjustments' => 'required|array|min:1',
+            'adjustments.*.product_id' => 'required|exists:mst_products,id',
+            'adjustments.*.adjustment_type' => 'required|in:add,deduct',
+            'adjustments.*.quantity' => 'required|numeric|min:0.001',
+            'adjustments.*.unit_cost' => 'nullable|numeric|min:0',
+            'adjustments.*.reason_code' => 'required|string|max:50',
+            'adjustments.*.notes' => 'nullable|string|max:500',
+            'batch_notes' => 'nullable|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $results = [];
+            $batchNotes = $validated['batch_notes'] ?? '';
+
+            foreach ($validated['adjustments'] as $adjustment) {
+                $product = Product::findOrFail($adjustment['product_id']);
+                $stock = InventoryStock::getOrCreate($product->id);
+
+                $quantityBefore = $stock->quantity_on_hand;
+                $unitCost = $adjustment['unit_cost'] ?? $stock->average_cost;
+
+                // Check if deducting more than available
+                if ($adjustment['adjustment_type'] === 'deduct') {
+                    if ($adjustment['quantity'] > $stock->quantity_available) {
+                        throw new \Exception("Cannot deduct {$adjustment['quantity']} units from {$product->name}. Only {$stock->quantity_available} available.");
+                    }
+                }
+
+                // Perform adjustment
+                if ($adjustment['adjustment_type'] === 'add') {
+                    $stock->addStock($adjustment['quantity'], $unitCost);
+                    $movementType = InventoryMovement::TYPE_ADJUSTMENT_IN;
+                    $quantityChange = $adjustment['quantity'];
+                } else {
+                    $stock->deductStock($adjustment['quantity']);
+                    $movementType = InventoryMovement::TYPE_ADJUSTMENT_OUT;
+                    $quantityChange = -$adjustment['quantity'];
+                }
+
+                // Build notes with reason code prefix
+                $notes = "[{$adjustment['reason_code']}]";
+                if (!empty($adjustment['notes'])) {
+                    $notes .= " {$adjustment['notes']}";
+                }
+                if (!empty($batchNotes)) {
+                    $notes .= " | Batch: {$batchNotes}";
+                }
+
+                // Record the movement
+                InventoryMovement::create([
+                    'movement_date' => now(),
+                    'product_id' => $product->id,
+                    'movement_type' => $movementType,
+                    'reference_type' => 'adjustment',
+                    'reference_id' => null,
+                    'quantity' => $quantityChange,
+                    'unit_cost' => $unitCost,
+                    'quantity_before' => $quantityBefore,
+                    'quantity_after' => $stock->quantity_on_hand,
+                    'notes' => $notes,
+                ]);
+
+                $results[] = [
+                    'product_name' => $product->name,
+                    'quantity_adjusted' => $adjustment['quantity'],
+                    'type' => $adjustment['adjustment_type'],
+                ];
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => count($results) . ' adjustments recorded successfully.',
+                'data' => $results,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
 }

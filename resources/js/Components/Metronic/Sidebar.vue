@@ -49,6 +49,7 @@
     const hasBrandPermissions = computed(() => hasPermission('brands.view'));
     const hasLogPermissions = computed(() => hasPermission('logs.view'));
     const hasProductCategoryPermissions = computed(() => hasPermission('product-categories.view'));
+    const hasInventoryAdjustmentPermissions = computed(() => hasPermission('inventory.adjustments.view'));
 
 </script>
 <template>
@@ -173,13 +174,23 @@
                                     </span>
                                 </div>
                             </Link>
-                            <Link :class="['menu-item', isActive('/inventory*') ? 'active' : '']" :href="route('inventory.list')">
+                            <Link :class="['menu-item', isActive('/inventory/list') || isActive('/inventory/product*') || isActive('/inventory/movements') ? 'active' : '']" :href="route('inventory.list')">
                                 <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
                                     <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
                                         <i class="ki-filled ki-parcel text-lg"></i>
                                     </span>
                                     <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
                                         Inventory
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasInventoryAdjustmentPermissions" :class="['menu-item', isActive('/inventory/adjustments*') ? 'active' : '']" :href="route('inventory.adjustments')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-notepad-edit text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Stock Adjustments
                                     </span>
                                 </div>
                             </Link>

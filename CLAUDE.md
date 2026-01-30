@@ -125,3 +125,60 @@ Web routes serve Inertia pages. API operations use routes like:
 - `PUT /resource/api/update/{id}`
 - `DELETE /resource/api/delete/{id}`
 - `PATCH /resource/api/toggle-status/{id}`
+
+### DatePicker Component
+Uses **vanilla-calendar-pro** library (same as Metronic 9). Located at `resources/js/Components/Metronic/DatePicker.vue`.
+
+```vue
+<script setup>
+import DatePicker from '@/Components/Metronic/DatePicker.vue';
+</script>
+
+<template>
+    <!-- Basic usage -->
+    <DatePicker v-model="date" placeholder="Select date" />
+
+    <!-- With custom display format -->
+    <DatePicker
+        v-model="date"
+        format="YYYY-MM-DD"
+        displayFormat="DD MMM YYYY"
+    />
+
+    <!-- Date range picker -->
+    <DatePicker v-model="dateRange" mode="range" />
+
+    <!-- With time picker -->
+    <DatePicker v-model="datetime" :enableTime="true" :timeMode="24" />
+
+    <!-- With constraints -->
+    <DatePicker
+        v-model="date"
+        minDate="2024-01-01"
+        maxDate="2024-12-31"
+        :disabledDates="['2024-06-15', '2024-06-16']"
+    />
+</template>
+```
+
+**Props:**
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `modelValue` | String | null | v-model binding (YYYY-MM-DD format) |
+| `placeholder` | String | 'Select date' | Input placeholder |
+| `format` | String | 'YYYY-MM-DD' | Output format for v-model |
+| `displayFormat` | String | 'DD MMM YYYY' | Display format in input |
+| `mode` | String | 'single' | 'single', 'multiple', 'range' |
+| `enableTime` | Boolean | false | Enable time picker |
+| `timeMode` | Number | 24 | 12 or 24 hour format |
+| `minDate` | String | null | Minimum selectable date |
+| `maxDate` | String | null | Maximum selectable date |
+| `disabledDates` | Array | [] | Array of disabled dates |
+| `disabled` | Boolean | false | Disable the input |
+| `clearable` | Boolean | true | Show clear button |
+| `size` | String | 'default' | 'sm', 'default', 'lg' |
+| `position` | String | 'left' | Calendar position: 'left', 'center', 'right' |
+
+**Events:**
+- `@update:modelValue` - Emitted when date changes (v-model)
+- `@change` - Emitted when date changes with the new value
