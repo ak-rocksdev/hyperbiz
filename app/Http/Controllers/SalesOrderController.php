@@ -16,6 +16,7 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ProfitCalculationService;
 
 class SalesOrderController extends Controller
 {
@@ -413,8 +414,16 @@ class SalesOrderController extends Controller
             'updated_at' => $so->updated_at ? Carbon::parse($so->updated_at)->format('d M Y H:i') : null,
         ];
 
+        // Include profit data if user has permission (permission-gated)
+        $profitData = null;
+        if (Auth::user()?->can('orders.view_profit')) {
+            $profitService = new ProfitCalculationService();
+            $profitData = $profitService->getSalesOrderProfit($so->id);
+        }
+
         return Inertia::render('SalesOrder/Detail', [
             'salesOrder' => $data,
+            'profitData' => $profitData,
         ]);
     }
 

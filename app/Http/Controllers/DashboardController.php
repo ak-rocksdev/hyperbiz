@@ -12,6 +12,7 @@ use App\Models\SalesOrder;
 use App\Models\PurchaseOrder;
 use App\Models\InventoryStock;
 use App\Models\InventoryMovement;
+use App\Services\ProfitCalculationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -36,7 +37,7 @@ class DashboardController extends Controller
             'total_users' => User::count(),
             'active_users' => User::where('is_active', true)->count(),
             'total_customers' => Customer::count(),
-            'total_transactions' => Transaction::count(),
+            'total_sales_orders' => SalesOrder::count(),
             'total_products' => Product::count(),
             'total_brands' => Brand::count(),
             'total_categories' => ProductCategory::count(),
@@ -65,10 +66,22 @@ class DashboardController extends Controller
             'recent_purchase_orders' => $this->getRecentPurchaseOrders(5),
         ];
 
+        // Profit data (permission-gated - only included if user has permission)
+        $profitData = null;
+        if (auth()->user()?->can('dashboard.financial_widgets')) {
+            $profitService = new ProfitCalculationService();
+            $profitData = [
+                'stats' => $profitService->getDashboardStats(),
+                'trend' => $profitService->getProfitTrend(30),
+                'top_products' => $profitService->getTopProfitableProducts(5),
+            ];
+        }
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'charts' => $charts,
             'recentActivity' => $recentActivity,
+            'profitData' => $profitData,
         ]);
     }
 

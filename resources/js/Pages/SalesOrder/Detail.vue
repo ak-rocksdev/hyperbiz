@@ -7,11 +7,13 @@ import Swal from 'sweetalert2';
 
 const props = defineProps({
     salesOrder: Object,
+    profitData: Object, // Permission-gated profit data
 });
 
 const so = computed(() => props.salesOrder);
 const showPaymentModal = ref(false);
 const isLoading = ref(false);
+const showItemProfit = ref(false);
 
 // Payment form
 const paymentForm = ref({
@@ -462,24 +464,101 @@ const submitPayment = () => {
                         </div>
                     </div>
 
-                    <!-- Profit Summary -->
-                    <div v-if="so?.status === 'delivered'" class="card">
+                    <!-- Profit Summary (Permission-gated) -->
+                    <div v-if="profitData" class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Profit Summary</h3>
+                            <div class="flex items-center gap-2">
+                                <h3 class="card-title">Profit Analysis</h3>
+                                <span class="badge badge-sm badge-success">
+                                    <i class="ki-filled ki-shield-tick text-[10px] mr-1"></i>
+                                    Authorized
+                                </span>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="space-y-3">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Total Revenue</span>
-                                    <span>{{ formatCurrency(so?.grand_total, so?.currency_code) }}</span>
+                                    <span class="text-gray-600">Revenue</span>
+                                    <span class="font-medium text-blue-600">{{ formatCurrency(profitData.revenue, so?.currency_code) }}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Total COGS</span>
-                                    <span>{{ formatCurrency(so?.total_cogs, so?.currency_code) }}</span>
+                                    <span class="text-gray-600">Cost of Goods</span>
+                                    <span class="font-medium text-red-600">{{ formatCurrency(profitData.cogs, so?.currency_code) }}</span>
                                 </div>
                                 <div class="border-t pt-3 flex justify-between">
                                     <span class="font-semibold">Gross Profit</span>
-                                    <span class="font-bold text-success">{{ formatCurrency(so?.total_profit, so?.currency_code) }}</span>
+                                    <span
+                                        class="font-bold"
+                                        :class="(profitData.gross_profit || 0) >= 0 ? 'text-emerald-600' : 'text-red-600'"
+                                    >
+                                        {{ formatCurrency(profitData.gross_profit, so?.currency_code) }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Margin</span>
+                                    <span
+                                        class="badge badge-sm"
+                                        :class="{
+                                            'badge-success': (profitData.margin_percent || 0) >= 30,
+                                            'badge-warning': (profitData.margin_percent || 0) >= 15 && (profitData.margin_percent || 0) < 30,
+                                            'badge-danger': (profitData.margin_percent || 0) < 15
+                                        }"
+                                    >
+                                        {{ profitData.margin_percent || 0 }}%
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Per-item profit breakdown toggle -->
+                            <div v-if="profitData.items?.length" class="mt-4 pt-4 border-t">
+                                <button
+                                    type="button"
+                                    class="text-sm text-primary hover:underline flex items-center gap-1"
+                                    @click="showItemProfit = !showItemProfit"
+                                >
+                                    <i :class="['ki-filled', showItemProfit ? 'ki-minus' : 'ki-plus']" class="text-xs"></i>
+                                    {{ showItemProfit ? 'Hide' : 'Show' }} Item Breakdown
+                                </button>
+                                <div v-if="showItemProfit" class="mt-3 space-y-2">
+                                    <div
+                                        v-for="item in profitData.items"
+                                        :key="item.product_id"
+                                        class="bg-gray-50 rounded-lg p-3"
+                                    >
+                                        <div class="text-sm font-medium text-gray-900 truncate" :title="item.product_name">
+                                            {{ item.product_name }}
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Revenue:</span>
+                                                <span>{{ formatCurrency(item.revenue, so?.currency_code) }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Cost:</span>
+                                                <span>{{ formatCurrency(item.cogs, so?.currency_code) }}</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Profit:</span>
+                                                <span
+                                                    :class="item.profit >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'"
+                                                >
+                                                    {{ formatCurrency(item.profit, so?.currency_code) }}
+                                                </span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-500">Margin:</span>
+                                                <span
+                                                    :class="{
+                                                        'text-green-600': item.margin_percent >= 30,
+                                                        'text-yellow-600': item.margin_percent >= 15 && item.margin_percent < 30,
+                                                        'text-red-600': item.margin_percent < 15
+                                                    }"
+                                                >
+                                                    {{ item.margin_percent }}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

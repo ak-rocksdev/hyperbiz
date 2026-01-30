@@ -72,6 +72,14 @@ class RolesPermissionSeeder extends Seeder
             // Inventory Adjustments
             'inventory.adjustments.view',
             'inventory.adjustments.create',
+
+            // Profit & Financial Reports
+            'dashboard.financial_widgets',   // See financial widgets on dashboard
+            'reports.profit.view',           // View profit summary/reports
+            'reports.profit.detailed',       // View detailed cost breakdown
+            'products.view_cost',            // See product cost prices & margins
+            'orders.view_profit',            // See per-order profit calculation
+            'customers.view_profitability',  // See customer profit analysis
         ];
 
         // Create all permissions
@@ -106,6 +114,11 @@ class RolesPermissionSeeder extends Seeder
             'company.view',
             'inventory.adjustments.view',
             'inventory.adjustments.create',
+            // Profit permissions for admin
+            'dashboard.financial_widgets',
+            'reports.profit.view',
+            'products.view_cost',
+            'orders.view_profit',
         ]);
 
         // Create staff role with limited permissions
