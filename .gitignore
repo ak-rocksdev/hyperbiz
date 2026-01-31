@@ -27,5 +27,4 @@ yarn-error.log
 database/backups/
 
 # Claude Code local config
-.claude/
 .playwright-mcp/
