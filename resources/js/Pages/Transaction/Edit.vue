@@ -158,6 +158,13 @@
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
     };
 
+    // Format stock (integer, no decimal places)
+    const formatStock = (value) => {
+        return new Intl.NumberFormat('id-ID', {
+            maximumFractionDigits: 0
+        }).format(Math.floor(value || 0));
+    };
+
     // Update transaction API call
     const updateTransaction = () => {
         try {
@@ -494,7 +501,7 @@
                                     </div>
                                 </td>
                                 <td class="py-2 px-4 text-right">
-                                    <span class="font-semibold">{{ product.stock_quantity }}</span>
+                                    <span class="font-semibold">{{ formatStock(product.stock_quantity) }}</span>
                                 </td>
                             </tr>
                             <tr v-else class="text-center">

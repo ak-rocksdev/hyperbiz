@@ -32,7 +32,9 @@ const formatCurrency = (value) => {
 };
 
 const formatNumber = (value) => {
-    return new Intl.NumberFormat('id-ID').format(value || 0);
+    return new Intl.NumberFormat('id-ID', {
+        maximumFractionDigits: 0
+    }).format(Math.floor(value || 0));
 };
 
 const stockStatusColors = {

@@ -12,7 +12,10 @@ class SalesOrderItem extends Model
         'sales_order_id',
         'product_id',
         'uom_id',
+        'uom_conversion_factor',
+        'base_uom_id',
         'quantity',
+        'base_quantity',
         'quantity_shipped',
         'unit_price',
         'unit_cost',
@@ -23,7 +26,9 @@ class SalesOrderItem extends Model
 
     protected $casts = [
         'quantity' => 'decimal:3',
+        'base_quantity' => 'decimal:3',
         'quantity_shipped' => 'decimal:3',
+        'uom_conversion_factor' => 'decimal:6',
         'unit_price' => 'decimal:2',
         'unit_cost' => 'decimal:2',
         'discount_percentage' => 'decimal:2',
@@ -55,6 +60,14 @@ class SalesOrderItem extends Model
     }
 
     /**
+     * Base unit of measure (for conversion reference).
+     */
+    public function baseUom()
+    {
+        return $this->belongsTo(Uom::class, 'base_uom_id');
+    }
+
+    /**
      * Calculate subtotal.
      */
     public function calculateSubtotal(): self
@@ -66,11 +79,30 @@ class SalesOrderItem extends Model
     }
 
     /**
-     * Get remaining quantity to ship.
+     * Calculate and set base quantity from quantity and conversion factor.
+     */
+    public function calculateBaseQuantity(): self
+    {
+        $factor = $this->uom_conversion_factor ?? 1;
+        $this->base_quantity = $this->quantity * $factor;
+        return $this;
+    }
+
+    /**
+     * Get remaining quantity to ship (in order UoM).
      */
     public function getRemainingQuantityAttribute(): float
     {
         return $this->quantity - $this->quantity_shipped;
+    }
+
+    /**
+     * Get remaining base quantity to ship.
+     */
+    public function getRemainingBaseQuantityAttribute(): float
+    {
+        $factor = $this->uom_conversion_factor ?? 1;
+        return ($this->quantity - $this->quantity_shipped) * $factor;
     }
 
     /**
@@ -81,5 +113,13 @@ class SalesOrderItem extends Model
         $revenue = $this->subtotal;
         $cost = $this->quantity * ($this->unit_cost ?? 0);
         return $revenue - $cost;
+    }
+
+    /**
+     * Get the effective conversion factor.
+     */
+    public function getEffectiveConversionFactor(): float
+    {
+        return $this->uom_conversion_factor ?? 1;
     }
 }

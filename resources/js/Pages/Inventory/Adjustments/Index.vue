@@ -25,8 +25,9 @@ const perPage = ref(props.pagination?.per_page || 20);
 // Format helpers
 const formatNumber = (value) => {
     if (value == null) return '0';
-    const num = Number(value);
-    return num % 1 === 0 ? num.toLocaleString('id-ID') : num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return new Intl.NumberFormat('id-ID', {
+        maximumFractionDigits: 0
+    }).format(Math.floor(Number(value) || 0));
 };
 
 const formatCurrency = (value) => {

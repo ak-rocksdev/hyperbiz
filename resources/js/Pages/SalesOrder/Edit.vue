@@ -138,6 +138,13 @@ const formatCurrency = (value) => {
     }).format(value || 0);
 };
 
+// Format stock (integer, no decimal places)
+const formatStock = (value) => {
+    return new Intl.NumberFormat('id-ID', {
+        maximumFractionDigits: 0
+    }).format(Math.floor(value || 0));
+};
+
 // Status helpers
 const currentStatus = computed(() => (props.salesOrder?.status || 'draft').toLowerCase());
 const isDraft = computed(() => currentStatus.value === 'draft');
@@ -451,7 +458,7 @@ const deleteDraft = async () => {
                                                 <div class="text-xs text-gray-500">
                                                     SKU: {{ product.sku || 'N/A' }} |
                                                     Stock: <span :class="(product.available_stock || 0) > 0 ? 'text-success' : 'text-danger'">
-                                                        {{ product.available_stock || 0 }}
+                                                        {{ formatStock(product.available_stock) }}
                                                     </span>
                                                 </div>
                                             </td>
@@ -489,7 +496,7 @@ const deleteDraft = async () => {
                                             </td>
                                             <td class="text-center">
                                                 <span :class="item.available_stock >= item.quantity ? 'text-success' : 'text-danger'" class="font-medium">
-                                                    {{ item.available_stock }}
+                                                    {{ formatStock(item.available_stock) }}
                                                 </span>
                                             </td>
                                             <td class="px-2">

@@ -50,6 +50,20 @@
     const hasLogPermissions = computed(() => hasPermission('logs.view'));
     const hasProductCategoryPermissions = computed(() => hasPermission('product-categories.view'));
     const hasInventoryAdjustmentPermissions = computed(() => hasPermission('inventory.adjustments.view'));
+    const hasUomPermissions = computed(() => hasPermission('uom.view'));
+    const hasFinancePermissions = computed(() =>
+        hasPermission('finance.settings.view') ||
+        hasPermission('finance.chart_of_accounts.view') ||
+        hasPermission('finance.fiscal_periods.view') ||
+        hasPermission('finance.journal_entries.view') ||
+        hasPermission('finance.expenses.view') ||
+        hasPermission('finance.reports.ar_aging') ||
+        hasPermission('finance.reports.ap_aging') ||
+        hasPermission('finance.reports.trial_balance') ||
+        hasPermission('finance.reports.profit_loss') ||
+        hasPermission('finance.reports.balance_sheet') ||
+        hasPermission('finance.bank.view')
+    );
 
 </script>
 <template>
@@ -231,6 +245,185 @@
                             </span>
                         </div>
                     </Link>
+                    <!-- Units of Measure (Expandable) -->
+                    <div v-if="hasUomPermissions" class="menu-item" :class="{ 'here show': isActive('/uom*') || isActive('/uom-category*') }"
+                        data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-abstract-26 text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Units of Measure
+                            </span>
+                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
+                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"></i>
+                            </span>
+                        </div>
+                        <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+                            <Link :class="['menu-item', isActive('/uom/list') || isActive('/uom/detail*') || isActive('/uom/edit*') ? 'active' : '']" :href="route('uom.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-questionnaire-tablet text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        UoM List
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/uom-category*') ? 'active' : '']" :href="route('uom-category.list')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-category text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        UoM Categories
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
+                    <!-- Finance (Expandable) -->
+                    <div v-if="hasFinancePermissions" class="menu-item" :class="{ 'here show': isActive('/finance*') }"
+                        data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-chart-pie-4 text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Finance
+                            </span>
+                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
+                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"></i>
+                            </span>
+                        </div>
+                        <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+                            <Link v-if="hasPermission('finance.chart_of_accounts.view')" :class="['menu-item', isActive('/finance/chart-of-accounts*') ? 'active' : '']" :href="route('finance.chart-of-accounts')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-book text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Chart of Accounts
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.journal_entries.view')" :class="['menu-item', isActive('/finance/journal-entries*') ? 'active' : '']" href="/finance/journal-entries">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-notepad text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Journal Entries
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.expenses.view')" :class="['menu-item', isActive('/finance/expenses') && !isActive('/finance/expense-categories*') ? 'active' : '']" href="/finance/expenses">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-purchase text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Expenses
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.expenses.view')" :class="['menu-item', isActive('/finance/expense-categories*') ? 'active' : '']" href="/finance/expense-categories">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-category text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Expense Categories
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.bank.view')" :class="['menu-item', isActive('/finance/bank-accounts*') || isActive('/finance/bank-reconciliations*') ? 'active' : '']" href="/finance/bank-accounts">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-bank text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Bank Accounts
+                                    </span>
+                                </div>
+                            </Link>
+                            <!-- Reports Section -->
+                            <Link v-if="hasPermission('finance.reports.ar_aging')" :class="['menu-item', isActive('/finance/reports/ar-aging*') ? 'active' : '']" href="/finance/reports/ar-aging">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-chart-pie-3 text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        AR Aging Report
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.reports.ap_aging')" :class="['menu-item', isActive('/finance/reports/ap-aging*') ? 'active' : '']" href="/finance/reports/ap-aging">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-chart text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        AP Aging Report
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.reports.trial_balance')" :class="['menu-item', isActive('/finance/reports/trial-balance*') ? 'active' : '']" href="/finance/reports/trial-balance">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-tablet-text-down text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Trial Balance
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.reports.profit_loss')" :class="['menu-item', isActive('/finance/reports/profit-loss*') ? 'active' : '']" href="/finance/reports/profit-loss">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-chart-line-up-2 text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Profit & Loss
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.reports.balance_sheet')" :class="['menu-item', isActive('/finance/reports/balance-sheet*') ? 'active' : '']" href="/finance/reports/balance-sheet">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-chart-pie-simple text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Balance Sheet
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.fiscal_periods.view')" :class="['menu-item', isActive('/finance/fiscal-periods*') ? 'active' : '']" :href="route('finance.fiscal-periods')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-calendar text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Fiscal Periods
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link v-if="hasPermission('finance.settings.view')" :class="['menu-item', isActive('/finance/settings*') ? 'active' : '']" :href="route('finance.settings')">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-setting-2 text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Settings
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
                     <Link v-if="hasLogPermissions" :class="['menu-item', isActive('/logs*') ? 'active' : '']" :href="isActive('/logs') ? '#' : '/logs'">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">

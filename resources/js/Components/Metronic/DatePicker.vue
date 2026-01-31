@@ -205,14 +205,25 @@ const initCalendar = () => {
         let outputValue;
         let displayVal;
 
-        if (props.mode === 'range' && dates.length >= 2) {
-            outputValue = `${dates[0]} - ${dates[dates.length - 1]}`;
-            displayVal = `${formatDateForDisplay(dates[0])} - ${formatDateForDisplay(dates[dates.length - 1])}`;
+        if (props.mode === 'range') {
+            // Range mode - wait for 2 dates before closing
+            if (dates.length >= 2) {
+                outputValue = `${dates[0]} - ${dates[dates.length - 1]}`;
+                displayVal = `${formatDateForDisplay(dates[0])} - ${formatDateForDisplay(dates[dates.length - 1])}`;
 
-            // Auto-close on range complete (if no time mode)
-            if (!props.enableTime) {
-                calendar.hide();
+                // Auto-close on range complete (if no time mode)
+                if (!props.enableTime) {
+                    calendar.hide();
+                }
+
+                displayValue.value = displayVal;
+                emit('update:modelValue', outputValue);
+                emit('change', outputValue);
+            } else {
+                // Only 1 date selected in range mode - show partial selection, don't close
+                displayValue.value = `${formatDateForDisplay(dates[0])} - ...`;
             }
+            return; // Exit early for range mode
         } else if (props.mode === 'multiple') {
             outputValue = dates.join(', ');
             displayVal = dates.map(d => formatDateForDisplay(d, selectedTime)).join(', ');

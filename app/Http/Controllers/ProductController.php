@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductUom;
 use App\Models\Brand;
 use App\Models\Customer;
+use App\Models\Uom;
 use App\Models\InventoryStock;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -365,7 +367,7 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $product = Product::with('inventoryStock')->findOrFail($id);
+        $product = Product::with(['inventoryStock', 'productUoms.uom'])->findOrFail($id);
         $stock = $product->inventoryStock;
 
         $data = [
@@ -393,12 +395,42 @@ class ProductController extends Controller
             'stock_status' => $product->stock_status,
         ];
 
+        // Product UoM configurations
+        $productUoms = $product->productUoms->map(fn($pu) => [
+            'id' => $pu->id,
+            'uom_id' => $pu->uom_id,
+            'uom_code' => $pu->uom?->code ?? '-',
+            'uom_name' => $pu->uom?->name ?? '-',
+            'is_base_uom' => $pu->is_base_uom,
+            'is_purchase_uom' => $pu->is_purchase_uom,
+            'is_sales_uom' => $pu->is_sales_uom,
+            'is_default_purchase' => $pu->is_default_purchase,
+            'is_default_sales' => $pu->is_default_sales,
+            'conversion_factor' => $pu->conversion_factor,
+            'default_purchase_price' => $pu->default_purchase_price,
+            'default_sales_price' => $pu->default_sales_price,
+            'is_active' => $pu->is_active,
+        ]);
+
+        // Available UoMs for dropdown
+        $uoms = Uom::where('is_active', true)
+            ->orderBy('code')
+            ->get()
+            ->map(fn($u) => [
+                'value' => $u->id,
+                'label' => "{$u->code} - {$u->name}",
+                'code' => $u->code,
+                'name' => $u->name,
+            ]);
+
         $productCategories = ProductCategory::pluck('name', 'id');
         $brands = Brand::pluck('name', 'id');
         $customers = Customer::pluck('client_name', 'id');
 
         return Inertia::render('Product/Edit', [
             'product' => $data,
+            'productUoms' => $productUoms,
+            'uoms' => $uoms,
             'productCategories' => $productCategories,
             'brands' => $brands,
             'customers' => $customers,
@@ -525,6 +557,319 @@ class ProductController extends Controller
             'recentSales' => $recentSales,
             'recentPurchases' => $recentPurchases,
             'recentMovements' => $recentMovements,
+        ]);
+    }
+
+    /**
+     * Store a new Product UoM configuration.
+     */
+    public function storeProductUom(Request $request, $productId)
+    {
+        $product = Product::findOrFail($productId);
+
+        $validatedData = $request->validate([
+            'uom_id' => 'required|exists:mst_uom,id',
+            'is_base_uom' => 'boolean',
+            'is_purchase_uom' => 'boolean',
+            'is_sales_uom' => 'boolean',
+            'is_default_purchase' => 'boolean',
+            'is_default_sales' => 'boolean',
+            'conversion_factor' => 'nullable|numeric|min:0.000001',
+            'default_purchase_price' => 'nullable|numeric|min:0',
+            'default_sales_price' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        // Check if UoM is already configured for this product
+        $existing = ProductUom::where('product_id', $productId)
+            ->where('uom_id', $validatedData['uom_id'])
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This UoM is already configured for this product.',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $productUom = ProductUom::create([
+                'product_id' => $productId,
+                'uom_id' => $validatedData['uom_id'],
+                'is_base_uom' => $validatedData['is_base_uom'] ?? false,
+                'is_purchase_uom' => $validatedData['is_purchase_uom'] ?? true,
+                'is_sales_uom' => $validatedData['is_sales_uom'] ?? true,
+                'is_default_purchase' => $validatedData['is_default_purchase'] ?? false,
+                'is_default_sales' => $validatedData['is_default_sales'] ?? false,
+                'conversion_factor' => $validatedData['conversion_factor'] ?? 1,
+                'default_purchase_price' => $validatedData['default_purchase_price'] ?? null,
+                'default_sales_price' => $validatedData['default_sales_price'] ?? null,
+                'is_active' => $validatedData['is_active'] ?? true,
+            ]);
+
+            // Load the UoM relation
+            $productUom->load('uom');
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product UoM added successfully.',
+                'productUom' => [
+                    'id' => $productUom->id,
+                    'uom_id' => $productUom->uom_id,
+                    'uom_code' => $productUom->uom?->code ?? '-',
+                    'uom_name' => $productUom->uom?->name ?? '-',
+                    'is_base_uom' => $productUom->is_base_uom,
+                    'is_purchase_uom' => $productUom->is_purchase_uom,
+                    'is_sales_uom' => $productUom->is_sales_uom,
+                    'is_default_purchase' => $productUom->is_default_purchase,
+                    'is_default_sales' => $productUom->is_default_sales,
+                    'conversion_factor' => $productUom->conversion_factor,
+                    'default_purchase_price' => $productUom->default_purchase_price,
+                    'default_sales_price' => $productUom->default_sales_price,
+                    'is_active' => $productUom->is_active,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add Product UoM.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a Product UoM configuration.
+     */
+    public function updateProductUom(Request $request, $productId, $id)
+    {
+        $productUom = ProductUom::where('product_id', $productId)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $validatedData = $request->validate([
+            'is_base_uom' => 'boolean',
+            'is_purchase_uom' => 'boolean',
+            'is_sales_uom' => 'boolean',
+            'is_default_purchase' => 'boolean',
+            'is_default_sales' => 'boolean',
+            'conversion_factor' => 'nullable|numeric|min:0.000001',
+            'default_purchase_price' => 'nullable|numeric|min:0',
+            'default_sales_price' => 'nullable|numeric|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $productUom->update([
+                'is_base_uom' => $validatedData['is_base_uom'] ?? $productUom->is_base_uom,
+                'is_purchase_uom' => $validatedData['is_purchase_uom'] ?? $productUom->is_purchase_uom,
+                'is_sales_uom' => $validatedData['is_sales_uom'] ?? $productUom->is_sales_uom,
+                'is_default_purchase' => $validatedData['is_default_purchase'] ?? $productUom->is_default_purchase,
+                'is_default_sales' => $validatedData['is_default_sales'] ?? $productUom->is_default_sales,
+                'conversion_factor' => $validatedData['conversion_factor'] ?? $productUom->conversion_factor,
+                'default_purchase_price' => $validatedData['default_purchase_price'] ?? $productUom->default_purchase_price,
+                'default_sales_price' => $validatedData['default_sales_price'] ?? $productUom->default_sales_price,
+                'is_active' => $validatedData['is_active'] ?? $productUom->is_active,
+            ]);
+
+            $productUom->load('uom');
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product UoM updated successfully.',
+                'productUom' => [
+                    'id' => $productUom->id,
+                    'uom_id' => $productUom->uom_id,
+                    'uom_code' => $productUom->uom?->code ?? '-',
+                    'uom_name' => $productUom->uom?->name ?? '-',
+                    'is_base_uom' => $productUom->is_base_uom,
+                    'is_purchase_uom' => $productUom->is_purchase_uom,
+                    'is_sales_uom' => $productUom->is_sales_uom,
+                    'is_default_purchase' => $productUom->is_default_purchase,
+                    'is_default_sales' => $productUom->is_default_sales,
+                    'conversion_factor' => $productUom->conversion_factor,
+                    'default_purchase_price' => $productUom->default_purchase_price,
+                    'default_sales_price' => $productUom->default_sales_price,
+                    'is_active' => $productUom->is_active,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update Product UoM.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a Product UoM configuration.
+     */
+    public function destroyProductUom($productId, $id)
+    {
+        $productUom = ProductUom::where('product_id', $productId)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // Prevent deletion if it's the only UoM or the base UoM
+        $count = ProductUom::where('product_id', $productId)->count();
+        if ($count <= 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete the only UoM configuration. At least one UoM is required.',
+            ], 422);
+        }
+
+        if ($productUom->is_base_uom) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete the base UoM. Set another UoM as base first.',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $productUom->delete();
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product UoM deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete Product UoM.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Product UoMs for a product (API).
+     */
+    public function getProductUoms($productId)
+    {
+        $product = Product::findOrFail($productId);
+
+        $productUoms = ProductUom::with('uom')
+            ->where('product_id', $productId)
+            ->orderByDesc('is_base_uom')
+            ->orderBy('uom_id')
+            ->get()
+            ->map(fn($pu) => [
+                'id' => $pu->id,
+                'uom_id' => $pu->uom_id,
+                'uom_code' => $pu->uom?->code ?? '-',
+                'uom_name' => $pu->uom?->name ?? '-',
+                'is_base_uom' => $pu->is_base_uom,
+                'is_purchase_uom' => $pu->is_purchase_uom,
+                'is_sales_uom' => $pu->is_sales_uom,
+                'is_default_purchase' => $pu->is_default_purchase,
+                'is_default_sales' => $pu->is_default_sales,
+                'conversion_factor' => $pu->conversion_factor,
+                'default_purchase_price' => $pu->default_purchase_price,
+                'default_sales_price' => $pu->default_sales_price,
+                'is_active' => $pu->is_active,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'productUoms' => $productUoms,
+        ]);
+    }
+
+    /**
+     * Get available UoMs for a product (for PO/SO dropdowns).
+     * Returns separate lists for purchase and sales UoMs.
+     */
+    public function getAvailableUoms($productId)
+    {
+        $product = Product::with(['productUoms.uom', 'uom'])->findOrFail($productId);
+
+        // Get configured product UoMs
+        $productUoms = $product->productUoms->where('is_active', true);
+
+        // Get base UoM info
+        $baseUom = $productUoms->firstWhere('is_base_uom', true);
+        $baseUomId = $baseUom?->uom_id ?? $product->uom_id;
+
+        // Format for purchase UoMs
+        $purchaseUoms = $productUoms
+            ->where('is_purchase_uom', true)
+            ->sortByDesc('is_default_purchase')
+            ->map(fn($pu) => [
+                'value' => $pu->uom_id,
+                'label' => $pu->uom?->code . ' - ' . $pu->uom?->name,
+                'uom_code' => $pu->uom?->code,
+                'uom_name' => $pu->uom?->name,
+                'conversion_factor' => (float) $pu->conversion_factor,
+                'default_price' => (float) ($pu->default_purchase_price ?? 0),
+                'is_base' => $pu->is_base_uom,
+                'is_default' => $pu->is_default_purchase,
+            ])
+            ->values();
+
+        // Format for sales UoMs
+        $salesUoms = $productUoms
+            ->where('is_sales_uom', true)
+            ->sortByDesc('is_default_sales')
+            ->map(fn($pu) => [
+                'value' => $pu->uom_id,
+                'label' => $pu->uom?->code . ' - ' . $pu->uom?->name,
+                'uom_code' => $pu->uom?->code,
+                'uom_name' => $pu->uom?->name,
+                'conversion_factor' => (float) $pu->conversion_factor,
+                'default_price' => (float) ($pu->default_sales_price ?? 0),
+                'is_base' => $pu->is_base_uom,
+                'is_default' => $pu->is_default_sales,
+            ])
+            ->values();
+
+        // If no UoMs configured, use the product's default UoM
+        if ($purchaseUoms->isEmpty() && $product->uom) {
+            $purchaseUoms = collect([[
+                'value' => $product->uom_id,
+                'label' => $product->uom->code . ' - ' . $product->uom->name,
+                'uom_code' => $product->uom->code,
+                'uom_name' => $product->uom->name,
+                'conversion_factor' => 1,
+                'default_price' => (float) ($product->cost_price ?? 0),
+                'is_base' => true,
+                'is_default' => true,
+            ]]);
+        }
+
+        if ($salesUoms->isEmpty() && $product->uom) {
+            $salesUoms = collect([[
+                'value' => $product->uom_id,
+                'label' => $product->uom->code . ' - ' . $product->uom->name,
+                'uom_code' => $product->uom->code,
+                'uom_name' => $product->uom->name,
+                'conversion_factor' => 1,
+                'default_price' => (float) ($product->price ?? 0),
+                'is_base' => true,
+                'is_default' => true,
+            ]]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'base_uom_id' => $baseUomId,
+            'purchase_uoms' => $purchaseUoms,
+            'sales_uoms' => $salesUoms,
         ]);
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,14 +14,6 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['permission:users.view'], ['only' => ['index', 'show', 'detailApi']]);
-        $this->middleware(['permission:users.create'], ['only' => ['create', 'store']]);
-        $this->middleware(['permission:users.edit'], ['only' => ['edit', 'update', 'toggleStatus']]);
-        $this->middleware(['permission:users.delete'], ['only' => ['destroy']]);
-    }
-
     /**
      * Display a listing of users with pagination.
      */

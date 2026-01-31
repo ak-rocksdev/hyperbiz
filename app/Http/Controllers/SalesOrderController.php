@@ -153,7 +153,7 @@ class SalesOrderController extends Controller
             ];
         });
 
-        // Get active products with stock info
+        // Get active products with stock info from inventory_stock (single source of truth)
         $products = Product::where('is_active', true)
             ->with(['uom', 'category', 'brand', 'inventoryStock'])
             ->get()
@@ -165,8 +165,10 @@ class SalesOrderController extends Controller
                     'sku' => $product->sku,
                     'selling_price' => $product->price,
                     'cost_price' => $product->cost_price ?? 0,
-                    'stock_quantity' => $product->stock_quantity,
-                    'available_stock' => $stock ? $stock->quantity_available : $product->stock_quantity,
+                    // Use inventory_stock as single source of truth (not legacy mst_products.stock_quantity)
+                    'quantity_on_hand' => $stock ? (float) $stock->quantity_on_hand : 0,
+                    'quantity_reserved' => $stock ? (float) $stock->quantity_reserved : 0,
+                    'available_stock' => $stock ? (float) $stock->quantity_available : 0,
                     'uom' => $product->uom ? [
                         'id' => $product->uom->id,
                         'code' => $product->uom->code,
@@ -466,6 +468,7 @@ class SalesOrderController extends Controller
             ];
         });
 
+        // Use inventory_stock as single source of truth (not legacy mst_products.stock_quantity)
         $products = Product::where('is_active', true)
             ->with(['uom', 'inventoryStock'])
             ->get()
@@ -476,7 +479,9 @@ class SalesOrderController extends Controller
                     'product_name' => $product->name,
                     'sku' => $product->sku,
                     'selling_price' => $product->price,
-                    'available_stock' => $stock ? $stock->quantity_available : $product->stock_quantity,
+                    'quantity_on_hand' => $stock ? (float) $stock->quantity_on_hand : 0,
+                    'quantity_reserved' => $stock ? (float) $stock->quantity_reserved : 0,
+                    'available_stock' => $stock ? (float) $stock->quantity_available : 0,
                     'uom' => $product->uom,
                 ];
             });

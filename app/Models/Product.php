@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use App\Traits\LogsSystemChanges;
 
 class Product extends Model
@@ -66,9 +66,116 @@ class Product extends Model
         return $this->belongsTo(Customer::class, 'mst_client_id');
     }
 
+    /**
+     * Base/default UoM for this product (legacy single-UoM field).
+     */
     public function uom()
     {
         return $this->belongsTo(Uom::class);
+    }
+
+    /**
+     * All UoM configurations for this product (multi-UoM support).
+     */
+    public function productUoms()
+    {
+        return $this->hasMany(ProductUom::class);
+    }
+
+    /**
+     * Active UoM configurations.
+     */
+    public function activeProductUoms()
+    {
+        return $this->productUoms()->where('is_active', true);
+    }
+
+    /**
+     * Get the base UoM configuration for this product.
+     */
+    public function getBaseProductUom(): ?ProductUom
+    {
+        return $this->productUoms()->where('is_base_uom', true)->first();
+    }
+
+    /**
+     * Get UoMs available for purchase.
+     */
+    public function getPurchaseUoms()
+    {
+        return $this->activeProductUoms()->where('is_purchase_uom', true)->with('uom')->get();
+    }
+
+    /**
+     * Get UoMs available for sales.
+     */
+    public function getSalesUoms()
+    {
+        return $this->activeProductUoms()->where('is_sales_uom', true)->with('uom')->get();
+    }
+
+    /**
+     * Get default purchase UoM configuration.
+     */
+    public function getDefaultPurchaseUom(): ?ProductUom
+    {
+        return $this->activeProductUoms()
+            ->where('is_purchase_uom', true)
+            ->orderByDesc('is_default_purchase')
+            ->orderByDesc('is_base_uom')
+            ->first();
+    }
+
+    /**
+     * Get default sales UoM configuration.
+     */
+    public function getDefaultSalesUom(): ?ProductUom
+    {
+        return $this->activeProductUoms()
+            ->where('is_sales_uom', true)
+            ->orderByDesc('is_default_sales')
+            ->orderByDesc('is_base_uom')
+            ->first();
+    }
+
+    /**
+     * Check if product has multi-UoM configured.
+     */
+    public function hasMultipleUoms(): bool
+    {
+        return $this->activeProductUoms()->count() > 1;
+    }
+
+    /**
+     * Convert quantity from a given UoM to base UoM.
+     *
+     * @param float $quantity
+     * @param int $uomId
+     * @return float
+     */
+    public function convertToBaseUom(float $quantity, int $uomId): float
+    {
+        $productUom = $this->productUoms()->where('uom_id', $uomId)->first();
+        if (!$productUom) {
+            return $quantity; // Assume 1:1 if not configured
+        }
+        return $productUom->convertToBase($quantity);
+    }
+
+    /**
+     * Convert quantity from base UoM to a given UoM.
+     *
+     * @param float $baseQuantity
+     * @param int $uomId
+     * @return float
+     */
+    public function convertFromBaseUom(float $baseQuantity, int $uomId): float
+    {
+        $productUom = $this->productUoms()->where('uom_id', $uomId)->first();
+        if (!$productUom) {
+            return $baseQuantity; // Assume 1:1 if not configured
+        }
+        return $productUom->convertFromBase($baseQuantity);
     }
 
     public function inventoryStock()

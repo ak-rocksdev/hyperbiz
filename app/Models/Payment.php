@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Auth;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Payment extends Model
 {
@@ -14,7 +15,7 @@ class Payment extends Model
         static::creating(function ($model) {
             $model->created_by = Auth::id();
             if (empty($model->payment_number)) {
-                $model->payment_number = static::generateNumber();
+                $model->payment_number = static::generateNumberWithLock();
             }
         });
 
@@ -69,25 +70,32 @@ class Payment extends Model
     const STATUS_CANCELLED = 'cancelled';
 
     /**
-     * Generate payment number: PAY-YYYY-NNNNN
+     * Generate payment number with database lock to prevent duplicates: PAY-YYYY-NNNNN
      */
-    public static function generateNumber(): string
+    public static function generateNumberWithLock(): string
     {
         $year = date('Y');
         $prefix = "PAY-{$year}-";
 
-        $last = static::where('payment_number', 'like', "{$prefix}%")
-            ->orderBy('payment_number', 'desc')
+        // Use MAX with numeric extraction to get the highest number reliably
+        // This handles mixed formats like PAY-2026-00001, PAY-2026-S00001, etc.
+        $result = DB::table('payments')
+            ->where('payment_number', 'like', "{$prefix}%")
+            ->lockForUpdate()
+            ->selectRaw("MAX(CAST(REGEXP_SUBSTR(payment_number, '[0-9]+$') AS UNSIGNED)) as max_num")
             ->first();
 
-        if ($last) {
-            $lastNumber = (int) substr($last->payment_number, -5);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
+        $newNumber = ($result->max_num ?? 0) + 1;
 
         return $prefix . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Generate payment number (legacy, use generateNumberWithLock instead)
+     */
+    public static function generateNumber(): string
+    {
+        return static::generateNumberWithLock();
     }
 
     /**

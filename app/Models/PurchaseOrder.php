@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use App\Traits\LogsSystemChanges;
 
 class PurchaseOrder extends Model
@@ -40,6 +40,7 @@ class PurchaseOrder extends Model
         'discount_type',
         'discount_value',
         'discount_amount',
+        'shipping_cost',
         'tax_enabled',
         'tax_name',
         'tax_percentage',
@@ -60,6 +61,7 @@ class PurchaseOrder extends Model
         'subtotal' => 'decimal:2',
         'discount_value' => 'decimal:2',
         'discount_amount' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
         'tax_enabled' => 'boolean',
         'tax_percentage' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -159,7 +161,7 @@ class PurchaseOrder extends Model
         if ($this->discount_type === 'percentage') {
             $this->discount_amount = $this->subtotal * ($this->discount_value / 100);
         } else {
-            $this->discount_amount = $this->discount_value;
+            $this->discount_amount = $this->discount_value ?? 0;
         }
 
         $afterDiscount = $this->subtotal - $this->discount_amount;
@@ -171,7 +173,8 @@ class PurchaseOrder extends Model
             $this->tax_amount = 0;
         }
 
-        $this->grand_total = $afterDiscount + $this->tax_amount;
+        // Grand total = subtotal - discount + tax + shipping
+        $this->grand_total = $afterDiscount + $this->tax_amount + ($this->shipping_cost ?? 0);
         $this->save();
 
         return $this;

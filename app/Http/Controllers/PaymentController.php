@@ -21,11 +21,11 @@ class PaymentController extends Controller
         $search = $request->input('search');
         $paymentType = $request->input('payment_type');
         $paymentMethod = $request->input('payment_method');
+        $dateRange = $request->input('date_range');
         $perPage = $request->input('per_page', 10);
 
         $query = Payment::with('createdBy')
-            ->orderByDesc('payment_date')
-            ->orderByDesc('created_at');
+            ->orderByDesc('id'); // Most recently recorded first
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -40,6 +40,12 @@ class PaymentController extends Controller
 
         if ($paymentMethod) {
             $query->where('payment_method', $paymentMethod);
+        }
+
+        // Date range filter (format: "YYYY-MM-DD - YYYY-MM-DD")
+        if ($dateRange && str_contains($dateRange, ' - ')) {
+            [$startDate, $endDate] = explode(' - ', $dateRange);
+            $query->whereBetween('payment_date', [trim($startDate), trim($endDate)]);
         }
 
         $payments = $query->paginate($perPage);
@@ -90,6 +96,7 @@ class PaymentController extends Controller
                 'search' => $search,
                 'payment_type' => $paymentType,
                 'payment_method' => $paymentMethod,
+                'date_range' => $dateRange,
             ],
             'paymentMethods' => [
                 ['value' => 'cash', 'label' => 'Cash'],

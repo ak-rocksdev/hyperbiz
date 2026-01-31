@@ -118,6 +118,13 @@
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(value);
     };
 
+    // Format stock (integer, no decimal places)
+    const formatStock = (value) => {
+        return new Intl.NumberFormat('id-ID', {
+            maximumFractionDigits: 0
+        }).format(Math.floor(value || 0));
+    };
+
     const clearSearch = () => {
         searchQuery.value = '';
     };
@@ -461,7 +468,7 @@
                                     </td>
                                     <td class="py-2 px-4 text-right">
                                         <span :class="{'text-danger': product.stock_quantity < product.min_stock_level}" class="font-semibold">
-                                            {{ product.stock_quantity }} Pcs
+                                            {{ formatStock(product.stock_quantity) }} Pcs
                                         </span>
                                     </td>
                                 </tr>

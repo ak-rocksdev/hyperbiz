@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('mst_client', function (Blueprint $table) {
-            $table->boolean('is_active')->default(true)->after('is_customer');
+            $table->boolean('is_active')->default(true);
         });
     }
 

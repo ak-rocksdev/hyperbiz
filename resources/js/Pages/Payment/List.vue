@@ -4,6 +4,8 @@ import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref, watch, computed } from 'vue';
 import Swal from 'sweetalert2';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
+import DatePicker from '@/Components/Metronic/DatePicker.vue';
 
 const props = defineProps({
     payments: Array,
@@ -16,15 +18,45 @@ const props = defineProps({
 const searchQuery = ref(props.filters?.search || '');
 const selectedPaymentType = ref(props.filters?.payment_type || '');
 const selectedPaymentMethod = ref(props.filters?.payment_method || '');
+const dateRange = ref(props.filters?.date_range || '');
 const currentPage = ref(props.pagination?.current_page || 1);
 const perPageOptions = [10, 25, 50, 100];
 const selectedPerPage = ref(props.pagination?.per_page || 10);
+
+// Payment type options
+const paymentTypeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'purchase', label: 'Purchase' },
+    { value: 'sales', label: 'Sales' },
+];
+
+// Payment method options with "All" option
+const paymentMethodOptions = computed(() => [
+    { value: '', label: 'All Methods' },
+    ...props.paymentMethods.map(m => ({ value: m.value, label: m.label }))
+]);
+
+// Check if any filter is active
+const hasActiveFilters = computed(() => {
+    return searchQuery.value || dateRange.value || selectedPaymentType.value || selectedPaymentMethod.value;
+});
+
+// Reset all filters
+const resetFilters = () => {
+    searchQuery.value = '';
+    dateRange.value = '';
+    selectedPaymentType.value = '';
+    selectedPaymentMethod.value = '';
+    currentPage.value = 1;
+    fetchData();
+};
 
 const fetchData = () => {
     router.get(route('payments.list'), {
         search: searchQuery.value,
         payment_type: selectedPaymentType.value,
         payment_method: selectedPaymentMethod.value,
+        date_range: dateRange.value,
         per_page: selectedPerPage.value,
         page: currentPage.value,
     }, { preserveScroll: true, preserveState: true });
@@ -150,26 +182,64 @@ const cancelPayment = (id) => {
                     <div class="card-header">
                         <h3 class="card-title">Payment Records</h3>
                         <div class="card-toolbar">
-                            <div class="flex gap-3 items-center">
+                            <div class="flex gap-2.5 items-center flex-wrap">
                                 <!-- Search -->
                                 <div class="relative">
                                     <i class="ki-filled ki-magnifier text-gray-500 absolute top-1/2 start-0 -translate-y-1/2 ms-3"></i>
-                                    <input v-model="searchQuery" class="input input-sm ps-8 w-[200px]"
+                                    <input v-model="searchQuery" class="input input-sm ps-8 w-[160px]"
                                         placeholder="Search..." @keyup.enter="performSearch" />
                                 </div>
+                                <!-- Date Range Filter -->
+                                <div class="w-[265px]">
+                                    <DatePicker
+                                        v-model="dateRange"
+                                        mode="range"
+                                        placeholder="Filter by date"
+                                        size="sm"
+                                        @change="performSearch"
+                                    />
+                                </div>
                                 <!-- Type Filter -->
-                                <select v-model="selectedPaymentType" @change="performSearch" class="select select-sm w-[130px]">
-                                    <option value="">All Types</option>
-                                    <option value="purchase">Purchase</option>
-                                    <option value="sales">Sales</option>
-                                </select>
+                                <div class="w-[120px]">
+                                    <SearchableSelect
+                                        v-model="selectedPaymentType"
+                                        :options="paymentTypeOptions"
+                                        placeholder="All Types"
+                                        :searchable="false"
+                                        size="sm"
+                                        @update:modelValue="performSearch"
+                                    />
+                                </div>
                                 <!-- Method Filter -->
-                                <select v-model="selectedPaymentMethod" @change="performSearch" class="select select-sm w-[140px]">
-                                    <option value="">All Methods</option>
-                                    <option v-for="method in paymentMethods" :key="method.value" :value="method.value">
-                                        {{ method.label }}
-                                    </option>
-                                </select>
+                                <div class="w-[140px]">
+                                    <SearchableSelect
+                                        v-model="selectedPaymentMethod"
+                                        :options="paymentMethodOptions"
+                                        placeholder="All Methods"
+                                        :searchable="false"
+                                        size="sm"
+                                        @update:modelValue="performSearch"
+                                    />
+                                </div>
+                                <!-- Reset Filters Button -->
+                                <Transition
+                                    enter-active-class="transition ease-out duration-200"
+                                    enter-from-class="opacity-0 scale-95"
+                                    enter-to-class="opacity-100 scale-100"
+                                    leave-active-class="transition ease-in duration-150"
+                                    leave-from-class="opacity-100 scale-100"
+                                    leave-to-class="opacity-0 scale-95"
+                                >
+                                    <button
+                                        v-if="hasActiveFilters"
+                                        @click="resetFilters"
+                                        class="btn btn-sm btn-light btn-clear gap-1.5 text-gray-600 hover:text-primary hover:bg-primary/5 transition-all"
+                                        title="Reset all filters"
+                                    >
+                                        <i class="ki-filled ki-arrows-circle text-sm"></i>
+                                        <span class="hidden sm:inline">Reset</span>
+                                    </button>
+                                </Transition>
                             </div>
                         </div>
                     </div>
