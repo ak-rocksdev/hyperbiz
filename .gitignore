@@ -23,8 +23,5 @@ yarn-error.log
 /.vscode
 /.zed
 
-# Database backups
-database/backups/
-
 # Claude Code local config
 .playwright-mcp/
