@@ -1,10 +1,11 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { KTModal } from '../../../../metronic/core/components/modal';
 
 // Props from controller
 const props = defineProps({
@@ -45,7 +46,6 @@ const expandedNodes = ref(new Set());
 const isLoading = ref(false);
 
 // Form state for modal
-const showFormModal = ref(false);
 const isEditMode = ref(false);
 const editingCategoryId = ref(null);
 const form = ref({
@@ -171,16 +171,10 @@ const resetForm = () => {
     editingCategoryId.value = null;
 };
 
-// Open create modal
-const openCreateModal = () => {
+// Open create modal - prepare form before modal shows
+const prepareCreateModal = () => {
     resetForm();
     isEditMode.value = false;
-    showFormModal.value = true;
-    nextTick(() => {
-        if (window.KTComponents) {
-            window.KTComponents.init();
-        }
-    });
 };
 
 // Open edit modal
@@ -196,18 +190,25 @@ const openEditModal = (category) => {
         description: category.description || '',
         is_active: category.is_active,
     };
-    showFormModal.value = true;
-    nextTick(() => {
-        if (window.KTComponents) {
-            window.KTComponents.init();
+    // Open the modal programmatically
+    const modalEl = document.querySelector('#modal_category_form');
+    if (modalEl) {
+        const modal = KTModal.getInstance(modalEl);
+        if (modal) {
+            modal.show();
         }
-    });
+    }
 };
 
-// Close modal
-const closeFormModal = () => {
-    showFormModal.value = false;
-    resetForm();
+// Close modal helper
+const closeModal = (modalId) => {
+    const modalEl = document.querySelector(`#${modalId}`);
+    if (modalEl) {
+        const modal = KTModal.getInstance(modalEl);
+        if (modal) {
+            modal.hide();
+        }
+    }
 };
 
 // Submit form (create or update)
@@ -240,7 +241,8 @@ const submitForm = async () => {
             text: response.data.message,
         });
 
-        closeFormModal();
+        closeModal('modal_category_form');
+        resetForm();
         router.reload({ only: ['categories', 'parentCategories', 'stats'] });
     } catch (error) {
         if (error.response?.status === 422) {
@@ -341,6 +343,7 @@ const getIndentStyle = (level) => {
 // Initialize
 onMounted(() => {
     expandAll(); // Expand all nodes by default
+    KTModal.init();
 });
 </script>
 
@@ -368,7 +371,8 @@ onMounted(() => {
                 <button
                     v-if="hasPermission('finance.expenses.create')"
                     class="btn btn-primary"
-                    @click="openCreateModal"
+                    data-modal-toggle="#modal_category_form"
+                    @click="prepareCreateModal"
                 >
                     <i class="ki-filled ki-plus me-2"></i>
                     Add Category
@@ -513,7 +517,8 @@ onMounted(() => {
                         <button
                             v-if="hasPermission('finance.expenses.create')"
                             class="btn btn-primary"
-                            @click="openCreateModal"
+                            data-modal-toggle="#modal_category_form"
+                            @click="prepareCreateModal"
                         >
                             <i class="ki-filled ki-plus me-2"></i>
                             Add Category
@@ -892,34 +897,19 @@ onMounted(() => {
         </div>
 
         <!-- Category Form Modal (Create/Edit) -->
-        <Teleport to="body">
-            <div
-                v-if="showFormModal"
-                class="fixed inset-0 z-[100] flex items-start justify-center pt-[10%] px-4"
-            >
-                <!-- Backdrop -->
-                <div
-                    class="fixed inset-0 bg-black/50"
-                    @click="closeFormModal"
-                ></div>
-
-                <!-- Modal Content -->
-                <div class="modal-content max-w-[500px] w-full relative z-10 bg-white rounded-lg shadow-xl">
+        <div id="modal_category_form" data-modal="true" class="modal">
+            <div class="modal-dialog">
+                <div class="modal-content max-w-[500px] top-[10%]">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            {{ isEditMode ? 'Edit Category' : 'Create New Category' }}
+                        </h5>
+                        <button type="button" class="btn btn-xs btn-icon btn-light" data-modal-dismiss="true">
+                            <i class="ki-outline ki-cross"></i>
+                        </button>
+                    </div>
                     <form @submit.prevent="submitForm">
-                        <div class="modal-header flex items-center justify-between p-5 border-b border-gray-200">
-                            <h3 class="modal-title text-lg font-semibold text-gray-900">
-                                {{ isEditMode ? 'Edit Category' : 'Create New Category' }}
-                            </h3>
-                            <button
-                                type="button"
-                                class="btn btn-xs btn-icon btn-light"
-                                @click="closeFormModal"
-                            >
-                                <i class="ki-outline ki-cross"></i>
-                            </button>
-                        </div>
-
-                        <div class="modal-body p-5 max-h-[65vh] overflow-y-auto">
+                        <div class="modal-body py-5 max-h-[65vh] overflow-y-auto">
                             <!-- Validation Errors -->
                             <div v-if="Object.keys(formErrors).length" class="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 mb-5 rounded">
                                 <p class="font-bold mb-2">Please fix the following errors:</p>
@@ -1017,31 +1007,18 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="modal-footer flex items-center justify-end gap-3 p-5 border-t border-gray-200">
-                            <button
-                                type="button"
-                                class="btn btn-light"
-                                @click="closeFormModal"
-                            >
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-modal-dismiss="true">
                                 Cancel
                             </button>
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                :disabled="isLoading"
-                            >
-                                <span v-if="isLoading" class="flex items-center gap-2">
-                                    <i class="ki-filled ki-loading animate-spin"></i>
-                                    Saving...
-                                </span>
-                                <span v-else>
-                                    {{ isEditMode ? 'Update Category' : 'Create Category' }}
-                                </span>
+                            <button type="submit" class="btn btn-primary" :disabled="isLoading">
+                                <span v-if="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+                                {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Category' : 'Create Category') }}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
-        </Teleport>
+        </div>
     </AppLayout>
 </template>

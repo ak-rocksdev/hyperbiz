@@ -5,10 +5,17 @@
 
     const page = usePage();
 
+    // Check if user is platform admin
+    const isPlatformAdmin = computed(() => page.props.auth?.user?.is_platform_admin || false);
+
+    // Get company logo or fallback to default
     const companyLogo = computed(() => {
         const logo = page.props.company?.logo;
-        return logo ? `/storage/${logo}` : null;
+        return logo ? `/storage/${logo}` : '/assets/media/app/logo.png';
     });
+
+    // Dashboard link based on user type
+    const dashboardLink = computed(() => isPlatformAdmin.value ? '/admin/dashboard' : '/dashboard');
 </script>
 
 <template>
@@ -20,21 +27,17 @@
             <div class="flex lg:hidden items-center -ms-1 gap-2">
                 <div class="flex items-center">
                     <button class="btn btn-light btn-clear gap-2 flex items-center" data-drawer-toggle="#sidebar">
-                        <i class="ki-filled ki-menu">
-                        </i>
+                        <i class="ki-filled ki-menu"></i>
                         <span class="font-black text-sm text-gray-800 dark:text-gray-200">
                             Menu
                         </span>
                     </button>
                 </div>
             </div>
-            <a class="flex items-center shrink-0 lg:hidden" href="#">
-                <img class="max-h-[32px] w-auto" :src="companyLogo" />
+            <a class="flex items-center shrink-0 lg:hidden" :href="dashboardLink">
+                <img class="max-h-[32px] w-auto" :src="companyLogo" alt="Logo" />
             </a>
             <!-- End of Mobile Logo -->
-            <!--Megamenu Container-->
-            <!-- <MegaMenu /> -->
-            <!--End of Megamenu Contaoner-->
             <!-- Topbar -->
             <Topbar />
             <!-- End of Topbar -->

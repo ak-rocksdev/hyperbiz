@@ -229,6 +229,8 @@ class SalesOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:mst_products,id',
             'items.*.uom_id' => 'nullable|exists:mst_uom,id',
+            'items.*.uom_conversion_factor' => 'nullable|numeric|min:0.000001',
+            'items.*.base_uom_id' => 'nullable|exists:mst_uom,id',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
@@ -274,11 +276,18 @@ class SalesOrderController extends Controller
                 $itemSubtotal = $gross - $discount;
                 $subtotal += $itemSubtotal;
 
+                // Calculate base quantity using conversion factor
+                $conversionFactor = $item['uom_conversion_factor'] ?? 1;
+                $baseQuantity = $item['quantity'] * $conversionFactor;
+
                 SalesOrderItem::create([
                     'sales_order_id' => $so->id,
                     'product_id' => $item['product_id'],
                     'uom_id' => $item['uom_id'] ?? null,
+                    'uom_conversion_factor' => $conversionFactor,
+                    'base_uom_id' => $item['base_uom_id'] ?? null,
                     'quantity' => $item['quantity'],
+                    'base_quantity' => $baseQuantity,
                     'quantity_shipped' => 0,
                     'unit_price' => $item['unit_price'],
                     'discount_percentage' => $item['discount_percentage'] ?? 0,
@@ -503,6 +512,10 @@ class SalesOrderController extends Controller
                 'discount_percentage' => (float) ($item->discount_percentage ?? 0),
                 'available_stock' => $stock ? (float) $stock->quantity_available : 0,
                 'notes' => $item->notes,
+                // UoM conversion fields
+                'uom_id' => $item->uom_id,
+                'uom_conversion_factor' => (float) ($item->uom_conversion_factor ?? 1),
+                'base_uom_id' => $item->base_uom_id,
             ];
         });
 
@@ -547,6 +560,8 @@ class SalesOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:mst_products,id',
             'items.*.uom_id' => 'nullable|exists:mst_uom,id',
+            'items.*.uom_conversion_factor' => 'nullable|numeric|min:0.000001',
+            'items.*.base_uom_id' => 'nullable|exists:mst_uom,id',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
@@ -582,11 +597,18 @@ class SalesOrderController extends Controller
                 $itemSubtotal = $gross - $discount;
                 $subtotal += $itemSubtotal;
 
+                // Calculate base quantity using conversion factor
+                $conversionFactor = $item['uom_conversion_factor'] ?? 1;
+                $baseQuantity = $item['quantity'] * $conversionFactor;
+
                 SalesOrderItem::create([
                     'sales_order_id' => $so->id,
                     'product_id' => $item['product_id'],
                     'uom_id' => $item['uom_id'] ?? null,
+                    'uom_conversion_factor' => $conversionFactor,
+                    'base_uom_id' => $item['base_uom_id'] ?? null,
                     'quantity' => $item['quantity'],
+                    'base_quantity' => $baseQuantity,
                     'quantity_shipped' => 0,
                     'unit_price' => $item['unit_price'],
                     'discount_percentage' => $item['discount_percentage'] ?? 0,

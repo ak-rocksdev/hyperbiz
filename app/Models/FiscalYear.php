@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
+use App\Traits\BelongsToCompany;
 
 class FiscalYear extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
     protected $table = 'fin_fiscal_years';
 
     protected $fillable = [

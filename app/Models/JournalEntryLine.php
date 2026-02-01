@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\BelongsToCompany;
 
 class JournalEntryLine extends Model
 {
+    use BelongsToCompany;
     protected $table = 'fin_journal_entry_lines';
 
     protected $fillable = [

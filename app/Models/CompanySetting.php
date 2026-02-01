@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToCompany;
 
 class CompanySetting extends Model
 {
+    use BelongsToCompany;
     protected $table = 'company_settings';
 
     protected $fillable = [

@@ -207,6 +207,8 @@ class PurchaseOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:mst_products,id',
             'items.*.uom_id' => 'nullable|exists:mst_uom,id',
+            'items.*.uom_conversion_factor' => 'nullable|numeric|min:0.000001',
+            'items.*.base_uom_id' => 'nullable|exists:mst_uom,id',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
@@ -251,11 +253,18 @@ class PurchaseOrderController extends Controller
                 $itemSubtotal = $gross - $discount;
                 $subtotal += $itemSubtotal;
 
+                // Calculate base quantity using conversion factor
+                $conversionFactor = $item['uom_conversion_factor'] ?? 1;
+                $baseQuantity = $item['quantity'] * $conversionFactor;
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $po->id,
                     'product_id' => $item['product_id'],
                     'uom_id' => $item['uom_id'] ?? null,
+                    'uom_conversion_factor' => $conversionFactor,
+                    'base_uom_id' => $item['base_uom_id'] ?? null,
                     'quantity' => $item['quantity'],
+                    'base_quantity' => $baseQuantity,
                     'quantity_received' => 0,
                     'unit_cost' => $item['unit_cost'],
                     'discount_percentage' => $item['discount_percentage'] ?? 0,
@@ -461,6 +470,10 @@ class PurchaseOrderController extends Controller
                 'unit_cost' => (float) $item->unit_cost,
                 'discount_percentage' => (float) ($item->discount_percentage ?? 0),
                 'notes' => $item->notes,
+                // UoM conversion fields
+                'uom_id' => $item->uom_id,
+                'uom_conversion_factor' => (float) ($item->uom_conversion_factor ?? $item->conversion_factor ?? 1),
+                'base_uom_id' => $item->base_uom_id,
             ];
         });
 
@@ -504,6 +517,8 @@ class PurchaseOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:mst_products,id',
             'items.*.uom_id' => 'nullable|exists:mst_uom,id',
+            'items.*.uom_conversion_factor' => 'nullable|numeric|min:0.000001',
+            'items.*.base_uom_id' => 'nullable|exists:mst_uom,id',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_cost' => 'required|numeric|min:0',
             'items.*.discount_percentage' => 'nullable|numeric|min:0|max:100',
@@ -539,11 +554,18 @@ class PurchaseOrderController extends Controller
                 $itemSubtotal = $gross - $discount;
                 $subtotal += $itemSubtotal;
 
+                // Calculate base quantity using conversion factor
+                $conversionFactor = $item['uom_conversion_factor'] ?? 1;
+                $baseQuantity = $item['quantity'] * $conversionFactor;
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $po->id,
                     'product_id' => $item['product_id'],
                     'uom_id' => $item['uom_id'] ?? null,
+                    'uom_conversion_factor' => $conversionFactor,
+                    'base_uom_id' => $item['base_uom_id'] ?? null,
                     'quantity' => $item['quantity'],
+                    'base_quantity' => $baseQuantity,
                     'quantity_received' => 0,
                     'unit_cost' => $item['unit_cost'],
                     'discount_percentage' => $item['discount_percentage'] ?? 0,

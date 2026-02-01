@@ -30,17 +30,28 @@ const close = () => {
         :closeable="closeable"
         @close="close"
     >
-        <div class="px-6 py-4">
-            <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <!-- Modal Header -->
+        <div class="modal-header">
+            <h3 class="modal-title">
                 <slot name="title" />
-            </div>
-
-            <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                <slot name="content" />
-            </div>
+            </h3>
+            <button
+                v-if="closeable"
+                type="button"
+                class="btn btn-icon btn-sm btn-light"
+                @click="close"
+            >
+                <i class="ki-filled ki-cross text-lg"></i>
+            </button>
         </div>
 
-        <div class="flex flex-row justify-end px-6 py-4 bg-gray-100 dark:bg-gray-800 text-end">
+        <!-- Modal Body -->
+        <div class="modal-body text-sm text-gray-600 dark:text-gray-400">
+            <slot name="content" />
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer flex justify-end gap-2.5">
             <slot name="footer" />
         </div>
     </Modal>

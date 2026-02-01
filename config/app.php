@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trial Period Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the number of days for the free trial period
+    | when a new company is created during onboarding.
+    |
+    */
+
+    'trial_days' => env('APP_TRIAL_DAYS', 14),
+
 ];

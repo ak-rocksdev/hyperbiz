@@ -2,7 +2,6 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -29,25 +28,15 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         return DB::transaction(function () use ($input) {
-            return tap(User::create([
+            // Create user without company (they will set up company in onboarding)
+            return User::create([
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => Hash::make($input['password']),
-            ]), function (User $user) {
-                $this->createTeam($user);
-            });
+                'is_active' => true,
+                'is_platform_admin' => false,
+                // company_id is null - will be set during onboarding
+            ]);
         });
-    }
-
-    /**
-     * Create a personal team for the user.
-     */
-    protected function createTeam(User $user): void
-    {
-        $user->ownedTeams()->save(Team::forceCreate([
-            'user_id' => $user->id,
-            'name' => explode(' ', $user->name, 2)[0]."'s Team",
-            'personal_team' => true,
-        ]));
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -99,12 +100,12 @@ class RolesPermissionSeeder extends Seeder
             'inventory.adjustments.create',
 
             // Profit & Financial Reports
-            'dashboard.financial_widgets',   // See financial widgets on dashboard
-            'reports.profit.view',           // View profit summary/reports
-            'reports.profit.detailed',       // View detailed cost breakdown
-            'products.view_cost',            // See product cost prices & margins
-            'orders.view_profit',            // See per-order profit calculation
-            'customers.view_profitability',  // See customer profit analysis
+            'dashboard.financial_widgets',
+            'reports.profit.view',
+            'reports.profit.detailed',
+            'products.view_cost',
+            'orders.view_profit',
+            'customers.view_profitability',
 
             // Finance Module
             'finance.settings.view',
@@ -142,6 +143,10 @@ class RolesPermissionSeeder extends Seeder
         // Create superadmin role (will bypass all permissions via Gate::before)
         $roleSuperadmin = Role::firstOrCreate(['name' => 'superadmin']);
 
+        // Create company-admin role (tenant super admin - gets all permissions within company)
+        $roleCompanyAdmin = Role::firstOrCreate(['name' => 'company-admin']);
+        $roleCompanyAdmin->syncPermissions($permissions);
+
         // Create admin role with specific permissions
         $roleAdmin = Role::firstOrCreate(['name' => 'admin']);
         $roleAdmin->syncPermissions([
@@ -163,33 +168,26 @@ class RolesPermissionSeeder extends Seeder
             'product-categories.view',
             'product-categories.create',
             'product-categories.edit',
-            // Units of Measure
             'uom.view',
             'uom.create',
             'uom.edit',
             'company.view',
-            // Purchase Orders
             'purchase-orders.view',
             'purchase-orders.create',
             'purchase-orders.edit',
-            // Sales Orders
             'sales-orders.view',
             'sales-orders.create',
             'sales-orders.edit',
-            // Payments
             'payments.view',
             'payments.create',
-            // Inventory
             'inventory.view',
             'inventory.edit',
             'inventory.adjustments.view',
             'inventory.adjustments.create',
-            // Profit permissions for admin
             'dashboard.financial_widgets',
             'reports.profit.view',
             'products.view_cost',
             'orders.view_profit',
-            // Finance permissions for admin
             'finance.settings.view',
             'finance.chart_of_accounts.view',
             'finance.fiscal_periods.view',
@@ -212,30 +210,33 @@ class RolesPermissionSeeder extends Seeder
             'products.view',
             'brands.view',
             'product-categories.view',
-            // Units of Measure (view only)
             'uom.view',
-            // Purchase Orders (view only)
             'purchase-orders.view',
-            // Sales Orders (view and create)
             'sales-orders.view',
             'sales-orders.create',
-            // Payments (view only)
             'payments.view',
-            // Inventory (view and adjustments)
             'inventory.view',
             'inventory.adjustments.view',
         ]);
 
-        // Assign superadmin role to user ID 1 (if exists)
-        $user1 = User::find(1);
-        if ($user1) {
-            $user1->assignRole($roleSuperadmin);
-        }
+        // Create platform admin user
+        $platformAdmin = User::firstOrCreate(
+            ['email' => 'platform@hyperbiz.com'],
+            [
+                'name' => 'Platform Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'is_active' => true,
+                'is_platform_admin' => true,
+                'company_id' => null, // Platform admin has no company
+            ]
+        );
+        $this->command->info("Platform Admin created: platform@hyperbiz.com / password");
 
-        // Assign admin role to user ID 2 (if exists)
-        $user2 = User::find(2);
-        if ($user2) {
-            $user2->assignRole($roleAdmin);
+        // Assign superadmin role to user ID 1 (if exists and not platform admin)
+        $user1 = User::find(1);
+        if ($user1 && !$user1->isPlatformAdmin()) {
+            $user1->assignRole($roleSuperadmin);
         }
     }
 }

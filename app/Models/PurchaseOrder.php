@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\LogsSystemChanges;
+use App\Traits\BelongsToCompany;
 
 class PurchaseOrder extends Model
 {
-    use LogsSystemChanges;
+    use LogsSystemChanges, BelongsToCompany;
 
     protected static function boot()
     {

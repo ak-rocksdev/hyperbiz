@@ -1,9 +1,13 @@
 {
     "compilerOptions": {
         "baseUrl": ".",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "target": "ESNext",
         "paths": {
             "@/*": ["resources/js/*"]
         }
     },
+    "include": ["resources/js/**/*", "tests/e2e/**/*"],
     "exclude": ["node_modules", "public"]
 }

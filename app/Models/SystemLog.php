@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToCompany;
 
 class SystemLog extends Model
 {
+    use BelongsToCompany;
     protected $fillable = [
         'model_type',
         'model_id',

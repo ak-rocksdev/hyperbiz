@@ -543,7 +543,7 @@ onMounted(() => {
                             <div class="modal-body py-5">
                                 <!-- Code -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Code <span class="text-danger">*</span>
                                     </label>
                                     <input
@@ -557,7 +557,7 @@ onMounted(() => {
 
                                 <!-- Name -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Name <span class="text-danger">*</span>
                                     </label>
                                     <input
@@ -571,7 +571,7 @@ onMounted(() => {
 
                                 <!-- Category -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Category <span class="text-danger">*</span>
                                     </label>
                                     <SearchableSelect
@@ -584,7 +584,7 @@ onMounted(() => {
 
                                 <!-- Base UoM -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">Base UoM</label>
+                                    <label class="form-label text-gray-700 mb-2">Base UoM</label>
                                     <SearchableSelect
                                         v-model="form.base_uom_id"
                                         :options="baseUomOptions"
@@ -599,7 +599,7 @@ onMounted(() => {
 
                                 <!-- Conversion Factor -->
                                 <div v-if="form.base_uom_id" class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Conversion Factor <span class="text-danger">*</span>
                                     </label>
                                     <input
@@ -618,9 +618,9 @@ onMounted(() => {
 
                                 <!-- Description -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">Description</label>
+                                    <label class="form-label text-gray-700 mb-2">Description</label>
                                     <textarea
-                                        class="input w-full"
+                                        class="textarea w-full"
                                         v-model="form.description"
                                         placeholder="Enter description (optional)"
                                         rows="3"

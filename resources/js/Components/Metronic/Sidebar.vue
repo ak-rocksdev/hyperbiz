@@ -17,6 +17,9 @@
     // Access the current URL from the `page` object
     const currentPath = computed(() => page.url);
 
+    // Check if user is platform admin
+    const isPlatformAdmin = computed(() => page.props.auth?.user?.is_platform_admin || false);
+
     // Function to check if a menu item is active
     const isActive = (path) => {
         if (path.endsWith('*')) {
@@ -73,15 +76,26 @@
         id="sidebar">
         <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0"
             id="sidebar_header">
-            <a v-if="!darkMode" href="/dashboard">
-                <img v-if="companyLogo" :src="companyLogo" class="default-logo min-h-[22px] h-auto max-h-[32px] max-w-[150px]" />
-                <img v-else class="default-logo min-h-[22px] max-w-[150px]" src="/assets/media/app/logo.png" />
-                <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
-            </a>
-            <a v-else href="/dashboard">
-                <img v-if="companyLogo" :src="companyLogo" class="default-logo min-h-[22px] max-w-[150px]" />
-                <img v-else class="default-logo min-h-[22px] max-w-[150px]" src="/assets/media/app/logo.png" />
-                <img class="small-logo min-h-[22px] max-w-[35px]" src="/assets/media/app/bkpi_square_logo.png" />
+            <!-- Sidebar Logo - Single anchor with both default and small logos -->
+            <!-- Metronic CSS handles visibility toggle: default-logo shown normally, small-logo shown when collapsed -->
+            <a :href="isPlatformAdmin ? '/admin/dashboard' : '/dashboard'" class="flex items-center">
+                <img
+                    v-if="companyLogo"
+                    :src="companyLogo"
+                    class="default-logo min-h-[22px] h-auto max-h-[32px] max-w-[150px]"
+                    alt="Company Logo"
+                />
+                <img
+                    v-else
+                    class="default-logo min-h-[22px] max-w-[150px]"
+                    src="/assets/media/app/logo.png"
+                    alt="HyperBiz Logo"
+                />
+                <img
+                    class="small-logo min-h-[22px] max-w-[35px] hidden"
+                    src="/assets/media/app/bkpi_square_logo.png"
+                    alt="HyperBiz"
+                />
             </a>
             <button
                 class="btn btn-icon btn-icon-md size-[30px] rounded-lg border border-gray-200 dark:border-gray-300 bg-light text-gray-500 hover:text-gray-700 toggle absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4"
@@ -98,6 +112,55 @@
                 <!-- Sidebar Menu -->
                 <div class="menu flex flex-col grow gap-0.5" data-menu="true" data-menu-accordion-expand-all="false"
                     id="sidebar_menu">
+
+                    <!-- ========================== -->
+                    <!-- Platform Admin Menu -->
+                    <!-- ========================== -->
+                    <template v-if="isPlatformAdmin">
+                        <Link :class="['menu-item', isActive('/admin/dashboard') ? 'active' : '']" href="/admin/dashboard">
+                            <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                                tabindex="0">
+                                <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                    <i class="ki-filled ki-element-11 text-lg"></i>
+                                </span>
+                                <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                    Dashboard
+                                </span>
+                            </div>
+                        </Link>
+                        <div class="menu-item pt-2.25 pb-px">
+                            <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
+                                Platform Management
+                            </span>
+                        </div>
+                        <Link :class="['menu-item', isActive('/admin/companies*') ? 'active' : '']" href="/admin/companies">
+                            <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                                tabindex="0">
+                                <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                    <i class="ki-filled ki-abstract-41 text-lg"></i>
+                                </span>
+                                <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                    Companies
+                                </span>
+                            </div>
+                        </Link>
+                        <Link :class="['menu-item', isActive('/admin/plans*') ? 'active' : '']" href="/admin/plans">
+                            <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                                tabindex="0">
+                                <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                    <i class="ki-filled ki-price-tag text-lg"></i>
+                                </span>
+                                <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                    Subscription Plans
+                                </span>
+                            </div>
+                        </Link>
+                    </template>
+
+                    <!-- ========================== -->
+                    <!-- Tenant User Menu -->
+                    <!-- ========================== -->
+                    <template v-else>
                     <Link :class="['menu-item', isActive('/dashboard') ? 'active' : '']" :href="isActive('/dashboard') ? '#' : route('dashboard')">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
@@ -435,6 +498,8 @@
                             </span>
                         </div>
                     </Link>
+                    </template>
+                    <!-- End Tenant User Menu -->
                 </div>
                 <!-- End of Sidebar Menu -->
             </div>

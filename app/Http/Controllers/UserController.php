@@ -24,8 +24,13 @@ class UserController extends Controller
         $roleFilter = $request->get('role', null);
         $statusFilter = $request->get('status', null);
 
-        // Build the query
-        $query = User::with('roles');
+        // Get current user's company
+        $companyId = auth()->user()->company_id;
+
+        // Build the query - only users from same company, exclude platform admins
+        $query = User::with('roles')
+            ->where('company_id', $companyId)
+            ->where('is_platform_admin', false);
 
         // Apply search filter
         if ($search) {
@@ -93,7 +98,11 @@ class UserController extends Controller
      */
     public function detailApi($id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::with('roles')
+            ->where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
 
         return response()->json([
             'user' => [
@@ -115,7 +124,11 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::with('roles')
+            ->where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
 
         return Inertia::render('User/Detail', [
             'user' => [
@@ -157,7 +170,9 @@ class UserController extends Controller
                 'name' => $validatedData['name'],
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
+                'company_id' => auth()->user()->company_id,
                 'is_active' => true,
+                'is_platform_admin' => false,
                 'created_by' => auth()->id(),
             ]);
 
@@ -186,7 +201,11 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $user = User::with('roles')->findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::with('roles')
+            ->where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
         $roles = Role::orderBy('name')->get();
 
         return Inertia::render('User/Edit', [
@@ -207,7 +226,10 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
@@ -257,7 +279,10 @@ class UserController extends Controller
      */
     public function toggleStatus($id)
     {
-        $user = User::findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
 
         // Prevent deactivating yourself
         if ($user->id === auth()->id()) {
@@ -282,7 +307,10 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
+        $companyId = auth()->user()->company_id;
+        $user = User::where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->findOrFail($id);
 
         // Prevent deleting yourself
         if ($user->id === auth()->id()) {
@@ -306,5 +334,20 @@ class UserController extends Controller
             'success' => true,
             'message' => 'User deleted successfully.',
         ]);
+    }
+
+    /**
+     * Get users for API (filtered by company).
+     */
+    public function indexData(Request $request)
+    {
+        $companyId = auth()->user()->company_id;
+
+        $users = User::where('company_id', $companyId)
+            ->where('is_platform_admin', false)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        return response()->json($users);
     }
 }

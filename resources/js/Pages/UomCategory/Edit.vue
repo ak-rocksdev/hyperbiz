@@ -88,7 +88,7 @@ const updateCategory = () => {
                         <form class="card-body" @submit.prevent="updateCategory">
                             <!-- Code Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Code <span class="text-danger">*</span>
                                 </label>
                                 <input
@@ -105,7 +105,7 @@ const updateCategory = () => {
 
                             <!-- Name Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Name <span class="text-danger">*</span>
                                 </label>
                                 <input
@@ -122,11 +122,11 @@ const updateCategory = () => {
 
                             <!-- Description Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Description
                                 </label>
                                 <textarea
-                                    class="input w-full"
+                                    class="textarea w-full"
                                     v-model="form.description"
                                     placeholder="Enter category description (optional)"
                                     rows="3"
@@ -138,7 +138,7 @@ const updateCategory = () => {
 
                             <!-- Is Active Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Status
                                 </label>
                                 <div class="flex items-center gap-3">

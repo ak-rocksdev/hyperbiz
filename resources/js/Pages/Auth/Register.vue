@@ -180,15 +180,18 @@
                     </div>
                     <InputError class="mt-2" :message="form.errors.password_confirmation" />
                 </div>
-                <label v-if="$page.props.jetstream.hasTermsAndPrivacyPolicyFeature" class="checkbox-group">
-                    <input class="checkbox checkbox-sm" name="check" type="checkbox" />
-                    <span class="checkbox-label">
-                        I accept
-                        <Link class="text-2sm link" :href="'/terms-of-service'">
-                            Terms & Conditions
-                        </Link>
-                    </span>
-                </label>
+                <div v-if="$page.props.jetstream.hasTermsAndPrivacyPolicyFeature" class="flex flex-col gap-1">
+                    <label class="checkbox-group">
+                        <input class="checkbox checkbox-sm" v-model="form.terms" type="checkbox" />
+                        <span class="checkbox-label">
+                            I accept
+                            <Link class="text-2sm link" :href="'/terms-of-service'">
+                                Terms & Conditions
+                            </Link>
+                        </span>
+                    </label>
+                    <InputError :message="form.errors.terms" />
+                </div>
                 <button class="btn btn-primary flex justify-center grow" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                     Sign up
                 </button>

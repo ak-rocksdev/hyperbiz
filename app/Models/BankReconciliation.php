@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\LogsSystemChanges;
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class BankReconciliation extends Model
 {
-    use HasFactory, LogsSystemChanges;
+    use HasFactory, LogsSystemChanges, BelongsToCompany;
 
     protected $table = 'fin_bank_reconciliations';
 

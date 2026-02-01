@@ -1808,9 +1808,12 @@
                                 <span class="text-sm text-gray-800 font-semibold leading-none">
                                     {{ page.auth.user.name }}
                                 </span>
-                                <a :href="page.company.website" target="_blank" class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
+                                <a v-if="page.company" :href="page.company.website" target="_blank" class="text-xs text-gray-600 hover:text-primary font-medium leading-none">
                                     {{ page.company.name }}
                                 </a>
+                                <span v-else class="text-xs text-gray-600 font-medium leading-none">
+                                    Platform Administrator
+                                </span>
                             </div>
                             </img>
                         </div>
@@ -1843,7 +1846,7 @@
                                 </span>
                             </Link>
                         </div>
-                        <div class="menu-item">
+                        <div v-if="page.company" class="menu-item">
                             <Link class="menu-link" :href="route('company.detail', { id: 1 })">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-briefcase">

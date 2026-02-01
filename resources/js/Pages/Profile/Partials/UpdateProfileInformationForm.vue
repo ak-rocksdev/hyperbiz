@@ -37,7 +37,9 @@ const updateProfileInformation = () => {
 };
 
 const sendEmailVerification = () => {
-    verificationLinkSent.value = true;
+    axios.post(route('verification.send')).then(() => {
+        verificationLinkSent.value = true;
+    });
 };
 
 const selectNewPhoto = () => {

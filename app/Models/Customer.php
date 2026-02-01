@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\LogsSystemChanges;
+use App\Traits\BelongsToCompany;
 
 class Customer extends Model
 {
-    use HasFactory, LogsSystemChanges;
+    use HasFactory, LogsSystemChanges, BelongsToCompany;
 
     protected static function newFactory()
     {

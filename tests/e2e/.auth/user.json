@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "XSRF-TOKEN",
+      "value": "eyJpdiI6Ikg1eDJIRXNKcjZXNDFwdVZZQ2ZibUE9PSIsInZhbHVlIjoiSjJFem1UdTFwcGdpVkNRUkR4UkFBWEh4V1pZaldGbE5lN010eEhKRTFZQjBpbTlWaGhBQ2JoVjZlWUgyZjZsMFIzdTRlMkFSd1dka0g0Q0Z6TEJUQVlhcCtBdmNhU3ZTR3RLV2R3cEFpWDN4bUlsaEwrekFXRHJUSUMvMVV6RUwiLCJtYWMiOiI3MmY0Mzk2YjAwNzU0NmY3M2UwMmM1MmIyNGVkMzE3NmE3NmI0ZGI3YzIwMjJmZjcyMTRmZThjMWQ2OWYwNzllIiwidGFnIjoiIn0%3D",
+      "domain": ".hyperbiz.local",
+      "path": "/",
+      "expires": 1769890835.776161,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "hyperbiz_session",
+      "value": "eyJpdiI6ImtOb2J3NUlPakRWelFnLzlOTUs1VWc9PSIsInZhbHVlIjoiQnJCMWhXd2NLd2svaFhKSUwrRDBrTWZFWDMzNjZKL1lpWk1pNmhjL2hMY1dqNytYMEpqNm9ZYUNJM2dCZk1LTGVlOG1ZSEcyd3BSb2FlT2pKMFFGcUZraUFUMnkwS2lNaHYxMkd6YUEwNExKMUg3bVdaOHUvL25BVC9GNzdWb0kiLCJtYWMiOiIzNGI3MTliNDkwMWIyYjliODA4YWY2Njc1Mjk3ZjY3YWQyN2UwZWEyNjk0M2IyNTdiYWVmZGU1OTk3OGQ0NmU1IiwidGFnIjoiIn0%3D",
+      "domain": ".hyperbiz.local",
+      "path": "/",
+      "expires": 1769890835.776274,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://hyperbiz.local",
+      "localStorage": [
+        {
+          "name": "theme",
+          "value": "light"
+        }
+      ]
+    }
+  ]
+}

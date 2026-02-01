@@ -136,7 +136,7 @@ const updateUom = () => {
                         <form class="card-body" @submit.prevent="updateUom">
                             <!-- Code Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Code <span class="text-danger">*</span>
                                 </label>
                                 <input
@@ -154,7 +154,7 @@ const updateUom = () => {
 
                             <!-- Name Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Name <span class="text-danger">*</span>
                                 </label>
                                 <input
@@ -172,7 +172,7 @@ const updateUom = () => {
 
                             <!-- Category Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Category <span class="text-danger">*</span>
                                 </label>
                                 <SearchableSelect
@@ -188,7 +188,7 @@ const updateUom = () => {
 
                             <!-- Base UoM Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Base UoM
                                 </label>
                                 <SearchableSelect
@@ -207,7 +207,7 @@ const updateUom = () => {
 
                             <!-- Conversion Factor Field (shown only if Base UoM is selected) -->
                             <div v-if="showConversionFactor" class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Conversion Factor <span class="text-danger">*</span>
                                 </label>
                                 <input
@@ -226,11 +226,11 @@ const updateUom = () => {
 
                             <!-- Description Field -->
                             <div class="mb-5">
-                                <label class="form-label text-gray-700">
+                                <label class="form-label text-gray-700 mb-2">
                                     Description
                                 </label>
                                 <textarea
-                                    class="input w-full min-h-[80px]"
+                                    class="textarea w-full"
                                     v-model="form.description"
                                     placeholder="Enter description (optional)"
                                     rows="3"

@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\BelongsToCompany;
 
 class UomCategory extends Model
 {
+    use BelongsToCompany;
     protected $table = 'mst_uom_categories';
 
     protected $fillable = [

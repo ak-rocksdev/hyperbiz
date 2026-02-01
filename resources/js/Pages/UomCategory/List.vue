@@ -472,7 +472,7 @@ onMounted(() => {
                             <div class="modal-body py-5">
                                 <!-- Category Code -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Category Code <span class="text-danger">*</span>
                                     </label>
                                     <input
@@ -489,7 +489,7 @@ onMounted(() => {
 
                                 <!-- Category Name -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">
+                                    <label class="form-label text-gray-700 mb-2">
                                         Category Name <span class="text-danger">*</span>
                                     </label>
                                     <input
@@ -503,9 +503,9 @@ onMounted(() => {
 
                                 <!-- Description -->
                                 <div class="mb-5">
-                                    <label class="form-label text-gray-700">Description</label>
+                                    <label class="form-label text-gray-700 mb-2">Description</label>
                                     <textarea
-                                        class="input w-full"
+                                        class="textarea w-full"
                                         v-model="form.description"
                                         placeholder="Enter category description (optional)"
                                         rows="3"

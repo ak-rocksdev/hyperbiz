@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\BelongsToCompany;
 
 class ProductUom extends Model
 {
+    use BelongsToCompany;
     protected $table = 'mst_product_uoms';
 
     protected $fillable = [

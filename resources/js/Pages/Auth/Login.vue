@@ -1,6 +1,6 @@
 <script setup>
-    import { onMounted } from 'vue';
-    import { Head, Link, useForm } from '@inertiajs/vue3';
+    import { onMounted, ref } from 'vue';
+    import { Head, Link, useForm, router } from '@inertiajs/vue3';
     import AuthenticationCard from '@/Components/AuthenticationCard.vue';
     import AuthenticationCardLogo from '@/Components/AuthenticationCardLogo.vue';
     import Checkbox from '@/Components/Checkbox.vue';
@@ -8,6 +8,8 @@
     import InputLabel from '@/Components/InputLabel.vue';
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import TextInput from '@/Components/TextInput.vue';
+    import RateLimitAlert from '@/Components/RateLimitAlert.vue';
+    import axios from 'axios';
 
     defineProps({
         canResetPassword: Boolean,
@@ -20,13 +22,52 @@
         remember: false,
     });
 
+    // Rate limit state
+    const showRateLimitAlert = ref(false);
+    const retryAfterSeconds = ref(60);
+
     const submit = () => {
-        form.transform(data => ({
-            ...data,
+        // Don't submit if rate limited
+        if (showRateLimitAlert.value) return;
+
+        // Use axios directly to catch 429 errors properly
+        axios.post(route('login'), {
+            email: form.email,
+            password: form.password,
             remember: form.remember ? 'on' : '',
-        })).post(route('login'), {
-            onFinish: () => form.reset('password'),
+        }).then((response) => {
+            // Successful login - redirect to intended URL or dashboard
+            window.location.href = response.data?.redirect || '/dashboard';
+        }).catch((error) => {
+            form.reset('password');
+
+            if (error.response?.status === 429) {
+                // Rate limit exceeded - show inline alert
+                retryAfterSeconds.value = error.response.data?.retry_after || 60;
+                showRateLimitAlert.value = true;
+            } else if (error.response?.status === 422) {
+                // Validation errors - extract first message from each error array
+                const errors = error.response.data?.errors || {};
+                const formattedErrors = {};
+                for (const [key, messages] of Object.entries(errors)) {
+                    formattedErrors[key] = Array.isArray(messages) ? messages[0] : messages;
+                }
+                form.setError(formattedErrors);
+            } else {
+                // Other errors
+                form.setError('email', error.response?.data?.message || 'An error occurred. Please try again.');
+            }
         });
+    };
+
+    const handleRateLimitExpire = () => {
+        showRateLimitAlert.value = false;
+    };
+
+    const handleRateLimitClose = () => {
+        // Optional: allow closing but keep form disabled until time expires
+        // For better UX, we'll just hide the alert but the countdown continues internally
+        showRateLimitAlert.value = false;
     };
 
     onMounted(() => {
@@ -94,8 +135,17 @@
 <template>
     <Head title="Log in" />
     <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg h-full">
-        <div class="card max-w-[370px] w-full">
-            <form action="#" class="card-body flex flex-col gap-5 p-10" id="sign_in_form" method="get" @submit.prevent="submit">
+        <div class="w-full max-w-[400px] px-4">
+            <!-- Rate Limit Alert -->
+            <RateLimitAlert
+                :show="showRateLimitAlert"
+                :retryAfter="retryAfterSeconds"
+                @expire="handleRateLimitExpire"
+                @close="handleRateLimitClose"
+            />
+
+            <div class="card w-full">
+                <form action="#" class="card-body flex flex-col gap-5 p-10" id="sign_in_form" method="get" @submit.prevent="submit">
                 <div class="flex items-center gap-2">
                     <span class="border-t border-gray-200 w-full"></span>
                     <img alt="or" class="size-20 shrink-0" src="/assets/media/app/bkpi_square_logo.png"/>
@@ -167,10 +217,16 @@
                     Remember me
                     </span>
                 </label>
-                <button class="btn btn-primary flex justify-center grow">
-                    Sign In
+                <button
+                    class="btn btn-primary flex justify-center grow"
+                    :class="{ 'opacity-50 cursor-not-allowed': showRateLimitAlert }"
+                    :disabled="showRateLimitAlert"
+                >
+                    <span v-if="showRateLimitAlert">Please Wait...</span>
+                    <span v-else>Sign In</span>
                 </button>
             </form>
+            </div>
         </div>
     </div>
 

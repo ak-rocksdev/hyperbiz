@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use App\Traits\BelongsToCompany;
 
 class FinancialSetting extends Model
 {
+    use BelongsToCompany;
     protected $table = 'fin_settings';
 
     protected $fillable = [

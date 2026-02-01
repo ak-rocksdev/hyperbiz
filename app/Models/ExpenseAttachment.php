@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\BelongsToCompany;
 
 class ExpenseAttachment extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToCompany;
 
     protected $table = 'fin_expense_attachments';
 

@@ -34,6 +34,9 @@ use App\Http\Controllers\BankReconciliationController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\UomCategoryController;
 use App\Http\Controllers\UomController;
+use App\Http\Controllers\PlatformAdminController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\SubscriptionPlanController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -54,7 +57,53 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // =====================================================
+    // Onboarding Routes (Users without company)
+    // =====================================================
+    Route::prefix('onboarding')->name('onboarding.')->group(function () {
+        Route::get('/', [OnboardingController::class, 'welcome'])->name('welcome');
+        Route::get('/company-setup', [OnboardingController::class, 'companySetup'])->name('company-setup');
+        Route::post('/company-setup', [OnboardingController::class, 'storeCompany'])->name('store-company');
+        Route::get('/complete', [OnboardingController::class, 'complete'])->name('complete');
+    });
+
+    // Main dashboard - redirects based on user type
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+
+        // Platform admin goes to admin dashboard
+        if ($user->isPlatformAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // User without company goes to onboarding
+        if (!$user->hasCompany()) {
+            return redirect()->route('onboarding.welcome');
+        }
+
+        // Regular tenant user goes to dashboard
+        return app(DashboardController::class)->index();
+    })->name('dashboard');
+
+    // =====================================================
+    // Platform Admin Routes (Platform Admins Only)
+    // =====================================================
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/dashboard', [PlatformAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/companies', [PlatformAdminController::class, 'companies'])->name('companies');
+        Route::get('/companies/{company}', [PlatformAdminController::class, 'companyDetail'])->name('companies.detail');
+        Route::put('/companies/{company}/subscription', [PlatformAdminController::class, 'updateCompanySubscription'])->name('companies.subscription');
+
+        // Subscription Plans Management
+        Route::prefix('plans')->name('plans.')->group(function () {
+            Route::get('/', [SubscriptionPlanController::class, 'index'])->name('index');
+            Route::post('/', [SubscriptionPlanController::class, 'store'])->name('store');
+            Route::put('/{plan}', [SubscriptionPlanController::class, 'update'])->name('update');
+            Route::patch('/{plan}/toggle-status', [SubscriptionPlanController::class, 'toggleStatus'])->name('toggle-status');
+            Route::delete('/{plan}', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
+            Route::post('/update-order', [SubscriptionPlanController::class, 'updateOrder'])->name('update-order');
+        });
+    });
 
     // Access Management (Users, Roles, Permissions)
     Route::prefix('access-management')->group(function () {

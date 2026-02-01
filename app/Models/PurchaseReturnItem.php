@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToCompany;
 
 class PurchaseReturnItem extends Model
 {
+    use BelongsToCompany;
     protected $table = 'purchase_return_items';
 
     protected $fillable = [

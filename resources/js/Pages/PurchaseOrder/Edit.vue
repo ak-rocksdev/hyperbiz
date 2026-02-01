@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchableSelect from '@/Components/SearchableSelect.vue';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -37,6 +37,12 @@ const cleanNum = (val) => {
     return num % 1 === 0 ? Math.round(num) : parseFloat(num.toFixed(2));
 };
 
+// Clean conversion factor - preserve decimals for conversion factors
+const cleanFactor = (val) => {
+    const num = parseFloat(val) || 1;
+    return num;
+};
+
 const form = ref({
     supplier_id: props.purchaseOrder?.supplier_id || null,
     order_date: props.purchaseOrder?.order_date_raw || new Date().toISOString().split('T')[0],
@@ -56,12 +62,72 @@ const form = ref({
         unit_cost: cleanNum(item.unit_cost),
         discount_percentage: cleanNum(item.discount_percentage),
         notes: item.notes || '',
+        // UoM fields
+        uom_id: item.uom_id || null,
+        uom_conversion_factor: cleanFactor(item.uom_conversion_factor || item.conversion_factor),
+        base_uom_id: item.base_uom_id || null,
     })),
 });
 
 const errors = ref({});
 const isSubmitting = ref(false);
 const searchQuery = ref('');
+
+// Store available UoMs per product (keyed by product_id)
+const productUomsCache = ref({});
+
+// Fetch available UoMs for a product
+const fetchProductUoms = async (productId) => {
+    if (productUomsCache.value[productId]) {
+        return productUomsCache.value[productId];
+    }
+    try {
+        const response = await axios.get(`/products/api/${productId}/available-uoms`);
+        if (response.data.success) {
+            productUomsCache.value[productId] = {
+                base_uom_id: response.data.base_uom_id,
+                purchase_uoms: response.data.purchase_uoms || [],
+            };
+            return productUomsCache.value[productId];
+        }
+    } catch (err) {
+        console.error('Failed to fetch product UoMs:', err);
+    }
+    return { base_uom_id: null, purchase_uoms: [] };
+};
+
+// Get UoM options for a specific product item
+const getUomOptions = (productId) => {
+    const cached = productUomsCache.value[productId];
+    if (!cached || !cached.purchase_uoms?.length) return [];
+    return cached.purchase_uoms.map(uom => ({
+        value: uom.value,
+        label: uom.uom_code,
+        sublabel: uom.uom_name,
+    }));
+};
+
+// Handle UoM change for an item
+const handleUomChange = (item, newUomId) => {
+    const cached = productUomsCache.value[item.product_id];
+    if (!cached) return;
+
+    const selectedUom = cached.purchase_uoms.find(u => u.value === newUomId);
+    if (selectedUom) {
+        item.uom_conversion_factor = selectedUom.conversion_factor;
+        item.base_uom_id = cached.base_uom_id;
+        // Update unit cost with default price if available
+        if (selectedUom.default_price > 0) {
+            item.unit_cost = selectedUom.default_price;
+        }
+    }
+};
+
+// Load UoMs for existing items on mount
+onMounted(async () => {
+    const productIds = [...new Set(form.value.items.map(item => item.product_id))];
+    await Promise.all(productIds.map(id => fetchProductUoms(id)));
+});
 
 // Filter products based on search
 const filteredProducts = computed(() => {
@@ -75,20 +141,28 @@ const filteredProducts = computed(() => {
 });
 
 // Add product to items
-const addProduct = (product) => {
+const addProduct = async (product) => {
     const existingIndex = form.value.items.findIndex(item => item.product_id === product.id);
     if (existingIndex !== -1) {
         form.value.items[existingIndex].quantity++;
     } else {
+        // Fetch UoMs for this product
+        const uomData = await fetchProductUoms(product.id);
+        const defaultUom = uomData.purchase_uoms?.find(u => u.is_default) || uomData.purchase_uoms?.[0];
+
         form.value.items.push({
             id: null,
             product_id: product.id,
             product_name: product.product_name || product.name,
             sku: product.sku,
             quantity: 1,
-            unit_cost: product.cost_price || 0,
+            unit_cost: defaultUom?.default_price || product.cost_price || 0,
             discount_percentage: 0,
             notes: '',
+            // UoM fields
+            uom_id: defaultUom?.value || null,
+            uom_conversion_factor: defaultUom?.conversion_factor || 1,
+            base_uom_id: uomData.base_uom_id || null,
         });
     }
     searchQuery.value = '';
@@ -446,11 +520,12 @@ const deleteDraft = async () => {
                                     <thead>
                                         <tr>
                                             <th class="min-w-[180px]">Product</th>
+                                            <th class="w-[100px] text-center">UoM</th>
                                             <th class="w-[90px] text-center">Qty</th>
                                             <th class="w-[130px] text-end">Unit Cost</th>
-                                            <th class="w-[100px] text-center">Disc %</th>
+                                            <th class="w-[80px] text-center">Disc %</th>
                                             <th class="w-[130px] text-end">Subtotal</th>
-                                            <th class="w-[60px] text-center"></th>
+                                            <th class="w-[50px] text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -458,6 +533,17 @@ const deleteDraft = async () => {
                                             <td>
                                                 <div class="font-medium text-gray-900">{{ item.product_name }}</div>
                                                 <div class="text-xs text-gray-500">SKU: {{ item.sku || 'N/A' }}</div>
+                                            </td>
+                                            <td class="px-2">
+                                                <SearchableSelect
+                                                    v-if="getUomOptions(item.product_id).length > 0"
+                                                    v-model="item.uom_id"
+                                                    :options="getUomOptions(item.product_id)"
+                                                    placeholder="UoM"
+                                                    size="sm"
+                                                    @update:modelValue="(val) => handleUomChange(item, val)"
+                                                />
+                                                <span v-else class="text-xs text-gray-400">-</span>
                                             </td>
                                             <td class="px-2">
                                                 <input type="number" v-model.number="item.quantity"
@@ -469,7 +555,7 @@ const deleteDraft = async () => {
                                             </td>
                                             <td class="px-2">
                                                 <input type="number" v-model.number="item.discount_percentage"
-                                                    class="input input-sm text-center w-full min-w-[70px]" min="0" max="100" step="0.1" />
+                                                    class="input input-sm text-center w-full min-w-[60px]" min="0" max="100" step="0.1" />
                                             </td>
                                             <td class="text-end font-medium text-gray-900 whitespace-nowrap">{{ formatCurrency(itemSubtotal(item)) }}</td>
                                             <td class="text-center">
@@ -480,7 +566,7 @@ const deleteDraft = async () => {
                                             </td>
                                         </tr>
                                         <tr v-if="form.items.length === 0">
-                                            <td colspan="6">
+                                            <td colspan="7">
                                                 <div class="flex flex-col items-center justify-center py-10 text-gray-400">
                                                     <i class="ki-outline ki-handcart text-5xl mb-3"></i>
                                                     <span>No products added yet</span>

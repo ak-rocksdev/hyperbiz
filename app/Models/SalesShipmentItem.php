@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToCompany;
 
 class SalesShipmentItem extends Model
 {
+    use BelongsToCompany;
     protected $table = 'sales_shipment_items';
 
     protected $fillable = [

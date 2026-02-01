@@ -11,13 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class UomController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['permission:uom.view'], ['only' => ['list', 'show', 'detailApi']]);
-        $this->middleware(['permission:uom.create'], ['only' => ['store']]);
-        $this->middleware(['permission:uom.edit'], ['only' => ['edit', 'update']]);
-        $this->middleware(['permission:uom.delete'], ['only' => ['destroy']]);
-    }
+    // Note: Middleware is defined in routes/web.php for Laravel 11 compatibility
 
     public function list(Request $request)
     {

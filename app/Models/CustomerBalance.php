@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\BelongsToCompany;
 
 class CustomerBalance extends Model
 {
+    use BelongsToCompany;
     protected $table = 'fin_customer_balances';
 
     protected $fillable = [

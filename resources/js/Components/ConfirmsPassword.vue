@@ -48,7 +48,7 @@ const startConfirmingPassword = () => {
 const confirmPassword = () => {
     form.processing = true;
 
-    axios.post(route('password.confirm'), {
+    axios.post(route('password.confirm.store'), {
         password: form.password,
     }).then(() => {
         form.processing = false;

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToCompany;
 
 class InventoryStock extends Model
 {
+    use BelongsToCompany;
     protected $table = 'inventory_stock';
 
     protected $fillable = [

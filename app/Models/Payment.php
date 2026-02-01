@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Traits\BelongsToCompany;
 
 class Payment extends Model
 {
+    use BelongsToCompany;
     protected static function boot()
     {
         parent::boot();

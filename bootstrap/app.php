@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,10 +25,21 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'ensure.company' => \App\Http\Middleware\EnsureHasCompany::class,
+            'check.subscription' => \App\Http\Middleware\CheckSubscriptionStatus::class,
         ]);
-
-        // Additional middleware configurations can be added here if needed
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Handle 429 (Too Many Requests) for Inertia/AJAX requests
+        // Returns JSON instead of rendering 429 error page
+        $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
+            if ($request->wantsJson() || $request->header('X-Inertia')) {
+                $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+
+                return response()->json([
+                    'message' => 'Too many login attempts. Please try again later.',
+                    'retry_after' => (int) $retryAfter,
+                ], 429, ['Retry-After' => $retryAfter]);
+            }
+        });
     })->create();
