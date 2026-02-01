@@ -37,6 +37,9 @@ use App\Http\Controllers\UomController;
 use App\Http\Controllers\PlatformAdminController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\SubscriptionPlanController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\Admin\PaymentVerificationController;
+use App\Http\Controllers\StripeWebhookController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome', [
@@ -56,6 +59,7 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    'check.subscription', // Check if subscription is active/trial
 ])->group(function () {
     // =====================================================
     // Onboarding Routes (Users without company)
@@ -86,6 +90,31 @@ Route::middleware([
     })->name('dashboard');
 
     // =====================================================
+    // Subscription Routes (Tenant Users)
+    // =====================================================
+    Route::prefix('subscription')->name('subscription.')->middleware('ensure.company')->group(function () {
+        Route::get('/', [SubscriptionController::class, 'index'])->name('index');
+        Route::get('/plans', [SubscriptionController::class, 'showPlans'])->name('plans');
+        Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
+        Route::post('/subscribe/{plan}', [SubscriptionController::class, 'subscribe'])->name('subscribe');
+        Route::get('/payment-proof/{invoice}', [SubscriptionController::class, 'showPaymentProof'])->name('payment-proof');
+        Route::post('/payment-proof/{invoice}', [SubscriptionController::class, 'uploadPaymentProof'])->name('upload-payment-proof');
+        Route::get('/billing-history', [SubscriptionController::class, 'billingHistory'])->name('billing-history');
+        Route::post('/cancel', [SubscriptionController::class, 'cancelSubscription'])->name('cancel');
+        Route::get('/invoice/{invoice}/download', [SubscriptionController::class, 'downloadInvoice'])->name('invoice.download');
+
+        // Stripe routes
+        Route::get('/stripe/checkout/{invoice}', [SubscriptionController::class, 'stripeCheckout'])->name('stripe.checkout');
+        Route::get('/success', [SubscriptionController::class, 'paymentSuccess'])->name('success');
+        Route::get('/cancelled', [SubscriptionController::class, 'paymentCancelled'])->name('cancelled');
+    });
+
+    // Stripe webhook (outside auth middleware)
+    Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])
+        ->name('stripe.webhook')
+        ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+    // =====================================================
     // Platform Admin Routes (Platform Admins Only)
     // =====================================================
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -102,6 +131,14 @@ Route::middleware([
             Route::patch('/{plan}/toggle-status', [SubscriptionPlanController::class, 'toggleStatus'])->name('toggle-status');
             Route::delete('/{plan}', [SubscriptionPlanController::class, 'destroy'])->name('destroy');
             Route::post('/update-order', [SubscriptionPlanController::class, 'updateOrder'])->name('update-order');
+        });
+
+        // Payment Verifications Management
+        Route::prefix('payment-verifications')->name('payment-verifications.')->group(function () {
+            Route::get('/', [PaymentVerificationController::class, 'index'])->name('index');
+            Route::get('/{proof}', [PaymentVerificationController::class, 'show'])->name('show');
+            Route::post('/{proof}/approve', [PaymentVerificationController::class, 'approve'])->name('approve');
+            Route::post('/{proof}/reject', [PaymentVerificationController::class, 'reject'])->name('reject');
         });
     });
 

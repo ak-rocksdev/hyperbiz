@@ -68,6 +68,80 @@
         hasPermission('finance.bank.view')
     );
 
+    // =====================================================
+    // Subscription Status Warning
+    // =====================================================
+    const company = computed(() => page.props.company || {});
+
+    // Check subscription status
+    const subscriptionStatus = computed(() => company.value.subscription_status || 'trial');
+    const isOnTrial = computed(() => company.value.is_on_trial || false);
+    const trialDaysRemaining = computed(() => company.value.trial_days_remaining || 0);
+    const isReadOnly = computed(() => company.value.is_read_only || false);
+
+    // Determine if we should show warning banner
+    const showSubscriptionWarning = computed(() => {
+        // Don't show for platform admins
+        if (isPlatformAdmin.value) return false;
+
+        // Show if expired or suspended
+        if (['expired', 'suspended'].includes(subscriptionStatus.value)) return true;
+
+        // Show if trial is expiring soon (7 days or less)
+        if (isOnTrial.value && trialDaysRemaining.value <= 7) return true;
+
+        return false;
+    });
+
+    // Get warning banner config based on status
+    const subscriptionWarning = computed(() => {
+        const status = subscriptionStatus.value;
+
+        // Expired status
+        if (status === 'expired' || (status === 'trial' && !isOnTrial.value)) {
+            return {
+                type: 'danger',
+                icon: 'ki-filled ki-shield-cross',
+                title: 'Trial Expired',
+                message: 'Upgrade to continue using all features',
+                bgClass: 'bg-danger/10 border-danger/20',
+                textClass: 'text-danger',
+                iconClass: 'text-danger',
+            };
+        }
+
+        // Suspended status
+        if (status === 'suspended') {
+            return {
+                type: 'danger',
+                icon: 'ki-filled ki-lock-3',
+                title: 'Account Suspended',
+                message: 'Please contact support',
+                bgClass: 'bg-danger/10 border-danger/20',
+                textClass: 'text-danger',
+                iconClass: 'text-danger',
+            };
+        }
+
+        // Trial expiring soon
+        if (isOnTrial.value && trialDaysRemaining.value <= 7) {
+            const days = trialDaysRemaining.value;
+            const isUrgent = days <= 3;
+
+            return {
+                type: isUrgent ? 'danger' : 'warning',
+                icon: 'ki-filled ki-time',
+                title: days === 0 ? 'Trial ends today!' : `Trial: ${days} day${days === 1 ? '' : 's'} left`,
+                message: 'Upgrade now to keep access',
+                bgClass: isUrgent ? 'bg-danger/10 border-danger/20' : 'bg-warning/10 border-warning/20',
+                textClass: isUrgent ? 'text-danger' : 'text-warning',
+                iconClass: isUrgent ? 'text-danger' : 'text-warning',
+            };
+        }
+
+        return null;
+    });
+
 </script>
 <template>
     <!-- Sidebar -->
@@ -152,6 +226,17 @@
                                 </span>
                                 <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
                                     Subscription Plans
+                                </span>
+                            </div>
+                        </Link>
+                        <Link :class="['menu-item', isActive('/admin/payment-verifications*') ? 'active' : '']" href="/admin/payment-verifications">
+                            <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                                tabindex="0">
+                                <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                    <i class="ki-filled ki-verify text-lg"></i>
+                                </span>
+                                <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                    Payment Verifications
                                 </span>
                             </div>
                         </Link>
@@ -498,10 +583,101 @@
                             </span>
                         </div>
                     </Link>
+                    <!-- Settings Section -->
+                    <div class="menu-item pt-2.25 pb-px">
+                        <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
+                            Settings
+                        </span>
+                    </div>
+                    <!-- Subscription -->
+                    <div class="menu-item" :class="{ 'here show': isActive('/subscription*') }"
+                        data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-discount text-lg"></i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Subscription
+                            </span>
+                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
+                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"></i>
+                            </span>
+                        </div>
+                        <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+                            <Link :class="['menu-item', isActive('/subscription') && !isActive('/subscription/plans') && !isActive('/subscription/billing') ? 'active' : '']" href="/subscription">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-chart-pie-4 text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Current Plan
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/subscription/plans*') ? 'active' : '']" href="/subscription/plans">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-price-tag text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Available Plans
+                                    </span>
+                                </div>
+                            </Link>
+                            <Link :class="['menu-item', isActive('/subscription/billing-history*') ? 'active' : '']" href="/subscription/billing-history">
+                                <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]">
+                                    <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                        <i class="ki-filled ki-bill text-lg"></i>
+                                    </span>
+                                    <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                        Billing History
+                                    </span>
+                                </div>
+                            </Link>
+                        </div>
+                    </div>
                     </template>
                     <!-- End Tenant User Menu -->
                 </div>
                 <!-- End of Sidebar Menu -->
+            </div>
+        </div>
+
+        <!-- Subscription Warning Banner -->
+        <div v-if="showSubscriptionWarning && subscriptionWarning" class="sidebar-footer shrink-0 px-3 lg:px-4 py-3 border-t border-gray-200 dark:border-coal-100">
+            <div
+                :class="[
+                    'rounded-lg border p-3 transition-all',
+                    subscriptionWarning.bgClass
+                ]"
+            >
+                <div class="flex items-start gap-2.5">
+                    <div class="shrink-0 mt-0.5">
+                        <i :class="[subscriptionWarning.icon, subscriptionWarning.iconClass, 'text-lg']"></i>
+                    </div>
+                    <div class="grow min-w-0">
+                        <p :class="['text-sm font-semibold leading-tight', subscriptionWarning.textClass]">
+                            {{ subscriptionWarning.title }}
+                        </p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5 leading-tight">
+                            {{ subscriptionWarning.message }}
+                        </p>
+                        <Link
+                            href="/subscription/plans"
+                            class="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-active mt-2"
+                        >
+                            <span>Upgrade Now</span>
+                            <i class="ki-filled ki-arrow-right text-2xs"></i>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+            <!-- Read-only mode indicator -->
+            <div v-if="isReadOnly" class="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+                <i class="ki-filled ki-eye text-gray-400"></i>
+                <span>Read-only mode active</span>
             </div>
         </div>
     </div>

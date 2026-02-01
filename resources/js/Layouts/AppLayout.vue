@@ -6,6 +6,7 @@
     import Sidebar from '@/Components/Metronic/Sidebar.vue';
     import Header from '@/Components/Metronic/Header.vue';
     import Footer from '@/Components/Metronic/Footer.vue';
+    import SubscriptionBanner from '@/Components/Metronic/SubscriptionBanner.vue';
     import GlobalSearchModal from '@/Components/Metronic/GlobalSearchModal.vue';
     import Dropdown from '@/Components/Dropdown.vue';
     import DropdownLink from '@/Components/DropdownLink.vue';
@@ -103,6 +104,7 @@
         <div class="flex grow">
             <!-- Wrapper -->
             <div class="wrapper flex grow flex-col">
+                <SubscriptionBanner />
                 <main class="grow content pt-5" id="content" role="content">
                     <!-- Header -->
                     <Header />

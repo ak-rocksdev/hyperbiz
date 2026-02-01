@@ -76,7 +76,16 @@ class RoleController extends Controller
         $roleFilter = $request->get('role', null);
         $statusFilter = $request->get('status', null);
 
+        // Get current user's company
+        $currentUser = auth()->user();
+        $companyId = $currentUser->company_id;
+
         $usersQuery = User::with('roles');
+
+        // Filter users by company - only show users from the same company
+        if ($companyId) {
+            $usersQuery->where('company_id', $companyId);
+        }
 
         if ($search && $activeTab === 'users') {
             $usersQuery->where(function ($q) use ($search) {
@@ -112,12 +121,16 @@ class RoleController extends Controller
             ];
         });
 
-        // ========== STATS ==========
+        // ========== STATS (scoped to company) ==========
         $stats = [
             'total_roles' => Role::count(),
             'total_permissions' => Permission::count(),
-            'users_with_roles' => User::whereHas('roles')->count(),
-            'total_users' => User::count(),
+            'users_with_roles' => $companyId
+                ? User::where('company_id', $companyId)->whereHas('roles')->count()
+                : User::whereHas('roles')->count(),
+            'total_users' => $companyId
+                ? User::where('company_id', $companyId)->count()
+                : User::count(),
         ];
 
         return Inertia::render('AccessManagement/Index', [

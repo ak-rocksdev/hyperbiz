@@ -2,15 +2,15 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
 import InputError from '@/Components/InputError.vue';
+import SearchableSelect from '@/Components/SearchableSelect.vue';
 
 // Props from controller
 defineProps({
     user: Object, // { name, email }
 });
 
-// Industry options
+// Industry options for SearchableSelect
 const industries = [
-    { value: '', label: 'Select an industry' },
     { value: 'retail', label: 'Retail & E-commerce' },
     { value: 'manufacturing', label: 'Manufacturing' },
     { value: 'wholesale', label: 'Wholesale & Distribution' },
@@ -35,8 +35,35 @@ const form = useForm({
     industry: '',
 });
 
+// Client-side validation
+const validate = () => {
+    form.clearErrors();
+    let isValid = true;
+
+    if (!form.name || form.name.trim() === '') {
+        form.setError('name', 'Company name is required.');
+        isValid = false;
+    }
+
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+        form.setError('email', 'Please enter a valid email address.');
+        isValid = false;
+    }
+
+    if (form.website && !/^https?:\/\/.+/.test(form.website)) {
+        form.setError('website', 'Please enter a valid URL starting with http:// or https://');
+        isValid = false;
+    }
+
+    return isValid;
+};
+
 // Submit handler
 const submit = () => {
+    if (!validate()) {
+        return;
+    }
+
     form.post(route('onboarding.store-company'), {
         onSuccess: () => {
             // Redirect handled by controller
@@ -109,6 +136,49 @@ onMounted(() => {
 .dark .page-bg {
     background-image: url('/assets/media/images/2600x1200/bg-10-dark.png');
 }
+
+/* Input group styling */
+.input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.input-group .input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-right: 0;
+    border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.input-group .input,
+.input-group .textarea,
+.input-group .select {
+    border-radius: 0 0.375rem 0.375rem 0;
+    flex: 1;
+}
+
+.input-group .textarea {
+    min-height: 80px;
+}
+
+/* Input group text for textarea - align to top */
+.input-group-textarea .input-group-text {
+    align-items: flex-start;
+    padding-top: 0.625rem;
+}
+
+/* Dark mode input group */
+:deep(.dark) .input-group .input-group-text {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #9ca3af;
+}
 </style>
 
 <template>
@@ -179,7 +249,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Form -->
-                    <form @submit.prevent="submit" class="space-y-5">
+                    <form @submit.prevent="submit" class="space-y-5" novalidate>
                         <!-- Company Name -->
                         <div>
                             <label for="company-name" class="form-label mb-2">
@@ -187,8 +257,8 @@ onMounted(() => {
                                 <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
-                                <span class="btn btn-input">
-                                    <i class="ki-filled ki-abstract-14 text-gray-500"></i>
+                                <span class="input-group-text">
+                                    <i class="ki-filled ki-abstract-14"></i>
                                 </span>
                                 <input
                                     id="company-name"
@@ -197,7 +267,6 @@ onMounted(() => {
                                     :class="{ 'border-danger': form.errors.name }"
                                     v-model="form.name"
                                     placeholder="Enter your company name"
-                                    required
                                 />
                             </div>
                             <InputError :message="form.errors.name" />
@@ -211,12 +280,12 @@ onMounted(() => {
                                     Company Email
                                 </label>
                                 <div class="input-group">
-                                    <span class="btn btn-input">
-                                        <i class="ki-filled ki-sms text-gray-500"></i>
+                                    <span class="input-group-text">
+                                        <i class="ki-filled ki-sms"></i>
                                     </span>
                                     <input
                                         id="company-email"
-                                        type="email"
+                                        type="text"
                                         class="input"
                                         :class="{ 'border-danger': form.errors.email }"
                                         v-model="form.email"
@@ -232,8 +301,8 @@ onMounted(() => {
                                     Phone Number
                                 </label>
                                 <div class="input-group">
-                                    <span class="btn btn-input">
-                                        <i class="ki-filled ki-phone text-gray-500"></i>
+                                    <span class="input-group-text">
+                                        <i class="ki-filled ki-phone"></i>
                                     </span>
                                     <input
                                         id="company-phone"
@@ -250,23 +319,16 @@ onMounted(() => {
 
                         <!-- Industry -->
                         <div>
-                            <label for="company-industry" class="form-label mb-2">
+                            <label class="form-label mb-2">
                                 Industry
                             </label>
-                            <select
-                                id="company-industry"
-                                class="select"
-                                :class="{ 'border-danger': form.errors.industry }"
+                            <SearchableSelect
                                 v-model="form.industry"
-                            >
-                                <option
-                                    v-for="option in industries"
-                                    :key="option.value"
-                                    :value="option.value"
-                                >
-                                    {{ option.label }}
-                                </option>
-                            </select>
+                                :options="industries"
+                                placeholder="Select an industry"
+                                :searchable="true"
+                                :clearable="true"
+                            />
                             <InputError :message="form.errors.industry" />
                         </div>
 
@@ -276,12 +338,12 @@ onMounted(() => {
                                 Website
                             </label>
                             <div class="input-group">
-                                <span class="btn btn-input">
-                                    <i class="ki-filled ki-globe text-gray-500"></i>
+                                <span class="input-group-text">
+                                    <i class="ki-filled ki-screen"></i>
                                 </span>
                                 <input
                                     id="company-website"
-                                    type="url"
+                                    type="text"
                                     class="input"
                                     :class="{ 'border-danger': form.errors.website }"
                                     v-model="form.website"
@@ -296,9 +358,9 @@ onMounted(() => {
                             <label for="company-address" class="form-label mb-2">
                                 Business Address
                             </label>
-                            <div class="input-group items-start">
-                                <span class="btn btn-input">
-                                    <i class="ki-filled ki-geolocation text-gray-500"></i>
+                            <div class="input-group input-group-textarea">
+                                <span class="input-group-text">
+                                    <i class="ki-filled ki-geolocation"></i>
                                 </span>
                                 <textarea
                                     id="company-address"

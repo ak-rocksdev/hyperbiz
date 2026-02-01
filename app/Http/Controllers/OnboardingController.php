@@ -90,12 +90,12 @@ class OnboardingController extends Controller
             $company = Company::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'] ?? $user->email,
-                'phone' => $validated['phone'] ?? null,
-                'address' => $validated['address'] ?? null,
+                'phone' => $validated['phone'] ?? '',
+                'address' => $validated['address'] ?? '',
                 'website' => $validated['website'] ?? null,
                 'industry' => $validated['industry'] ?? null,
                 'subscription_status' => 'trial',
-                'trial_ends_at' => now()->addDays(config('app.trial_days', 14)),
+                'trial_ends_at' => now()->addDays((int) config('app.trial_days', 14)),
             ]);
 
             // Assign user to the company
@@ -113,10 +113,14 @@ class OnboardingController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Onboarding company creation failed: ' . $e->getMessage());
+            Log::error('Onboarding company creation failed: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'data' => $validated,
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return back()->withErrors([
-                'company_name' => 'Failed to create company. Please try again.',
+                'name' => 'Failed to create company: ' . $e->getMessage(),
             ]);
         }
     }
