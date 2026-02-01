@@ -9,19 +9,19 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 **Status:** Completed
 
 ### Database Changes
-- [x] Add `company_id` column to `users` table
-- [x] Add `is_platform_admin` column to `users` table
-- [x] Create `mst_company` table with subscription fields
-- [x] Add `company_id` foreign key to all tenant-specific tables
+- [x] Add company_id column to users table
+- [x] Add is_platform_admin column to users table
+- [x] Create mst_company table with subscription fields
+- [x] Add company_id foreign key to all tenant-specific tables
 
 ### Models & Scopes
-- [x] Create `Company` model with relationships
-- [x] Implement `BelongsToCompany` trait with global scope
+- [x] Create Company model with relationships
+- [x] Implement BelongsToCompany trait with global scope
 - [x] Apply global scope to all tenant models (Product, Customer, SalesOrder, etc.)
-- [x] Add `hasCompany()` and `isPlatformAdmin()` methods to User model
+- [x] Add hasCompany() and isPlatformAdmin() methods to User model
 
 ### Middleware
-- [x] Create `EnsureHasCompany` middleware
+- [x] Create EnsureHasCompany middleware
 - [x] Redirect users without company to onboarding
 - [x] Exclude platform admins from company requirement
 
@@ -32,22 +32,18 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 **Status:** Completed
 
 ### Platform Admin Dashboard
-- [x] Create `PlatformAdminController`
+- [x] Create PlatformAdminController
 - [x] Dashboard with company statistics (total, active, trial, expired)
 - [x] Recent companies list
 - [x] Subscription status chart
 
 ### Company Management
 - [x] Companies list with search and status filter
-- [x] Company detail page with:
-  - Company information display
-  - User list for the company
-  - Quick stats (products, customers, orders)
-  - Subscription status card
+- [x] Company detail page with company info, user list, quick stats, subscription status
 - [x] Edit subscription status modal (change trial/active/expired/cancelled)
 
 ### Admin Routes & Navigation
-- [x] Define `/admin/*` routes with platform admin protection
+- [x] Define /admin/* routes with platform admin protection
 - [x] Separate sidebar menu for platform admin
 - [x] Platform admin topbar customization
 
@@ -58,9 +54,9 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 **Status:** Completed
 
 ### Onboarding Pages
-- [x] Welcome page (`/onboarding`)
-- [x] Company Setup form (`/onboarding/company-setup`)
-- [x] Completion page (`/onboarding/complete`)
+- [x] Welcome page (/onboarding)
+- [x] Company Setup form (/onboarding/company-setup)
+- [x] Completion page (/onboarding/complete)
 
 ### Onboarding Features
 - [x] Progress indicator (3 steps)
@@ -70,8 +66,8 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 - [x] Quick start links on completion page
 
 ### Trial Configuration
-- [x] Configurable trial days in `config/app.php`
-- [x] Environment variable support (`APP_TRIAL_DAYS`)
+- [x] Configurable trial days in config/app.php
+- [x] Environment variable support (APP_TRIAL_DAYS)
 - [x] Trial end date calculation
 - [x] Days remaining display
 
@@ -82,32 +78,22 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 **Status:** Completed
 
 ### Database
-- [x] Create `subscription_plans` table
-  - id, name, slug, description
-  - price_monthly, price_yearly
-  - max_users, max_products, max_customers, max_monthly_orders
-  - features (JSON array)
-  - is_active, sort_order
+- [x] Create subscription_plans table
 - [x] SubscriptionPlan model with relationships and scopes
 
 ### Platform Admin Features
-- [x] Plans list page (`/admin/plans`)
+- [x] Plans list page (/admin/plans)
 - [x] Create/Edit plan modal with full form
 - [x] Toggle plan active status (with SweetAlert2 confirmation)
 - [x] Delete plan (with protection for plans with active subscribers)
 - [x] Drag-and-drop reorder plans
-- [x] Table view with all plan details
-- [x] Card view with pricing display and feature list
-- [x] View toggle (table/card)
+- [x] Table view and Card view toggle
 - [x] Search and status filter
 - [x] Stats summary (total, active, inactive plans)
 
 ### Plan Features to Track
-- [x] Maximum users per company
-- [x] Maximum products
-- [x] Maximum customers
-- [x] Maximum monthly orders
-- [x] Custom features list (JSON array - flexible for any feature)
+- [x] Maximum users, products, customers, monthly orders
+- [x] Custom features list (JSON array)
 
 ### Sample Plans Created
 - Starter: IDR 99,000/mo - 3 users, 100 products, 200 customers, 100 orders/mo
@@ -116,28 +102,58 @@ This document outlines the development roadmap for transforming HyperBiz from a 
 
 ---
 
-## Phase 5: Tenant Subscription & Billing 🔲
+## Phase 5: Tenant Subscription & Billing 🟡
 
-**Status:** Pending
+**Status:** In Progress (Core features complete, payment gateway pending)
 
 ### Subscription Flow
-- [ ] View available plans page
-- [ ] Plan comparison table
-- [ ] Upgrade/downgrade flow
-- [ ] Subscription confirmation
+- [x] View available plans page (/subscription/plans)
+- [x] Plan comparison table with features list
+- [x] Upgrade flow (select plan → choose billing → generate invoice)
+- [x] Subscription confirmation page
+- [x] Current subscription status page (/subscription)
 
-### Billing Integration
-- [ ] Payment gateway integration (Midtrans/Stripe)
-- [ ] Invoice generation
-- [ ] Payment history
-- [ ] Auto-renewal handling
-- [ ] Failed payment handling
+### Billing Integration (Bank Transfer - Manual Verification)
+- [x] Invoice generation (automatic when tenant selects plan)
+- [x] Invoice model with number, amount, due date, status
+- [x] Bank transfer payment method
+- [x] Payment proof upload (transfer amount now optional)
+- [x] Payment proof image storage and display
+- [x] Admin verification page (/admin/payment-verifications)
+- [x] Amount mismatch warning for admin approval
+- [x] Mandatory verification checkbox before approval
+- [x] Subscription auto-activation upon payment approval
+- [x] Payment rejection with reason tracking
+- [ ] Payment gateway (Midtrans/Stripe) - Future
+- [ ] Auto-renewal handling - Future
 
 ### Subscription Management
-- [ ] Current plan display in company settings
-- [ ] Usage statistics vs plan limits
-- [ ] Upgrade prompts when approaching limits
-- [ ] Grace period for expired subscriptions
+- [x] Current plan display in subscription page
+- [x] Usage statistics vs plan limits
+- [x] Global subscription status banner (top of every page)
+- [x] Upgrade prompts via banner CTA buttons
+- [ ] Grace period for expired subscriptions - Future
+
+### Admin Payment Verification
+- [x] Platform admin verification page
+- [x] Filter by status (pending, approved, rejected)
+- [x] View payment proof details modal
+- [x] Approve/Reject with SweetAlert2 confirmation
+- [x] Amount mismatch warning during approval
+- [x] Verification checkbox requirement
+- [x] Fixed SweetAlert z-index with dialog elements
+
+### Subscription Banner (SubscriptionBanner.vue)
+- [x] Full-width banner at top of content
+- [x] Color-coded by status severity
+- [x] Dismissible for non-critical trial warnings
+- [x] Non-dismissible for expired/suspended/past_due
+- [x] Hidden for platform admins and active subscriptions
+
+### Scheduled Commands (Laravel 11)
+- [x] CheckExpiredTrials - Daily trial expiry check
+- [x] CheckExpiredSubscriptions - Daily subscription check
+- [x] CheckPastDueInvoices - Daily overdue invoice check
 
 ---
 
@@ -328,7 +344,5 @@ STRIPE_KEY=
 STRIPE_SECRET=
 STRIPE_WEBHOOK_SECRET=
 ```
-
----
 
 *Last Updated: February 1, 2026*

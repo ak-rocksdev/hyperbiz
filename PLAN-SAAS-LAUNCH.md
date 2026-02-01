@@ -47,113 +47,113 @@ These decisions were made during brainstorming and are the foundation for all ph
 
 #### 2.1.1 Modify `users` table
 
-- [ ] Add `company_id` column (nullable, foreign key to `mst_company`)
-- [ ] Add `is_platform_admin` boolean column (default: false)
-- [ ] Remove dependency on `current_team_id` (Jetstream Teams)
-- [ ] Add index on `company_id`
+- [x] Add `company_id` column (nullable, foreign key to `mst_company`)
+- [x] Add `is_platform_admin` boolean column (default: false)
+- [x] Remove dependency on `current_team_id` (Jetstream Teams)
+- [x] Add index on `company_id`
 
 #### 2.1.2 Add `company_id` to all master tables
 
 Each migration adds: `$table->foreignId('company_id')->constrained('mst_company')` with compound index.
 
-- [ ] `mst_products` — add `company_id`, change UNIQUE(sku) to UNIQUE(company_id, sku)
-- [ ] `mst_client` (customers/suppliers) — add `company_id`, update unique constraints
-- [ ] `mst_product_categories` — add `company_id`
-- [ ] `mst_brands` — add `company_id`
-- [ ] `mst_expense_categories` — add `company_id`
-- [ ] `mst_uom_categories` — add `company_id`
-- [ ] `mst_uom` — add `company_id` (custom UOMs are company-scoped)
-- [ ] `mst_product_uoms` — add `company_id`
+- [x] `mst_products` — add `company_id`, change UNIQUE(sku) to UNIQUE(company_id, sku)
+- [x] `mst_client` (customers/suppliers) — add `company_id`, update unique constraints
+- [x] `mst_product_categories` — add `company_id`
+- [x] `mst_brands` — add `company_id`
+- [x] `mst_expense_categories` — add `company_id`
+- [x] `mst_uom_categories` — add `company_id`
+- [x] `mst_uom` — add `company_id` (custom UOMs are company-scoped)
+- [x] `mst_product_uoms` — add `company_id`
 
 #### 2.1.3 Add `company_id` to all transaction tables
 
-- [ ] `purchase_orders` — add `company_id`, update UNIQUE(order_number) to UNIQUE(company_id, order_number)
-- [ ] `purchase_order_items` — add `company_id`
-- [ ] `purchase_receivings` — add `company_id`
-- [ ] `purchase_receiving_items` — add `company_id`
-- [ ] `purchase_returns` — add `company_id`
-- [ ] `purchase_return_items` — add `company_id`
-- [ ] `sales_orders` — add `company_id`, update UNIQUE(order_number) to UNIQUE(company_id, order_number)
-- [ ] `sales_order_items` — add `company_id`
-- [ ] `sales_shipments` — add `company_id`
-- [ ] `sales_shipment_items` — add `company_id`
-- [ ] `sales_returns` — add `company_id`
-- [ ] `sales_return_items` — add `company_id`
-- [ ] `payments` — add `company_id`
-- [ ] `transactions` — add `company_id`
-- [ ] `inventory_stock` — add `company_id`
-- [ ] `inventory_movements` — add `company_id`
-- [ ] `inventory_adjustments` — add `company_id`
-- [ ] `inventory_adjustment_items` — add `company_id`
+- [x] `purchase_orders` — add `company_id`, update UNIQUE(order_number) to UNIQUE(company_id, order_number)
+- [x] `purchase_order_items` — add `company_id`
+- [x] `purchase_receivings` — add `company_id`
+- [x] `purchase_receiving_items` — add `company_id`
+- [x] `purchase_returns` — add `company_id`
+- [x] `purchase_return_items` — add `company_id`
+- [x] `sales_orders` — add `company_id`, update UNIQUE(order_number) to UNIQUE(company_id, order_number)
+- [x] `sales_order_items` — add `company_id`
+- [x] `sales_shipments` — add `company_id`
+- [x] `sales_shipment_items` — add `company_id`
+- [x] `sales_returns` — add `company_id`
+- [x] `sales_return_items` — add `company_id`
+- [x] `payments` — add `company_id`
+- [x] `transactions` — add `company_id`
+- [x] `inventory_stock` — add `company_id`
+- [x] `inventory_movements` — add `company_id`
+- [x] `inventory_adjustments` — add `company_id`
+- [x] `inventory_adjustment_items` — add `company_id`
 
 #### 2.1.4 Add `company_id` to all finance tables
 
-- [ ] `fin_chart_of_accounts` — add `company_id`
-- [ ] `fin_fiscal_years` — add `company_id`
-- [ ] `fin_fiscal_periods` — add `company_id`
-- [ ] `fin_journal_entries` — add `company_id`
-- [ ] `fin_journal_entry_lines` — add `company_id`
-- [ ] `fin_account_balances` — add `company_id`
-- [ ] `fin_expenses` — add `company_id`
-- [ ] `fin_expense_attachments` — add `company_id`
-- [ ] `fin_bank_accounts` — add `company_id`
-- [ ] `fin_bank_reconciliations` — add `company_id`
-- [ ] `fin_bank_transactions` — add `company_id`
-- [ ] `fin_supplier_balances` — add `company_id`
-- [ ] `fin_settings` — add `company_id`
+- [x] `fin_chart_of_accounts` — add `company_id`
+- [x] `fin_fiscal_years` — add `company_id`
+- [x] `fin_fiscal_periods` — add `company_id`
+- [x] `fin_journal_entries` — add `company_id`
+- [x] `fin_journal_entry_lines` — add `company_id`
+- [x] `fin_account_balances` — add `company_id`
+- [x] `fin_expenses` — add `company_id`
+- [x] `fin_expense_attachments` — add `company_id`
+- [x] `fin_bank_accounts` — add `company_id`
+- [x] `fin_bank_reconciliations` — add `company_id`
+- [x] `fin_bank_transactions` — add `company_id`
+- [x] `fin_supplier_balances` — add `company_id`
+- [x] `fin_settings` — add `company_id`
 
 #### 2.1.5 Add `company_id` to system tables
 
-- [ ] `system_logs` — add `company_id`
-- [ ] `company_settings` — already has `company_id` (verify)
+- [x] `system_logs` — add `company_id`
+- [x] `company_settings` — already has `company_id` (verify)
 
 #### 2.1.6 Add subscription fields to `mst_company`
 
-- [ ] `subscription_status` enum: `trial`, `active`, `suspended`, `cancelled`, `expired` (default: `trial`)
-- [ ] `subscription_plan_id` nullable foreign key
-- [ ] `trial_ends_at` timestamp nullable
-- [ ] `subscription_starts_at` timestamp nullable
-- [ ] `subscription_ends_at` timestamp nullable
-- [ ] `billing_cycle` enum: `monthly`, `yearly` nullable
-- [ ] `max_users` integer nullable (plan limit)
+- [x] `subscription_status` enum: `trial`, `active`, `suspended`, `cancelled`, `expired` (default: `trial`)
+- [x] `subscription_plan_id` nullable foreign key
+- [x] `trial_ends_at` timestamp nullable
+- [x] `subscription_starts_at` timestamp nullable
+- [x] `subscription_ends_at` timestamp nullable
+- [x] `billing_cycle` enum: `monthly`, `yearly` nullable
+- [x] `max_users` integer nullable (plan limit)
 
 ### 2.2 Model Layer — BelongsToCompany Trait
 
-- [ ] Create `app/Traits/BelongsToCompany.php` trait with:
+- [x] Create `app/Traits/BelongsToCompany.php` trait with:
   - Global scope: auto-filter `WHERE company_id = auth()->user()->company_id` (skip for platform admin)
   - Auto-set `company_id` on creating event
   - `company()` belongsTo relationship
-- [ ] Apply trait to ALL company-scoped models (every model listed in 2.1.2 — 2.1.5)
-- [ ] Keep Currency model as global (no trait) — or decide: base currencies global, custom ones scoped
-- [ ] Update `User` model: add `company()` relationship, `isPlatformAdmin()` method
-- [ ] Remove `HasTeams` trait from User model
-- [ ] Add `scopeForCompany($query, $companyId)` helper scope
+- [x] Apply trait to ALL company-scoped models (every model listed in 2.1.2 — 2.1.5)
+- [x] Keep Currency model as global (no trait) — or decide: base currencies global, custom ones scoped
+- [x] Update `User` model: add `company()` relationship, `isPlatformAdmin()` method
+- [x] Remove `HasTeams` trait from User model
+- [x] Add `scopeForCompany($query, $companyId)` helper scope
 
 ### 2.3 Middleware
 
-- [ ] Create `EnsureHasCompany` middleware — redirect users without `company_id` to company setup
-- [ ] Create `CheckSubscriptionStatus` middleware — check if company subscription is active/trial
-- [ ] Register middleware in `app/Http/Kernel.php` (or bootstrap/app.php for Laravel 11)
-- [ ] Apply `EnsureHasCompany` to all authenticated routes except company setup routes
-- [ ] Apply `CheckSubscriptionStatus` to all authenticated routes
+- [x] Create `EnsureHasCompany` middleware — redirect users without `company_id` to company setup
+- [x] Create `CheckSubscriptionStatus` middleware — check if company subscription is active/trial
+- [x] Register middleware in `app/Http/Kernel.php` (or bootstrap/app.php for Laravel 11)
+- [x] Apply `EnsureHasCompany` to all authenticated routes except company setup routes
+- [x] Apply `CheckSubscriptionStatus` to all authenticated routes
 
 ### 2.4 Update Controllers
 
-- [ ] Audit every controller — remove any manual `::all()` or unscoped queries (the global scope will handle filtering, but verify)
-- [ ] Update `UserController` — scope user listing to same `company_id`
-- [ ] Update `CompanyController` — users can only view/edit their own company
-- [ ] Update `DashboardController` — scope all stats to `company_id`
-- [ ] Update any report controllers to scope data
+- [x] Audit every controller — remove any manual `::all()` or unscoped queries (the global scope will handle filtering, but verify)
+- [x] Update `UserController` — scope user listing to same `company_id`
+- [x] Update `CompanyController` — users can only view/edit their own company
+- [x] Update `DashboardController` — scope all stats to `company_id`
+- [x] Update any report controllers to scope data
 
 ### 2.5 Update Seeders
 
-- [ ] Create a default platform admin user in `DatabaseSeeder`
-- [ ] Update demo seeders to assign `company_id` to all seeded data
+- [x] Create a default platform admin user in `DatabaseSeeder`
+- [x] Update demo seeders to assign `company_id` to all seeded data
 - [ ] Create a `TenantDemoSeeder` class that seeds sample data for a single company (reusable for onboarding)
 
 ### 2.6 Remove Jetstream Teams Usage
 
-- [ ] Remove `HasTeams` trait from User model
+- [x] Remove `HasTeams` trait from User model
 - [ ] Remove team-related routes from `routes/web.php` (or keep but disable)
 - [ ] Remove/hide Teams pages from `resources/js/Pages/Teams/`
 - [ ] Remove team switching from profile page
@@ -278,49 +278,49 @@ The landing page is a single Vue component with these sections, scrollable top-t
 ### 4.1 Update Registration Flow
 
 #### 4.1.1 Modify Register Page
-- [ ] Keep existing fields: name, email, password, password confirmation
+- [x] Keep existing fields: name, email, password, password confirmation
 - [ ] Add hidden field: `plan` (from URL query param `?plan=starter`)
-- [ ] Keep terms & conditions checkbox
+- [x] Keep terms & conditions checkbox
 - [ ] Update styling to match new landing page look
-- [ ] After registration: redirect to onboarding wizard instead of dashboard
+- [x] After registration: redirect to onboarding wizard instead of dashboard
 
 #### 4.1.2 Update CreateNewUser Action (Fortify)
-- [ ] File: `app/Actions/Fortify/CreateNewUser.php`
-- [ ] Remove team creation logic
-- [ ] Set `company_id` as null on user creation (they don't have a company yet)
-- [ ] Set `is_platform_admin` to false
+- [x] File: `app/Actions/Fortify/CreateNewUser.php`
+- [x] Remove team creation logic
+- [x] Set `company_id` as null on user creation (they don't have a company yet)
+- [x] Set `is_platform_admin` to false
 - [ ] Store selected plan in session or user metadata for onboarding step
 
 #### 4.1.3 Update Post-Registration Redirect
-- [ ] File: `app/Providers/FortifyServiceProvider.php` or RouteServiceProvider
-- [ ] Change redirect from `/dashboard` to `/onboarding` for users without `company_id`
-- [ ] `EnsureHasCompany` middleware handles this globally for all auth routes
+- [x] File: `app/Providers/FortifyServiceProvider.php` or RouteServiceProvider
+- [x] Change redirect from `/dashboard` to `/onboarding` for users without `company_id`
+- [x] `EnsureHasCompany` middleware handles this globally for all auth routes
 
 ### 4.2 Onboarding Wizard
 
 #### 4.2.1 Route & Controller
-- [ ] Create `OnboardingController.php`
-- [ ] `GET /onboarding` → show wizard (only if user has no `company_id`)
-- [ ] `POST /onboarding/company` → Step 1: save company
+- [x] Create `OnboardingController.php`
+- [x] `GET /onboarding` → show wizard (only if user has no `company_id`)
+- [x] `POST /onboarding/company` → Step 1: save company
 - [ ] `POST /onboarding/preferences` → Step 2: save preferences
-- [ ] `POST /onboarding/complete` → Step 3: finalize and redirect to dashboard
-- [ ] Middleware: `auth` only (no `EnsureHasCompany` — they're creating one)
+- [x] `POST /onboarding/complete` → Step 3: finalize and redirect to dashboard
+- [x] Middleware: `auth` only (no `EnsureHasCompany` — they're creating one)
 
 #### 4.2.2 Wizard UI (resources/js/Pages/Onboarding/Index.vue)
-- [ ] Full-page layout (no sidebar, minimal header with logo only)
-- [ ] Step indicator at top: Step 1 → Step 2 → Step 3 (with progress visualization)
+- [x] Full-page layout (no sidebar, minimal header with logo only)
+- [x] Step indicator at top: Step 1 → Step 2 → Step 3 (with progress visualization)
 - [ ] Each step is a section within the same component (or sub-components)
-- [ ] "Back" and "Next" navigation between steps
+- [x] "Back" and "Next" navigation between steps
 - [ ] Progress saved to backend on each step (not lost on page refresh)
 
 #### 4.2.3 Step 1: Company Information
-- [ ] Company name (required)
-- [ ] Industry/business type (dropdown: Retail, Manufacturing, Trading, Services, Other)
+- [x] Company name (required)
+- [x] Industry/business type (dropdown: Retail, Manufacturing, Trading, Services, Other)
 - [ ] Company address (textarea, optional)
 - [ ] Company phone (optional)
 - [ ] Company email (optional, default from user email)
 - [ ] Company logo upload (optional, with preview)
-- [ ] On submit: creates `mst_company` record, sets `subscription_status = 'trial'`, sets `trial_ends_at = now + 30 days`, links user to company via `company_id`
+- [x] On submit: creates `mst_company` record, sets `subscription_status = 'trial'`, sets `trial_ends_at = now + 30 days`, links user to company via `company_id`
 
 #### 4.2.4 Step 2: Preferences & Setup
 - [ ] Default currency selection (dropdown from global currencies table)
@@ -333,8 +333,8 @@ The landing page is a single Vue component with these sections, scrollable top-t
 #### 4.2.5 Step 3: Ready to Go (Confirmation)
 - [ ] Summary of company info and preferences
 - [ ] Subscription plan display: "You're starting a 30-day free trial of {Plan Name}"
-- [ ] Trial end date shown
-- [ ] "Go to Dashboard" primary CTA button
+- [x] Trial end date shown
+- [x] "Go to Dashboard" primary CTA button
 - [ ] On submit:
   - If demo data selected: run `TenantDemoSeeder` for this company
   - Create default Chart of Accounts for the company
@@ -380,7 +380,7 @@ The landing page is a single Vue component with these sections, scrollable top-t
 ### 5.1 Database Tables
 
 #### 5.1.1 `subscription_plans` table
-- [ ] Create migration with columns:
+- [x] Create migration with columns:
   - `id` (primary key)
   - `name` (string) — e.g., "Starter", "Professional", "Enterprise"
   - `slug` (string, unique) — e.g., "starter", "professional", "enterprise"
@@ -416,7 +416,7 @@ The landing page is a single Vue component with these sections, scrollable top-t
 
 ### 5.2 Models
 
-- [ ] Create `SubscriptionPlan` model (`app/Models/SubscriptionPlan.php`)
+- [x] Create `SubscriptionPlan` model (`app/Models/SubscriptionPlan.php`)
   - `features()` hasMany relationship
   - `companies()` hasManyThrough relationship
   - `scopeActive($query)` scope
@@ -429,7 +429,7 @@ The landing page is a single Vue component with these sections, scrollable top-t
   - `isActive()` helper
   - `isTrialing()` helper
   - `daysRemaining()` helper
-- [ ] Update `Company` model:
+- [x] Update `Company` model:
   - `subscription()` hasOne (latest active subscription)
   - `subscriptionHistory()` hasMany
   - `plan()` through subscription
@@ -482,7 +482,7 @@ access_management         | Role & permission management   | /access-management/
 
 #### 5.5.1 Inertia Shared Data
 - [ ] Share `company.features` array via `AppServiceProvider` (list of feature keys the company has access to)
-- [ ] Share `company.subscription` object (status, plan name, trial_ends_at, days_remaining)
+- [x] Share `company.subscription` object (status, plan name, trial_ends_at, days_remaining)
 
 #### 5.5.2 Vue Feature Helper
 - [ ] Create composable `useFeature()` in `resources/js/Composables/useFeature.js`:
@@ -503,7 +503,7 @@ access_management         | Role & permission management   | /access-management/
 - [ ] Clicking locked module opens upgrade prompt modal
 
 #### 5.5.4 Upgrade Required Page
-- [ ] Create `resources/js/Pages/Subscription/UpgradeRequired.vue`
+- [x] Create `resources/js/Pages/Subscription/UpgradeRequired.vue`
 - [ ] Shows: "This feature is available on the {Plan Name} plan"
 - [ ] CTA: "Upgrade Now" or "Contact us"
 - [ ] Accessible info about what the plan includes
@@ -541,14 +541,14 @@ Max users: unlimited (null)
 
 ### 6.1 Routes & Access
 
-- [ ] Create route group: `/platform-admin/*` with middleware `is_platform_admin`
-- [ ] Create `PlatformAdminMiddleware` — checks `auth()->user()->is_platform_admin`
-- [ ] Create `PlatformAdminController.php`
+- [x] Create route group: `/admin/*` with middleware `is_platform_admin`
+- [x] Create `PlatformAdminMiddleware` — checks `auth()->user()->is_platform_admin`
+- [x] Create `PlatformAdminController.php`
 
 ### 6.2 Platform Admin Pages
 
 #### 6.2.1 Platform Dashboard (`/platform-admin/dashboard`)
-- [ ] Create `resources/js/Pages/PlatformAdmin/Dashboard.vue`
+- [x] Create `resources/js/Pages/Admin/Dashboard.vue`
 - [ ] Stats cards:
   - Total companies (tenants)
   - Active subscriptions
@@ -560,7 +560,7 @@ Max users: unlimited (null)
 - [ ] Companies expiring soon (trial ending within 7 days)
 
 #### 6.2.2 Companies Management (`/platform-admin/companies`)
-- [ ] Create `resources/js/Pages/PlatformAdmin/Companies/Index.vue`
+- [x] Create `resources/js/Pages/Admin/Companies/Index.vue`
 - [ ] List all companies with: name, owner email, plan, status, trial end, user count, created date
 - [ ] Filters: status (trial/active/expired/cancelled), plan, search
 - [ ] Actions per company:
@@ -571,16 +571,16 @@ Max users: unlimited (null)
   - Impersonate (login as company admin for debugging)
 
 #### 6.2.3 Company Detail (`/platform-admin/companies/{id}`)
-- [ ] Create `resources/js/Pages/PlatformAdmin/Companies/Detail.vue`
+- [x] Create `resources/js/Pages/Admin/Companies/Detail.vue`
 - [ ] Company info, subscription history, user list, usage stats
 - [ ] Quick actions: change plan, extend trial, impersonate
 
 #### 6.2.4 Subscription Plans Management (`/platform-admin/plans`)
-- [ ] Create `resources/js/Pages/PlatformAdmin/Plans/Index.vue`
-- [ ] CRUD for subscription plans
+- [x] Create `resources/js/Pages/Admin/Plans/Index.vue`
+- [x] CRUD for subscription plans
 - [ ] Feature checkboxes per plan
-- [ ] Pricing configuration (monthly/yearly)
-- [ ] Drag-to-reorder plans
+- [x] Pricing configuration (monthly/yearly)
+- [x] Drag-to-reorder plans
 
 #### 6.2.5 Platform Settings
 - [ ] Default trial duration (days)
@@ -591,8 +591,8 @@ Max users: unlimited (null)
 ### 6.3 Platform Admin Layout
 
 - [ ] Create `PlatformAdminLayout.vue` — separate layout from tenant AppLayout
-- [ ] Different sidebar with platform admin menu items
-- [ ] Visual distinction (different color scheme or banner) so you know you're in platform admin mode
+- [x] Different sidebar with platform admin menu items
+- [x] Visual distinction (different color scheme or banner) so you know you're in platform admin mode
 - [ ] "Exit to tenant view" button for impersonation
 
 ### 6.4 Impersonation
@@ -612,7 +612,7 @@ Max users: unlimited (null)
 
 ### 7.1 Subscription Status Check
 
-- [ ] Create `CheckSubscriptionStatus` middleware (if not already in Phase 1):
+- [x] Create `CheckSubscriptionStatus` middleware (if not already in Phase 1):
   - Active subscription or valid trial → allow all
   - Expired/suspended → allow only GET requests (read-only) + redirect POST/PUT/DELETE to upgrade page
   - Cancelled → redirect to "account cancelled" page
@@ -621,31 +621,31 @@ Max users: unlimited (null)
 ### 7.2 Read-Only Mode Implementation
 
 #### 7.2.1 Backend
-- [ ] Middleware blocks all write operations (POST, PUT, PATCH, DELETE) for expired companies
-- [ ] Returns JSON `{ error: 'subscription_expired', message: '...' }` for API calls
-- [ ] Returns Inertia redirect to upgrade page for web requests
+- [x] Middleware blocks all write operations (POST, PUT, PATCH, DELETE) for expired companies
+- [x] Returns JSON `{ error: 'subscription_expired', message: '...' }` for API calls
+- [x] Returns Inertia redirect to upgrade page for web requests
 
 #### 7.2.2 Frontend
-- [ ] Share `company.is_read_only` boolean via Inertia
-- [ ] Global banner at top: "Your trial has expired. Subscribe to continue creating and editing data."
+- [x] Share `company.is_read_only` boolean via Inertia
+- [x] Global banner at top: "Your trial has expired. Subscribe to continue creating and editing data."
 - [ ] Disable all "Create", "Edit", "Delete" buttons when `is_read_only` is true
 - [ ] Hide action buttons or show them as disabled with tooltip "Upgrade to unlock"
-- [ ] Create `ReadOnlyBanner.vue` component, included in `AppLayout.vue`
+- [x] Create `SubscriptionBanner.vue` component, included in `AppLayout.vue`
 
 ### 7.3 Trial Expiry Notifications (In-App)
 
-- [ ] Dashboard shows trial countdown: "X days remaining in your trial"
-- [ ] Color coding: green (> 14 days), yellow (7-14 days), red (< 7 days)
-- [ ] At 7 days: show persistent banner "Your trial expires in 7 days"
-- [ ] At 3 days: show more urgent banner
-- [ ] At 0 days: switch to read-only mode automatically
+- [x] Dashboard shows trial countdown: "X days remaining in your trial"
+- [x] Color coding: green (> 14 days), yellow (7-14 days), red (< 7 days)
+- [x] At 7 days: show persistent banner "Your trial expires in 7 days"
+- [x] At 3 days: show more urgent banner
+- [x] At 0 days: switch to read-only mode automatically
 
 ### 7.4 Scheduled Command
 
-- [ ] Create `app/Console/Commands/CheckExpiredTrials.php` artisan command
-- [ ] Runs daily via scheduler
-- [ ] Finds companies where `trial_ends_at < now()` and `subscription_status = 'trial'`
-- [ ] Updates their status to `expired`
+- [x] Create scheduled commands in `routes/console.php` (Laravel 11)
+- [x] Runs daily via scheduler
+- [x] Finds companies where `trial_ends_at < now()` and `subscription_status = 'trial'`
+- [x] Updates their status to `expired`
 - [ ] (Future: sends email notification)
 
 ---
